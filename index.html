@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Popup</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <div class="schedule-container">
+                <h1 id="white-box-heading">Schedule</h1>
+                <div id="schedule"></div>
+            </div>
+            <div class="current-period">
+                <h2 id="countdown-heading" class="countdown-header">Normal Schedule ▸ Period 1</h2>
+                <div id="current-period-time">00:00</div>
+            </div>
+        </div>
+    </div>
+    <div id="settings-sidebar" class="settings-sidebar">
+        <button class="close-settings-sidebar" onclick="toggleSettingsSidebar()">Close</button>
+        <h2>Settings</h2>
+        
+        <!-- Background Settings Group -->
+        <div class="settings-group">
+            <h3>Background Settings</h3>
+            <!-- Image Upload Section -->
+            <div class="image-upload">
+                <input type="file" id="bg-image" accept="image/*">
+                <div id="bg-image-drop-area">
+                    <p>📸 Drop image here</p>
+                    <p>or</p>
+                    <p>Click to upload</p>
+                </div>
+                <button id="remove-bg-button" onclick="removeBackground()">Remove Background</button>
+            </div>
+            
+            <!-- Gradient Controls -->
+            <div id="gradient-section">
+                <h3 id="gradient-section-toggle" class="dropdown-toggle">
+                    Gradient Controls <span class="triangle">&#9662;</span>
+                </h3>
+                <div id="gradient-controls" class="dropdown-content">
+                    <div class="gradient-preview-container">
+                        <div class="gradient-preview"></div>
+                    </div>
+                    <div class="gradient-main-controls">
+                        <div class="gradient-type-selector">
+                            <select id="gradient-type">
+                                <option value="linear">Linear</option>
+                                <option value="radial">Radial</option>
+                            </select>
+                        </div>
+                        <div class="gradient-stops-editor">
+                            <div class="gradient-bar-container">
+                                <div class="gradient-preview-bar"></div>
+                                <div class="gradient-stops"></div>
+                            </div>
+                            <div class="stop-controls">
+                                <input type="color" id="stop-color" class="color-picker">
+                                <input type="number" id="stop-position" min="0" max="100" value="0">
+                                <button class="delete-stop">Delete</button>
+                            </div>
+                        </div>
+                        <button class="add-stop-btn">Add color stop</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Box Settings Group -->
+        <div class="settings-group">
+            <h3>Schedule Box Settings</h3>
+            <div>
+                <label for="white-box-color">Background Color:</label>
+                <input type="color" id="white-box-color" name="white-box-color" value="#ffffff" onchange="updateWhiteBoxColor()">
+            </div>
+            <div>
+                <label for="white-box-text-color">Text Color:</label>
+                <input type="color" id="white-box-text-color" name="white-box-text-color" value="#000035" onchange="updateWhiteBoxTextColor()">
+            </div>
+        </div>
+
+        <!-- Countdown Settings Group -->
+        <div class="settings-group">
+            <h3>Countdown Settings</h3>
+            <div>
+                <label for="countdown-color">Timer Color:</label>
+                <input type="color" id="countdown-color" name="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+            </div>
+            <div>
+                <label for="font-color">Header Color:</label>
+                <input type="color" id="font-color" name="font-color" value="#ffffff">
+            </div>
+            <div class="switch-container">
+                <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                <label class="switch">
+                    <input type="checkbox" id="timer-shadow" onchange="toggleShadowSettings(); updateTimerShadow();">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div id="shadow-settings-content" class="dropdown-content">
+                <div id="shadow-preview">12:34</div>
+                <div>
+                    <label for="shadow-color">Shadow Color:</label>
+                    <input type="color" id="shadow-color" value="#000000" onchange="updateTimerShadow()">
+                </div>
+                <div>
+                    <label for="shadow-opacity">Shadow Opacity:</label>
+                    <input type="range" id="shadow-opacity" min="0" max="100" value="50" onchange="updateTimerShadow()">
+                    <span class="range-value">50%</span>
+                </div>
+                <div>
+                    <label for="shadow-blur">Shadow Blur:</label>
+                    <input type="range" id="shadow-blur" min="0" max="20" value="4" onchange="updateTimerShadow()">
+                    <span class="range-value">4px</span>
+                </div>
+                <div>
+                    <label for="shadow-distance">Shadow Distance:</label>
+                    <input type="range" id="shadow-distance" min="0" max="20" value="2" onchange="updateTimerShadow()">
+                    <span class="range-value">2px</span>
+                </div>
+                <div>
+                    <label for="shadow-angle">Shadow Angle:</label>
+                    <input type="range" id="shadow-angle" min="0" max="360" value="45" onchange="updateTimerShadow()">
+                    <span class="range-value">45°</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Management Group -->
+        <div class="settings-group">
+            <h3>Schedule Management</h3>
+            <div>
+                <h3>Select Schedule:</h3>
+                <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
+                    <option value="normal">Normal Schedule</option>
+                    <option value="chapel">Chapel Bell Schedule</option>
+                    <option value="latePepRally">Late Pep Rally Schedule</option>
+                    <option value="earlyPepRally">Early Pep Rally Schedule</option>
+                </select>
+            </div>
+            <div id="rename-periods">
+                <h3 id="rename-periods-toggle" class="dropdown-toggle">
+                    Rename Periods <span class="triangle">&#9662;</span>
+                </h3>
+                <div id="rename-periods-content" class="dropdown-content">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+            <div id="custom-schedule">
+                <h3 id="custom-schedule-toggle" class="dropdown-toggle">
+                    Custom Schedule <span class="triangle">&#9662;</span>
+                </h3>
+                <div id="custom-schedule-content" class="dropdown-content">
+                    <label for="schedule-name">Schedule Name:</label>
+                    <input type="text" id="schedule-name" placeholder="Enter schedule name" />
+                    <label for="num-periods">Number of Periods:</label>
+                    <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
+                    <div id="period-inputs"></div>
+                    <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()">&#9881;</button>
+
+    <!-- Load scripts at the end of body -->
+    <script src="script2.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
