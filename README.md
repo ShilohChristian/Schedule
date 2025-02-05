@@ -1,4 +1,4 @@
-#School Period Countdown
+School Period Countdown
 
 Overview
 
