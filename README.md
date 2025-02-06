@@ -1,17 +1,43 @@
-School Period Countdown
+# Shiloh Christian Schedule
 
-Overview
+A customizable schedule countdown website designed for students and faculty to track class periods with real-time updates.
 
-This project is a customizable schedule countdown timer designed for schools. It displays the current period, time remaining, and upcoming schedule while allowing users to personalize the interface with background images, gradients, and text colors.
+## Features
 
-Features
+### 📅 Schedule Display
+- Live countdown timer for the current period
+- Highlights the active period
+- Supports multiple predefined schedules
 
-✔ Live Countdown Timer – Shows the time remaining for the current period. ✔ Multiple Schedules – Switch between Normal, Chapel, and Pep Rally schedules. ✔ Custom Schedules – Create and save personalized school schedules. ✔ Background Customization – Upload an image or set a custom gradient. ✔ Color Theme Controls – Adjust text, countdown, and background colors. ✔ Settings Sidebar – User-friendly UI for managing preferences.
+### 🎨 Customization Options
+- **Background**: Upload a custom image or remove background
+- **Gradients**: Choose between Linear and Radial gradient effects
+- **Text & Colors**:
+  - Adjust schedule box background and text colors
+  - Modify countdown timer and header colors
+  - Customize timer shadow (color, opacity, blur, distance, and angle)
 
-Technologies Used
+### 🕒 Schedule Management
+- Select from predefined schedules:
+  - Normal Schedule
+  - Chapel Bell Schedule
+  - Late Pep Rally Schedule
+  - Early Pep Rally Schedule
+- Rename periods to fit specific classes or events
+- Create custom schedules with unique names and period configurations
 
-🔹 HTML – Page structure 🔹 CSS – Styling and animations 🔹 JavaScript – Dynamic countdown and settings
+## Usage
+- Navigate to the settings menu to personalize the schedule.
+- Choose a predefined schedule or create a custom one.
+- Modify visual elements to fit your preferences.
 
-Future Enhancements
+## License
+This project is licensed under the MIT License.
 
-🔹 Local Storage Support – Save user preferences permanently. 🔹 Dark/Light Mode – Toggle between themes. 🔹 Auto-Schedule Switching – Change schedules based on the date.
+## Acknowledgments
+- Developed by [Shiloh Christian](https://shilohchristian.github.io/Schedule/)
+- Inspired by school scheduling needs
+
+---
+
+Enjoy a personalized scheduling experience! 🚀
