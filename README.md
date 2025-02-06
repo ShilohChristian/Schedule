@@ -40,4 +40,3 @@ This project is licensed under the MIT License.
 
 ---
 
-Enjoy a personalized scheduling experience! 🚀
