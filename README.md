@@ -10,7 +10,7 @@ A customizable schedule countdown website designed for students and faculty to t
 - Supports multiple predefined schedules
 
 ### 🎨 Customization Options
-- **Background**: Upload a custom image or remove background
+- **Background**: Upload a custom image or choose a gradient
 - **Gradients**: Choose between Linear and Radial gradient effects
 - **Text & Colors**:
   - Adjust schedule box background and text colors
