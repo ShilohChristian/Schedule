@@ -61,7 +61,7 @@ const scheduleDisplayNames = {
     normal: 'Normal',
     chapel: 'Chapel Bell',
     latePepRally: 'Late Pep Rally',
-    earlyPepRally: 'Early Pep Rally'
+    earlyPepRally: 'Early Pep Rally'  // Fixed the display name
 };
 
 // Initialize global variables
@@ -150,13 +150,16 @@ function updateCountdowns() {
     );
 
     if (currentPeriod) {
-        document.getElementById("current-period-time").innerText = formatCountdown(
-            getTimeInSeconds(currentPeriod.end) - currentTimeInSeconds
-        );
-        document.getElementById("countdown-heading").innerText = 
-            `${currentScheduleName.charAt(0).toUpperCase() + currentScheduleName.slice(1)} Schedule ▸ ${currentPeriod.name}`;
-        document.getElementById("countdown-heading").style.color = fontColor;
-        localStorage.setItem("fontColor", fontColor); // Save font color
+        const countdown = getTimeInSeconds(currentPeriod.end) - currentTimeInSeconds;
+        const timeRemaining = formatCountdown(countdown);
+        document.getElementById("current-period-time").innerText = timeRemaining;
+        
+        const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
+        const headerText = `${scheduleName} Schedule ▸ ${currentPeriod.name}`;
+        document.getElementById("countdown-heading").innerText = headerText;
+        
+        // Update page title
+        document.title = `${currentPeriod.name} | ${timeRemaining}`;
     } else {
         let nextPeriod = currentSchedule.find(period => 
             getTimeInSeconds(period.start) > currentTimeInSeconds
@@ -165,18 +168,41 @@ function updateCountdowns() {
         if (!nextPeriod) {
             nextPeriod = currentSchedule[0];
             const countdown = getTimeInSeconds(nextPeriod.start) + (24 * 3600 - currentTimeInSeconds);
-            document.getElementById("current-period-time").innerText = formatCountdownHHMMSS(countdown);
+            const timeRemaining = formatCountdownHHMMSS(countdown);
+            document.getElementById("current-period-time").innerText = timeRemaining;
+            
+            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
             document.getElementById("countdown-heading").innerText = 
-                `${currentScheduleName.charAt(0).toUpperCase() + currentScheduleName.slice(1)} Schedule ▸ Free`;
-            document.getElementById("countdown-heading").style.color = fontColor;
-            localStorage.setItem("fontColor", fontColor); // Save font color
+                `${scheduleName} Schedule ▸ Free`;
+            
+            // Update page title
+            document.title = `Free | ${timeRemaining}`;
         } else {
             const countdown = getTimeInSeconds(nextPeriod.start) - currentTimeInSeconds;
-            document.getElementById("current-period-time").innerText = formatCountdown(countdown);
-            document.getElementById("countdown-heading").innerText = 
-                `${currentScheduleName.charAt(0).toUpperCase() + currentScheduleName.slice(1)} Schedule ▸ ${nextPeriod.name}`;
+            const timeRemaining = formatCountdown(countdown);
+            document.getElementById("current-period-time").innerText = timeRemaining;
+            
+            const previousPeriod = currentSchedule.find(period => 
+                getTimeInSeconds(period.end) <= currentTimeInSeconds
+            );
+            
+            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
+            if (previousPeriod && (currentTimeInSeconds - getTimeInSeconds(previousPeriod.end)) < 360) {
+                document.getElementById("countdown-heading").innerText = 
+                    `${scheduleName} Schedule ▸ Passing to ${nextPeriod.name}`;
+                // Update page title
+                document.title = `Passing | ${timeRemaining}`;
+            } else {
+                document.getElementById("countdown-heading").innerText = 
+                    `${scheduleName} Schedule ▸ Free until ${nextPeriod.name}`;
+                // Update page title
+                document.title = `Free | ${timeRemaining}`;
+            }
         }
     }
+    
+    document.getElementById("countdown-heading").style.color = fontColor;
+    localStorage.setItem("fontColor", fontColor);
 }
 
 function getTimeInSeconds(time) {
