@@ -68,16 +68,6 @@ const scheduleDisplayNames = {
 let currentSchedule = schedules.normal;
 let currentScheduleName = 'normal';
 
-// Wait for both scripts to be loaded
-document.addEventListener("DOMContentLoaded", function() {
-    // First ensure script2.js functions are available
-    if (typeof toggleSettingsSidebar === 'function') {
-        initializeApp();
-    } else {
-        console.error('Required functions not loaded yet');
-    }
-});
-
 // Clean up old interval if it exists when loading new script
 if (window.countdownInterval) {
     clearInterval(window.countdownInterval);
@@ -543,4 +533,4 @@ function updateCustomSchedule() {
 }
 
 /* ...existing code... */
- 
+
