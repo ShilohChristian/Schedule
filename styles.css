@@ -1285,4 +1285,133 @@ input:checked + .slider:before {
 
 /* ...existing code... */
 
- 
+/* ...existing code... */
+
+.gradient-controls {
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+.gradient-options {
+    margin-bottom: 20px;
+}
+
+.gradient-options select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: inherit;
+}
+
+.gradient-colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.color-input label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.color-input input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+.gradient-preview {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode .gradient-controls {
+    background: var(--chrome-input-bg);
+    border: 1px solid var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .gradient-options select {
+    background: var(--chrome-bg);
+    border-color: var(--chrome-border);
+    color: var(--chrome-text);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.gradient-controls {
+    margin-top: 15px;
+}
+
+.gradient-controls-content {
+    margin-top: 15px;
+    display: none;
+}
+
+.gradient-controls-content.active {
+    display: block;
+}
+
+.gradient-preview {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 15px;
+}
+
+.gradient-colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.color-input label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.color-input input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.gradient-direction {
+    margin-top: 15px;
+}
+
+.gradient-direction select {
+    width: 100%;
+    margin-top: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: inherit;
+    padding: 8px;
+}
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode .gradient-controls {
+    background: var(--chrome-input-bg);
+}
+
+/* ...existing code... */
+
+
