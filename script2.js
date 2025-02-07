@@ -89,12 +89,18 @@ function loadSettings() {
             const gradientEnabled = document.getElementById('gradient-enabled');
             const gradientStart = document.getElementById('gradient-start');
             const gradientEnd = document.getElementById('gradient-end');
-            const gradientDirection = document.getElementById('gradient-direction');
+            const gradientAngle = document.getElementById('gradient-angle');
 
             if (gradientEnabled) gradientEnabled.checked = true;
             if (gradientStart) gradientStart.value = gradientSettings.startColor || '#000035';
             if (gradientEnd) gradientEnd.value = gradientSettings.endColor || '#00bfa5';
-            if (gradientDirection) gradientDirection.value = gradientSettings.direction || 'to bottom';
+            if (gradientAngle) {
+                gradientAngle.value = gradientSettings.angle || '90';
+                const angleDisplay = document.querySelector('#gradient-angle + .range-value');
+                if (angleDisplay) {
+                    angleDisplay.textContent = `${gradientAngle.value}°`;
+                }
+            }
 
             updateGradient();
         } else {
@@ -117,6 +123,19 @@ function loadSettings() {
             fontSelect.value = savedFont;
         }
     }
+
+    // Load background image and update preview
+    const bgImage = localStorage.getItem('bgImage');
+    const preview = document.getElementById('bg-preview');
+    
+    if (bgImage && preview) {
+        preview.style.backgroundImage = `url('${bgImage}')`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+    } else if (preview) {
+        preview.style.backgroundImage = 'none';
+        preview.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
+    }
 }
 
 function loadWhiteBoxSettings() {
@@ -135,26 +154,31 @@ function loadWhiteBoxSettings() {
 // UI Controls
 // Simplified image handling
 function handleBgImageUpload(file) {
-    console.group('Image Upload Debug');
-    console.log('1. Starting upload process');
-    
     if (!file) {
         console.error('No file provided');
-        console.groupEnd();
+        return;
+    }
+
+    // Check file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+    }
+
+    // Check file type
+    if (!file.type.match('image.*')) {
+        alert('Only image files are allowed');
         return;
     }
 
     const reader = new FileReader();
     
     reader.onload = function(e) {
-        console.log('4. File loaded successfully');
         try {
-            // Create an image element to verify the loaded data
             const img = new Image();
+            
             img.onload = function() {
-                console.log('5. Image validated successfully');
-                
-                // Create a canvas to resize the image if needed
+                // Compress image if needed
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
@@ -175,52 +199,82 @@ function handleBgImageUpload(file) {
                     height = MAX_HEIGHT;
                 }
                 
-                // Set canvas dimensions
                 canvas.width = width;
                 canvas.height = height;
-                
-                // Draw and compress the image
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // Get compressed image data
                 const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
                 
+                // Update UI first
+                const preview = document.getElementById('bg-preview');
+                if (preview) {
+                    preview.style.backgroundImage = `url('${compressedImage}')`;
+                    preview.style.backgroundSize = 'contain';
+                    preview.style.backgroundPosition = 'center';
+                    preview.style.backgroundRepeat = 'no-repeat';
+                    preview.style.backgroundColor = '#000';
+                }
+                
+                // Then try to save and apply
                 try {
-                    // Apply the background
+                    localStorage.setItem('bgImage', compressedImage);
                     document.body.style.backgroundImage = `url('${compressedImage}')`;
                     document.body.style.backgroundSize = 'cover';
                     document.body.style.backgroundPosition = 'center';
                     document.body.style.backgroundRepeat = 'no-repeat';
                     
-                    // Save to localStorage
-                    localStorage.setItem('bgImage', compressedImage);
-                    console.log('6. Compressed image saved to localStorage');
+                    // Reset gradient if it's enabled
+                    const gradientEnabled = document.getElementById('gradient-enabled');
+                    if (gradientEnabled) {
+                        gradientEnabled.checked = false;
+                    }
+                    
+                    // Show success message
+                    const successMessage = document.createElement('div');
+                    successMessage.className = 'upload-success';
+                    successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
+                    
+                    const dropArea = document.getElementById('bg-image-drop-area');
+                    if (dropArea && dropArea.parentNode) {
+                        // Remove any existing success message
+                        const existingMessage = dropArea.parentNode.querySelector('.upload-success');
+                        if (existingMessage) {
+                            existingMessage.remove();
+                        }
+                        
+                        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
+                        setTimeout(() => successMessage.remove(), 3000);
+                    }
+                    
                 } catch (storageError) {
-                    console.error('Error saving to localStorage:', storageError);
-                    alert('Error saving image. The file might still be too large.');
+                    console.error('Storage error:', storageError);
+                    alert('Failed to save image. The file might be too large.');
                 }
             };
             
             img.onerror = function() {
-                console.error('5. Invalid image data');
+                console.error('Failed to load image');
                 alert('Invalid image file');
             };
             
             img.src = e.target.result;
+            
         } catch (error) {
             console.error('Error processing image:', error);
             alert('Error processing image');
         }
-        console.groupEnd();
+    };
+    
+    reader.onerror = function(error) {
+        console.error('FileReader error:', error);
+        alert('Error reading file');
     };
 
     try {
-        console.log('3. Starting file read');
         reader.readAsDataURL(file);
     } catch (error) {
         console.error('Error starting file read:', error);
         alert('Error reading file');
-        console.groupEnd();
     }
 }
 
@@ -322,23 +376,35 @@ function updateGradient() {
     const enabled = document.getElementById('gradient-enabled').checked;
     const startColor = document.getElementById('gradient-start').value;
     const endColor = document.getElementById('gradient-end').value;
-    const direction = document.getElementById('gradient-direction').value;
+    const angle = document.getElementById('gradient-angle').value;
 
     if (enabled) {
         // Clear any background image
         document.body.style.backgroundImage = '';
         localStorage.removeItem('bgImage');
         
-        // Apply gradient
-        document.body.style.background = `linear-gradient(${direction}, ${startColor}, ${endColor})`;
+        // CSS gradients use a different angle system - we need to adjust it
+        // CSS: 0deg points up, and rotates clockwise
+        // Our input: 0deg points right, and rotates clockwise
+        // So we subtract 90 and negate the value to match CSS behavior
+        const cssAngle = (-angle + 90) % 360;
+        
+        // Apply gradient with corrected angle
+        document.body.style.background = `linear-gradient(${cssAngle}deg, ${startColor}, ${endColor})`;
         
         // Save settings
         localStorage.setItem('gradientSettings', JSON.stringify({
             enabled,
             startColor,
             endColor,
-            direction
+            angle
         }));
+
+        // Update the angle value display
+        const angleDisplay = document.querySelector('#gradient-angle + .range-value');
+        if (angleDisplay) {
+            angleDisplay.textContent = `${angle}°`;
+        }
     } else {
         removeBackground();
     }
@@ -636,6 +702,18 @@ document.addEventListener("DOMContentLoaded", function() {
             createProgressBar();
             updateProgressBarStyle();
         }
+    }
+
+    // Add gradient angle input listener
+    const gradientAngle = document.getElementById('gradient-angle');
+    if (gradientAngle) {
+        gradientAngle.addEventListener('input', (e) => {
+            updateGradient();
+            const angleDisplay = document.querySelector('#gradient-angle + .range-value');
+            if (angleDisplay) {
+                angleDisplay.textContent = `${e.target.value}°`;
+            }
+        });
     }
 });
 
@@ -998,24 +1076,21 @@ function createProgressBar() {
     
     const progressBar = document.createElement('div');
     progressBar.className = 'progress-overlay';
-    document.body.insertBefore(progressBar, document.body.firstChild); // Insert at the top
+    document.body.insertBefore(progressBar, document.body.firstChild);
     
-    // Initialize style
     const color = document.getElementById('progress-bar-color')?.value || '#00bfa5';
     const opacity = document.getElementById('progress-bar-opacity')?.value || '20';
     
-    progressBar.style.backgroundColor = color;
-    progressBar.style.opacity = opacity / 100;
+    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
     
-    // Update immediately
+    // Start the update loop
     updateProgressBar();
-}
-
-function removeProgressBar() {
-    const progressBar = document.querySelector('.progress-overlay');
-    if (progressBar) {
-        progressBar.remove();
+    
+    // Update progress bar when switching periods
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
     }
+    window.progressInterval = setInterval(updateProgressBar, 1000);
 }
 
 function updateProgressBarStyle() {
@@ -1025,8 +1100,7 @@ function updateProgressBarStyle() {
     const color = document.getElementById('progress-bar-color').value;
     const opacity = document.getElementById('progress-bar-opacity').value;
     
-    progressBar.style.backgroundColor = color;
-    progressBar.style.opacity = opacity / 100;
+    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
     
     // Update opacity display
     const opacityDisplay = document.querySelector('#progress-bar-opacity + .range-value');
@@ -1047,42 +1121,70 @@ function updateProgressBar() {
     const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
     
     // Find current period
-    const periodMatch = currentSchedule.find(period => 
-        currentTimeInSeconds >= getTimeInSeconds(period.start) && 
-        currentTimeInSeconds < getTimeInSeconds(period.end)
+    let currentPeriod = currentSchedule.find(period => {
+        const startTime = getTimeInSeconds(period.start);
+        const endTime = getTimeInSeconds(period.end);
+        return currentTimeInSeconds >= startTime && currentTimeInSeconds < endTime;
+    });
+
+    if (currentPeriod) {
+        // We're in a period
+        const startTime = getTimeInSeconds(currentPeriod.start);
+        const endTime = getTimeInSeconds(currentPeriod.end);
+        const totalDuration = endTime - startTime;
+        const elapsed = currentTimeInSeconds - startTime;
+        const progress = (elapsed / totalDuration) * 100;
+        progressBar.style.width = `${progress}%`;
+        return;
+    }
+
+    // Find the next period
+    let nextPeriod = currentSchedule.find(period => 
+        getTimeInSeconds(period.start) > currentTimeInSeconds
     );
-    
-    if (periodMatch) {
-        const periodStart = getTimeInSeconds(periodMatch.start);
-        const periodEnd = getTimeInSeconds(periodMatch.end);
-        const totalDuration = periodEnd - periodStart;
-        const elapsed = currentTimeInSeconds - periodStart;
-        const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+
+    // If there's no next period, we've reached the end of the day
+    if (!nextPeriod) {
+        // Use the first period of tomorrow
+        nextPeriod = currentSchedule[0];
         
-        requestAnimationFrame(() => {
-            progressBar.style.width = `${progress}%`;
-            
-            // Add/remove complete class based on progress
-            if (progress >= 100) {
-                progressBar.classList.add('complete');
-                // Reset the bar after a short delay
-                setTimeout(() => {
-                    progressBar.style.width = '0%';
-                    progressBar.classList.remove('complete');
-                }, 300);
-            } else {
-                progressBar.classList.remove('complete');
-            }
-        });
+        // Calculate progress through the overnight period
+        const lastPeriodEnd = getTimeInSeconds(currentSchedule[currentSchedule.length - 1].end);
+        const nextDayStart = getTimeInSeconds(nextPeriod.start) + (24 * 3600);
+        const totalDuration = nextDayStart - lastPeriodEnd;
+        const elapsed = currentTimeInSeconds - lastPeriodEnd;
+        const progress = (elapsed / totalDuration) * 100;
+        
+        progressBar.style.width = `${progress}%`;
+        return;
+    }
+
+    // We're in between periods
+    const previousPeriod = [...currentSchedule]
+        .reverse()
+        .find(period => getTimeInSeconds(period.end) <= currentTimeInSeconds);
+
+    if (previousPeriod) {
+        const freeStart = getTimeInSeconds(previousPeriod.end);
+        const freeEnd = getTimeInSeconds(nextPeriod.start);
+        const totalDuration = freeEnd - freeStart;
+        const elapsed = currentTimeInSeconds - freeStart;
+        const progress = (elapsed / totalDuration) * 100;
+        progressBar.style.width = `${progress}%`;
     } else {
-        progressBar.style.width = '0%';
+        // Before first period of the day
+        const firstPeriodStart = getTimeInSeconds(nextPeriod.start);
+        const totalDuration = firstPeriodStart;
+        const elapsed = currentTimeInSeconds;
+        const progress = (elapsed / totalDuration) * 100;
+        progressBar.style.width = `${progress}%`;
     }
 }
 
 // Add to the loadSettings function
 function loadProgressBarSettings() {
     const enabled = localStorage.getItem('progressBarEnabled') === 'true';
-    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
+    const color = localStorage.getItem('progressBarColor') || '#000000'; // Changed default to black
     const opacity = localStorage.getItem('progressBarOpacity') || '20';
     
     const checkbox = document.getElementById('progress-bar');
@@ -1118,3 +1220,205 @@ function updateFont() {
     document.body.style.fontFamily = fontFamily;
     localStorage.setItem('fontFamily', fontFamily);
 }
+
+// ...existing code...
+
+function toggleGradient() {
+    const enabled = document.getElementById('gradient-enabled').checked;
+    const controls = document.getElementById('gradient-controls');
+    const bgImage = localStorage.getItem('bgImage');
+    
+    if (enabled && bgImage) {
+        // If there's a background image, show confirmation dialog
+        showGradientConfirmDialog();
+        // Uncheck the toggle until confirmed
+        document.getElementById('gradient-enabled').checked = false;
+        return;
+    }
+    
+    applyGradientToggle(enabled);
+}
+
+function showGradientConfirmDialog() {
+    // Create dialog if it doesn't exist
+    let dialog = document.querySelector('.gradient-confirm-dialog');
+    if (!dialog) {
+        dialog = document.createElement('div');
+        dialog.className = 'gradient-confirm-dialog';
+        dialog.innerHTML = `
+            <p>Enabling gradient will remove the current background image. Continue?</p>
+            <div class="gradient-confirm-buttons">
+                <button class="confirm" onclick="handleGradientConfirm(true)">Yes, enable gradient</button>
+                <button class="cancel" onclick="handleGradientConfirm(false)">Cancel</button>
+            </div>
+        `;
+        document.body.appendChild(dialog);
+    }
+    
+    dialog.classList.add('show');
+}
+
+function handleGradientConfirm(confirmed) {
+    const dialog = document.querySelector('.gradient-confirm-dialog');
+    dialog.classList.remove('show');
+    
+    if (confirmed) {
+        document.getElementById('gradient-enabled').checked = true;
+        localStorage.removeItem('bgImage');
+        document.body.style.backgroundImage = 'none';
+        const preview = document.getElementById('bg-preview');
+        if (preview) {
+            preview.style.backgroundImage = 'none';
+        }
+        applyGradientToggle(true);
+    }
+}
+
+function applyGradientToggle(enabled) {
+    const controls = document.getElementById('gradient-controls');
+    controls.classList.toggle('active', enabled);
+    
+    if (enabled) {
+        updateGradient();
+    } else {
+        removeBackground();
+    }
+}
+
+function updateGradient() {
+    const type = document.getElementById('gradient-type').value;
+    const angle = document.getElementById('gradient-angle').value;
+    const stops = getGradientStops();
+    
+    let gradient;
+    if (type === 'linear') {
+        gradient = `linear-gradient(${angle}deg, ${stops})`;
+    } else {
+        gradient = `radial-gradient(circle at center, ${stops})`;
+    }
+    
+    document.querySelector('.gradient-preview').style.background = gradient;
+    document.querySelector('.gradient-preview-bar').style.background = gradient;
+    document.body.style.background = gradient;
+    
+    // Save settings
+    saveGradientSettings();
+}
+
+function getGradientStops() {
+    return Array.from(document.querySelectorAll('.gradient-stop'))
+        .sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left))
+        .map(stop => `${stop.dataset.color} ${parseFloat(stop.style.left)}%`)
+        .join(', ');
+}
+
+function updateSelectedStop() {
+    const activeStop = document.querySelector('.gradient-stop.active');
+    if (!activeStop) return;
+    
+    const color = document.getElementById('stop-color').value;
+    const position = document.getElementById('stop-position').value;
+    
+    activeStop.dataset.color = color;
+    activeStop.style.backgroundColor = color;
+    activeStop.style.left = `${position}%`;
+    
+    updateGradient();
+}
+
+function deleteSelectedStop() {
+    const activeStop = document.querySelector('.gradient-stop.active');
+    if (!activeStop || document.querySelectorAll('.gradient-stop').length <= 2) return;
+    
+    activeStop.remove();
+    updateGradient();
+}
+
+function addGradientStop() {
+    const container = document.querySelector('.gradient-stops');
+    const stop = document.createElement('div');
+    const color = '#ffffff';
+    const position = 50;
+    
+    stop.className = 'gradient-stop';
+    stop.dataset.color = color;
+    stop.style.backgroundColor = color;
+    stop.style.left = `${position}%`;
+    
+    stop.addEventListener('click', selectGradientStop);
+    stop.addEventListener('mousedown', startDragging);
+    
+    container.appendChild(stop);
+    selectGradientStop({ target: stop });
+    updateGradient();
+}
+
+function selectGradientStop(e) {
+    const stops = document.querySelectorAll('.gradient-stop');
+    stops.forEach(s => s.classList.remove('active'));
+    
+    const stop = e.target;
+    stop.classList.add('active');
+    
+    document.getElementById('stop-color').value = stop.dataset.color;
+    document.getElementById('stop-position').value = parseFloat(stop.style.left);
+}
+
+// ...existing code...
+
+function saveGradientSettings() {
+    const settings = {
+        type: document.getElementById('gradient-type').value,
+        angle: document.getElementById('gradient-angle').value,
+        stops: Array.from(document.querySelectorAll('.gradient-stop')).map(stop => ({
+            color: stop.dataset.color,
+            position: parseFloat(stop.style.left)
+        }))
+    };
+    
+    localStorage.setItem('gradientSettings', JSON.stringify(settings));
+}
+
+function startDragging(e) {
+    e.preventDefault();
+    const stop = e.target;
+    const container = stop.parentElement;
+    const rect = container.getBoundingClientRect();
+    let isDragging = true;
+
+    function handleDrag(moveEvent) {
+        if (!isDragging) return;
+        
+        const x = moveEvent.clientX - rect.left;
+        const position = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        
+        stop.style.left = `${position}%`;
+        updateGradient();
+    }
+
+    function stopDragging() {
+        isDragging = false;
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDragging);
+    }
+
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', stopDragging);
+}
+
+// ...existing code...
+
+function removeProgressBar() {
+    const progressBar = document.querySelector('.progress-overlay');
+    if (progressBar) {
+        progressBar.remove();
+    }
+    
+    // Clear any existing update interval
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+        window.progressInterval = null;
+    }
+}
+
+// ...existing code...
