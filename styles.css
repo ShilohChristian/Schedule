@@ -7,6 +7,8 @@ body {
     height: 100vh;
     overflow: hidden;
     background-size: cover;
+    position: relative;
+    z-index: 0;
 }
 
 /* Add global transitions */
@@ -46,7 +48,7 @@ body {
     position: fixed;
     bottom: 240px;
     left: 20px;
-    z-index: 1;
+    z-index: 2;
 }
 
 /* Consolidated heading styles */
@@ -116,16 +118,28 @@ select {
 }
 
 #settings-button {
-    background: none;
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    background: rgba(0, 0, 0, 0.2);
     border: none;
     color: #ffffff;
-    font-size: 36px;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
     cursor: pointer;
-    position: absolute;
-    bottom: 2%;
-    left: 94.5%;
-    z-index: 1000;
-    display: block;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+#settings-button:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: rotate(45deg);
 }
 
 /* Consolidated dropdown styles */
@@ -219,22 +233,16 @@ select {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* Modern Settings Sidebar */
 .settings-sidebar {
     display: none;
     position: fixed;
-    left: 0;
-    top: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(34, 40, 49, 0.97); /* #222831 with transparency */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 40px;
+    inset: 0;
+    background: #1a1a1a;
+    color: #ffffff;
     z-index: 9999;
-    overflow-y: auto;
-    box-sizing: border-box;
     opacity: 0;
-    transition: opacity 0.3s ease, transform 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 
 .settings-sidebar.open {
@@ -242,27 +250,189 @@ select {
     opacity: 1;
 }
 
-.settings-sidebar h2 {
-    color: #EEEEEE;
-    font-size: 28px;
-    margin-bottom: 40px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #00ADB5;
-    text-align: center;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.theme-toggle {
+    position: fixed; /* Change to fixed */
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.settings-sidebar.open .theme-toggle {
+    display: flex;  /* Show only when settings sidebar is open */
+}
+
+.theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.settings-actions button {
+    background: none;
+    border: none;
+    color: #ffffff;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.settings-actions button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.close-settings span {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.settings-content {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    height: calc(100vh - 4.5rem); /* Change to viewport height */
+    overflow: hidden;
+}
+
+.settings-nav {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    height: 100%;
+    position: relative;
+    padding-bottom: 80px; /* Space for theme toggle */
+}
+
+.nav-spacer {
+    flex: 1;
+}
+
+.theme-toggle {
+    position: fixed; /* Change to fixed */
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.settings-panels {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.settings-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-panel.active {
+    display: block;
 }
 
 .settings-group {
-    /* ...existing properties... */
-    transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-    background: rgba(57, 62, 70, 0.95); /* #393E46 with transparency */
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
-.settings-group:hover {
-    transform: translateY(-2px);
-    background: rgba(57, 62, 70, 0.98);
+.settings-group h3 {
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
+    color: #00bfa5;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Light theme modifications */
+.settings-sidebar.light-mode {
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+.settings-sidebar.light-mode .settings-nav {
+    background: #f5f5f5;
+    border-right-color: #e0e0e0;
+}
+
+.settings-sidebar.light-mode .settings-group {
+    background: #f5f5f5;
+}
+
+.settings-sidebar.light-mode .nav-item {
+    color: #1a1a1a;
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-sidebar.light-mode .nav-item.active {
+    background: #00bfa5;
+    color: #ffffff;
 }
 
 .dropdown-toggle:hover {
@@ -281,7 +451,7 @@ select {
     color: #EEEEEE;
 }
 
-.close-settings-sidebar:hover {
+close-settings-sidebar:hover {
     background: rgba(0, 173, 181, 0.2);
 }
 
@@ -378,6 +548,9 @@ select {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    border: 2px dashed currentColor;
+    background-color: transparent;
+    color: inherit;
 }
 
 #bg-image-drop-area:hover {
@@ -395,6 +568,8 @@ select {
     margin: 2px 0; /* Reduced margin */
     color: #ffffff;
     font-size: 10px; /* Reduced font size */
+    color: inherit;
+    opacity: 0.8;
 }
 
 #bg-image {
@@ -1416,7 +1591,7 @@ input:checked + .slider:before {
     align-items: center;
 }
 
-.stop-editor input[type="color"] {
+stop-editor input[type="color"] {
     width: 40px;
     height: 40px;
     padding: 0;
@@ -1424,7 +1599,7 @@ input:checked + .slider:before {
     border-radius: 4px;
 }
 
-.stop-editor input[type="number"] {
+stop-editor input[type="number"] {
     width: 70px;
     padding: 8px;
     border-radius: 4px;
@@ -1897,16 +2072,19 @@ stop-controls input[type="number"] {
 
 /* Light Theme Colors */
 :root {
-    --light-bg: #F9F7F7;
-    --light-secondary: #DBE2EF;
-    --light-primary: #3F72AF;
-    --light-dark: #112D4E;
+    --light-bg: #f8f9fa;
+    --light-secondary: #e9ecef;
+    --light-primary: #3578e5;
+    --light-text: #2b3044;
+    --light-border: #dee2e6;
+    --light-hover: #f1f3f5;
+    --light-accent: #00ADB5;
 }
 
 /* Light Theme Styles */
 .settings-sidebar.light-mode {
     background: var(--light-bg);
-    color: var(--light-dark);
+    color: var(--light-text);
 }
 
 .settings-sidebar.light-mode h2 {
@@ -1959,22 +2137,549 @@ stop-controls input[type="number"] {
 
 /* Theme Toggle Button */
 .theme-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    padding: 8px 16px;
-    border-radius: 20px;
-    border: 2px solid var(--light-primary);
+    width: 40px;
+    height: 40px;
+    border: none;
     background: transparent;
+    color: inherit;
+    font-size: 1.2rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+/* Gradient Controls Updates */
+.gradient-controls {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.gradient-preview-container {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Light Mode Improvements */
+.settings-sidebar.light-mode {
+    background: var(--light-bg);
+    color: var(--light-text);
+}
+
+.settings-sidebar.light-mode .settings-nav {
+    background: var(--light-secondary);
+    border-right-color: var(--light-border);
+}
+
+.settings-sidebar.light-mode .settings-group {
+    background: #ffffff;
+    border: 1px solid var(--light-border);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.settings-sidebar.light-mode .gradient-controls {
+    background: var(--light-secondary);
+}
+
+.settings-sidebar.light-mode .nav-item {
+    color: var(--light-text);
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: var(--light-hover);
+}
+
+.settings-sidebar.light-mode .nav-item.active {
+    background: var(--light-accent);
+    color: #ffffff;
+}
+
+.settings-sidebar.light-mode input[type="text"],
+.settings-sidebar.light-mode input[type="number"],
+.settings-sidebar.light-mode select {
+    background: #ffffff;
+    border: 1px solid var(--light-border);
+    color: var(--light-text);
+}
+
+.settings-sidebar.light-mode .theme-toggle {
+    color: var(--light-text);
+}
+
+.settings-sidebar.light-mode .theme-toggle:hover {
+    background-color: var(--light-hover);
+}
+
+.settings-sidebar.light-mode h3 {
+    color: var(--light-accent);
+}
+
+.settings-sidebar.light-mode label {
+    color: var(--light-text);
+}
+
+/* ...existing code... */
+
+/* Updated Light Theme Colors */
+:root {
+    --chrome-bg: #ffffff;
+    --chrome-sidebar: #f1f3f4;
+    --chrome-hover: #e8eaed;
+    --chrome-active: #e8f0fe;
+    --chrome-active-text: #1a73e8;
+    --chrome-border: #dadce0;
+    --chrome-text: #202124;
+    --chrome-secondary-text: #5f6368;
+    --chrome-blue: #1a73e8;
+}
+
+/* Light Mode Improvements */
+.settings-sidebar.light-mode {
+    background: var(--chrome-bg);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .settings-nav {
+    background: var(--chrome-sidebar);
+    border-right-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .settings-group {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.1);
+}
+
+.settings-sidebar.light-mode .nav-item {
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode .nav-item.active {
+    background: var(--chrome-active);
+    color: var(--chrome-active-text);
+    font-weight: 500;
+}
+
+.settings-sidebar.light-mode .theme-toggle {
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .theme-toggle:hover {
+    background: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode h3 {
+    color: var(--chrome-text);
+    font-weight: 500;
+}
+
+.settings-sidebar.light-mode label {
+    color: var(--chrome-text);
+}
+
+/* Shadow Settings Light Mode */
+.settings-sidebar.light-mode #shadow-settings-content {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode #shadow-preview {
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .range-value {
+    color: var(--chrome-secondary-text);
+}
+
+.settings-sidebar.light-mode input[type="range"] {
+    background: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode .switch {
+    background: var(--chrome-hover);
+    border-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode input:checked + .slider {
+    background: var(--chrome-blue);
+}
+
+.settings-sidebar.light-mode .slider:before {
+    background: var(--chrome-bg);
+}
+
+.settings-sidebar.light-mode .switch-label {
+    color: var(--chrome-text);
+}
+
+/* Light Mode Input Styles */
+.settings-sidebar.light-mode input[type="text"],
+.settings-sidebar.light-mode input[type="number"],
+.settings-sidebar.light-mode select {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode input[type="text"]:focus,
+.settings-sidebar.light-mode input[type="number"]:focus,
+.settings-sidebar.light-mode select:focus {
+    border-color: var(--chrome-blue);
+    outline: none;
+}
+
+/* Light Mode Button Styles */
+.settings-sidebar.light-mode .settings-group button {
+    background: var(--chrome-blue);
+    color: white;
+}
+
+.settings-sidebar.light-mode .settings-group button:hover {
+    background: #1557b0;
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+/* Updated Chrome Theme Colors */
+:root {
+    --chrome-bg: #ffffff;
+    --chrome-sidebar: #f1f3f4;
+    --chrome-hover: #e8eaed;
+    --chrome-active: #e8f0fe;
+    --chrome-active-text: #1967d2;
+    --chrome-border: #dadce0;
+    --chrome-text: #202124;
+    --chrome-secondary-text: #5f6368;
+    --chrome-blue: #1967d2;
+    --chrome-input-bg: #f8f9fa;
+    --chrome-shadow: rgba(60, 64, 67, 0.1);
+}
+
+.settings-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem;
+    gap: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    height: 100%;
+}
+
+.nav-spacer {
+    display: none;
+}
+
+.theme-toggle {
+    width: calc(100% - 8px);
+    height: auto;
+    padding: 12px;
+    margin: 4px;
+    border: 1px solid var(--chrome-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    transition: all 0.3s ease;
+    margin-bottom: 12px;
+}
+
+.theme-toggle i {
+    margin-right: 0.5rem;
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Improved Light Mode Styles */
+.settings-sidebar.light-mode {
+    background: var(--chrome-bg);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .settings-nav {
+    background: var(--chrome-sidebar);
+    border-right-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .settings-group {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+    box-shadow: 0 1px 2px var(--chrome-shadow);
+}
+
+.settings-sidebar.light-mode .nav-item {
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode .nav-item.active {
+    background: var(--chrome-active);
+    color: var(--chrome-active-text);
+    font-weight: 500;
+}
+
+.settings-sidebar.light-mode input[type="text"],
+.settings-sidebar.light-mode input[type="number"],
+.settings-sidebar.light-mode input[type="time"],
+settings-sidebar.light-mode select {
+    background: var(--chrome-input-bg);
+    border: 1px solid var(--chrome-border);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .theme-toggle {
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .theme-toggle:hover {
+    background: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode .gradient-controls {
+    background: var(--chrome-input-bg);
+    border: 1px solid var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .stop-controls {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+}
+
+.settings-sidebar.light-mode #shadow-settings-content {
+    background: var(--chrome-bg);
+    border: 1px solid var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .range-value {
+    color: var(--chrome-secondary-text);
+}
+
+.settings-sidebar.light-mode .switch {
+    background: var(--chrome-hover);
+    border-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode input:checked + .slider {
+    background: var(--chrome-blue);
+}
+
+.settings-sidebar.light-mode .gradient-stop-marker {
+    border-color: var(--chrome-blue);
+    background: var(--chrome-bg);
+}
+
+.settings-sidebar.light-mode .gradient-preview-container {
+    border-color: var(--chrome-border);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+/* Updated Theme Toggle Button */
+.theme-toggle {
+    width: 100%;
+    height: auto;
+    padding: 12px;
+    margin: 0;
+    border: 1px solid var(--chrome-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.3s ease;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: calc(100% - 8px);
+    height: auto;
+    padding: 12px;
+    margin: 4px;
+    border: 1px solid var(--chrome-border);
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     transition: all 0.3s ease;
 }
 
 .theme-toggle i {
-    font-size: 18px;
+    font-size: 1.2rem;
+    width: 24px;
+}
+
+.theme-toggle-text {
+    flex-grow: 1;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.theme-toggle:hover {
+    background-color: var(--chrome-hover);
+}
+
+.settings-sidebar.light-mode .theme-toggle-text {
+    color: var(--chrome-text);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.nav-spacer {
+    flex-grow: 1;
+}
+
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    margin: 8px;
+}
+
+.theme-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: transform 0.3s ease;
+}
+
+/* Remove the theme-toggle styles from the body */
+.settings-sidebar .theme-toggle-text {
+    display: none;
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.theme-toggle {
+    display: none !important; /* Hide the theme toggle button */
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 100vh; /* Changed to full viewport height */
+    background-color: rgba(0, 191, 165, 0.2); /* Made more transparent */
+    pointer-events: none;
+    z-index: 1000;
+    transition: width 0.3s linear;
+    backdrop-filter: blur(2px); /* Add subtle blur effect */
+    border-right: 2px solid rgba(0, 191, 165, 0.5); /* Add border on right edge */
+}
+
+/* Style for when progress bar reaches the end */
+.progress-overlay.complete {
+    transition: opacity 0.3s ease-out;
+    opacity: 0;
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.opacity-helper {
+    margin: 4px 0 0 0;
+    font-size: 0.85em;
+    color: rgba(255, 255, 255, 0.7);
+    font-style: italic;
+}
+
+.settings-sidebar.light-mode .opacity-helper {
+    color: var(--chrome-secondary-text);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.font-selector {
+    margin-top: 10px;
+}
+
+.font-selector select {
+    width: 100%;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 191, 165, 0.2);
+    border-radius: 4px;
+    color: inherit;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.font-selector select option {
+    background: #222831;
+    color: #ffffff;
+}
+
+.settings-sidebar.light-mode .font-selector select {
+    background: var(--chrome-input-bg);
+    border-color: var(--chrome-border);
+    color: var(--chrome-text);
+}
+
+.settings-sidebar.light-mode .font-selector select option {
+    background: white;
+    color: var(--chrome-text);
 }
 
 /* ...existing code... */
