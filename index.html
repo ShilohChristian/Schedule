@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule Popup</title>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&family=Source+Sans+Pro&family=Inter&family=Montserrat&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="styles2.css">  <!-- Added type attribute -->
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -24,9 +25,12 @@
     </div>
     <div id="settings-sidebar" class="settings-sidebar">
         <div class="settings-header">
-            <h2>Settings</h2>
-            <button class="close-settings" onclick="toggleSettingsSidebar()">
-                <span>×</span>
+            <div class="header-left">
+                <i class="fas fa-sliders-h"></i>
+                <h2>Settings</h2>
+            </div>
+            <button class="close-settings" onclick="toggleSettingsSidebar()" title="Close settings">
+                <i class="fas fa-times"></i>
             </button>
         </div>
         
@@ -46,42 +50,78 @@
                 <div class="settings-panel active" id="appearance-panel">
                     <div class="settings-group">
                         <h3>Background Image</h3>
-                        <div class="image-upload">
-                            <input type="file" id="bg-image" accept="image/*">
-                            <div id="bg-image-drop-area">
-                                <p>📸 Drop image here</p>
-                                <p>or</p>
-                                <p>Click to upload</p>
+                        <div class="background-controls">
+                            <div class="image-upload-container">
+                                <input type="file" id="bg-image" accept="image/*">
+                                <div id="bg-image-drop-area">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <div class="upload-text">
+                                        <p class="main-text">Drop image here or click to upload</p>
+                                        <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
+                                    </div>
+                                </div>
                             </div>
-                            <button id="remove-bg-button" onclick="removeBackground()">Remove Background</button>
+                            <div class="background-actions">
+                                <button id="remove-bg-button" onclick="removeBackground()" class="action-button">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span>Remove Background</span>
+                                </button>
+                                <button id="reset-bg-button" onclick="resetBackground()" class="action-button secondary">
+                                    <i class="fas fa-undo"></i>
+                                    <span>Reset to Default</span>
+                                </button>
+                            </div>
+                            <div class="background-preview">
+                                <div class="preview-label">Current Background</div>
+                                <div id="bg-preview"></div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="settings-group">
                         <h3>Gradient Background</h3>
-                        <div class="gradient-controls">
+                        <div class="switch-container">
+                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
+                            <label class="switch">
+                                <input type="checkbox" id="gradient-enabled" onchange="toggleGradient()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div class="gradient-controls" id="gradient-controls">
                             <div class="gradient-preview-container">
                                 <div class="gradient-preview"></div>
                             </div>
                             <div class="gradient-main-controls">
                                 <div class="gradient-type-selector">
-                                    <select id="gradient-type">
+                                    <label for="gradient-type">Type:</label>
+                                    <select id="gradient-type" onchange="updateGradient()">
                                         <option value="linear">Linear</option>
                                         <option value="radial">Radial</option>
                                     </select>
+                                    <!-- Temporarily hiding angle control
+                                    <label for="gradient-angle">Angle:</label>
+                                    <input type="range" id="gradient-angle" min="0" max="360" value="90" step="1" oninput="updateGradient()">
+                                    <span class="range-value">90°</span>
+                                    -->
                                 </div>
                                 <div class="gradient-stops-editor">
                                     <div class="gradient-bar-container">
                                         <div class="gradient-preview-bar"></div>
                                         <div class="gradient-stops"></div>
                                     </div>
-                                    <div class="stop-controls">
-                                        <input type="color" id="stop-color" class="color-picker">
-                                        <input type="number" id="stop-position" min="0" max="100" value="0">
-                                        <button class="delete-stop">Delete</button>
+                                    <div class="stop-editor">
+                                        <input type="color" id="stop-color" class="color-picker" onchange="updateSelectedStop()">
+                                        <div class="position-control">
+                                            <label for="stop-position">Position:</label>
+                                            <input type="number" id="stop-position" min="0" max="100" value="0" onchange="updateSelectedStop()">
+                                            <span>%</span>
+                                        </div>
+                                        <button class="delete-stop" onclick="deleteSelectedStop()">Delete</button>
                                     </div>
                                 </div>
-                                <button class="add-stop-btn">Add color stop</button>
+                                <button class="add-stop-btn" onclick="addGradientStop()">
+                                    <i class="fas fa-plus"></i> Add Color Stop
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -128,7 +168,7 @@
                         <div id="progress-bar-settings" class="dropdown-content">
                             <div>
                                 <label for="progress-bar-color">Bar Color:</label>
-                                <input type="color" id="progress-bar-color" value="#00bfa5" onchange="updateProgressBarStyle()">
+                                <input type="color" id="progress-bar-color" value="#000000" onchange="updateProgressBarStyle()">
                             </div>
                             <div>
                                 <label for="progress-bar-opacity">Opacity:</label>
@@ -229,6 +269,7 @@
                         <h3>About</h3>
                         <p>Shiloh Schedule Version 1.7</p>
                         <p>Created by Brady Blackwell</p>
+                        <p>Note: This project is in a very early version! Please expect a few bugs.</p>
                     </div>
                 </div>
             </div>
