@@ -102,30 +102,45 @@ function switchSchedule(scheduleName) {
     if (!scheduleName) return;
     
     try {
-        const savedSchedule = localStorage.getItem('savedSchedule_' + scheduleName);
+        let schedule;
         
-        if (savedSchedule) {
-            currentSchedule = JSON.parse(savedSchedule);
-            currentScheduleName = scheduleName;
-            // Also update the in-memory schedule
-            schedules[scheduleName] = currentSchedule;
-        } else if (schedules[scheduleName]) {
-            currentSchedule = JSON.parse(JSON.stringify(schedules[scheduleName]));
-            currentScheduleName = scheduleName;
-            localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(currentSchedule));
+        // Check if it's a custom schedule
+        if (scheduleName.startsWith('customSchedule_')) {
+            const savedSchedule = localStorage.getItem(scheduleName);
+            if (savedSchedule) {
+                schedule = JSON.parse(savedSchedule);
+            } else {
+                console.error(`Custom schedule ${scheduleName} not found`);
+                return;
+            }
         } else {
-            console.error(`Schedule ${scheduleName} not found`);
-            return;
+            // Handle built-in schedules
+            const savedSchedule = localStorage.getItem('savedSchedule_' + scheduleName);
+            if (savedSchedule) {
+                schedule = JSON.parse(savedSchedule);
+            } else if (schedules[scheduleName]) {
+                schedule = JSON.parse(JSON.stringify(schedules[scheduleName]));
+                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
+            } else {
+                console.error(`Schedule ${scheduleName} not found`);
+                return;
+            }
         }
 
+        // Update current schedule
+        currentSchedule = schedule;
+        currentScheduleName = scheduleName;
         localStorage.setItem('currentScheduleName', scheduleName);
         
-        const displayName = scheduleDisplayNames[scheduleName] || 
-                           scheduleName.replace('customSchedule_', '');
+        // Update display name
+        const displayName = scheduleName.startsWith('customSchedule_') 
+            ? scheduleName.replace('customSchedule_', '')
+            : scheduleDisplayNames[scheduleName] || scheduleName;
         
-        document.getElementById("countdown-heading").innerText = 
-            `${displayName} Schedule ▸ ${currentSchedule[0].name}`;
+        const headingText = `${displayName} Schedule ▸ ${schedule[0].name}`;
+        document.getElementById("countdown-heading").innerText = headingText;
         
+        // Update dropdown if it exists
         const dropdown = document.getElementById("schedule-dropdown");
         if (dropdown) dropdown.value = scheduleName;
         
@@ -497,6 +512,34 @@ function populateRenamePeriods() {
             content.appendChild(div);
         }
     });
+}
+
+function updateCustomSchedule() {
+    const numPeriods = document.getElementById("num-periods").value;
+    const saveButton = document.getElementById("save-schedule-button");
+    let isValid = true;
+
+    // Validate all periods
+    for (let i = 0; i < numPeriods; i++) {
+        const startTime = document.getElementById(`period-start-${i}`).value;
+        const endTime = document.getElementById(`period-end-${i}`).value;
+        
+        if (!startTime || !endTime) {
+            isValid = false;
+            break;
+        }
+        
+        // Check if end time is after start time
+        if (startTime >= endTime) {
+            isValid = false;
+            break;
+        }
+    }
+
+    // Enable/disable save button based on validation
+    if (saveButton) {
+        saveButton.disabled = !isValid;
+    }
 }
 
 /* ...existing code... */
