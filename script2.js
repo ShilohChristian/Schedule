@@ -6,6 +6,11 @@ let gradientStops = [];
 function toggleSettingsSidebar() {
     const sidebar = document.getElementById("settings-sidebar");
     sidebar.classList.toggle("open");
+    
+    // Initialize panels if opening
+    if (sidebar.classList.contains("open")) {
+        initializeSettingsPanels();
+    }
 }
 
 // Add missing helper function
@@ -101,6 +106,17 @@ function loadSettings() {
     // Load other settings
     loadWhiteBoxSettings();
     loadShadowSettings();
+    loadProgressBarSettings(); // Add this line
+
+    // Load saved font
+    const savedFont = localStorage.getItem('fontFamily');
+    if (savedFont) {
+        document.body.style.fontFamily = savedFont;
+        const fontSelect = document.getElementById('font-family');
+        if (fontSelect) {
+            fontSelect.value = savedFont;
+        }
+    }
 }
 
 function loadWhiteBoxSettings() {
@@ -607,6 +623,20 @@ document.addEventListener("DOMContentLoaded", function() {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
     }
+
+    // Add event listeners for progress bar inputs
+    document.getElementById('progress-bar-color')?.addEventListener('input', updateProgressBarStyle);
+    document.getElementById('progress-bar-opacity')?.addEventListener('input', updateProgressBarStyle);
+    
+    // Initialize progress bar if enabled
+    if (localStorage.getItem('progressBarEnabled') === 'true') {
+        const checkbox = document.getElementById('progress-bar');
+        if (checkbox) {
+            checkbox.checked = true;
+            createProgressBar();
+            updateProgressBarStyle();
+        }
+    }
 });
 
 function setupDropdownListeners() {
@@ -885,19 +915,206 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function toggleTheme() {
     const sidebar = document.getElementById('settings-sidebar');
-    const themeButton = document.querySelector('.theme-toggle');
-    const icon = themeButton.querySelector('i');
+    const icon = document.querySelector('.theme-toggle i');
+    const text = document.querySelector('.theme-toggle-text');
     
     sidebar.classList.toggle('light-mode');
     
-    // Update icon and save preference
+    // Update icon, text and save preference
     if (sidebar.classList.contains('light-mode')) {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
+        text.textContent = 'Light Mode';
         localStorage.setItem('theme', 'light');
     } else {
         icon.classList.remove('fa-sun');
         icon.classList.add('fa-moon');
+        text.textContent = 'Dark Mode';
         localStorage.setItem('theme', 'dark');
     }
+
+    // Add smooth transition effect
+    icon.style.transform = 'rotate(360deg)';
+    setTimeout(() => {
+        icon.style.transform = '';
+    }, 300);
+}
+
+// Add the new navigation functionality
+function initializeSettingsPanels() {
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all items and panels
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to clicked item and corresponding panel
+            item.classList.add('active');
+            const targetPanel = document.getElementById(`${item.dataset.target}-panel`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+        });
+    });
+}
+
+// Update the theme loading code
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    const sidebar = document.getElementById('settings-sidebar');
+    const icon = document.querySelector('.theme-toggle i');
+    const text = document.querySelector('.theme-toggle-text');
+    
+    if (savedTheme === 'light') {
+        sidebar.classList.add('light-mode');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        text.textContent = 'Light Mode';
+    }
+});
+
+// Progress Bar Functions
+function toggleProgressBar() {
+    const checkbox = document.getElementById('progress-bar');
+    const settings = document.getElementById('progress-bar-settings');
+    
+    if (checkbox.checked) {
+        settings.style.display = 'block';
+        createProgressBar();
+        updateProgressBarStyle();
+    } else {
+        settings.style.display = 'none';
+        removeProgressBar();
+    }
+    
+    // Save preference
+    localStorage.setItem('progressBarEnabled', checkbox.checked);
+}
+
+function createProgressBar() {
+    removeProgressBar(); // Remove any existing progress bar first
+    
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-overlay';
+    document.body.insertBefore(progressBar, document.body.firstChild); // Insert at the top
+    
+    // Initialize style
+    const color = document.getElementById('progress-bar-color')?.value || '#00bfa5';
+    const opacity = document.getElementById('progress-bar-opacity')?.value || '20';
+    
+    progressBar.style.backgroundColor = color;
+    progressBar.style.opacity = opacity / 100;
+    
+    // Update immediately
+    updateProgressBar();
+}
+
+function removeProgressBar() {
+    const progressBar = document.querySelector('.progress-overlay');
+    if (progressBar) {
+        progressBar.remove();
+    }
+}
+
+function updateProgressBarStyle() {
+    const progressBar = document.querySelector('.progress-overlay');
+    if (!progressBar) return;
+    
+    const color = document.getElementById('progress-bar-color').value;
+    const opacity = document.getElementById('progress-bar-opacity').value;
+    
+    progressBar.style.backgroundColor = color;
+    progressBar.style.opacity = opacity / 100;
+    
+    // Update opacity display
+    const opacityDisplay = document.querySelector('#progress-bar-opacity + .range-value');
+    if (opacityDisplay) {
+        opacityDisplay.textContent = `${opacity}%`;
+    }
+    
+    // Save settings
+    localStorage.setItem('progressBarColor', color);
+    localStorage.setItem('progressBarOpacity', opacity);
+}
+
+function updateProgressBar() {
+    const progressBar = document.querySelector('.progress-overlay');
+    if (!progressBar) return;
+    
+    const now = new Date();
+    const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    
+    // Find current period
+    const periodMatch = currentSchedule.find(period => 
+        currentTimeInSeconds >= getTimeInSeconds(period.start) && 
+        currentTimeInSeconds < getTimeInSeconds(period.end)
+    );
+    
+    if (periodMatch) {
+        const periodStart = getTimeInSeconds(periodMatch.start);
+        const periodEnd = getTimeInSeconds(periodMatch.end);
+        const totalDuration = periodEnd - periodStart;
+        const elapsed = currentTimeInSeconds - periodStart;
+        const progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+        
+        requestAnimationFrame(() => {
+            progressBar.style.width = `${progress}%`;
+            
+            // Add/remove complete class based on progress
+            if (progress >= 100) {
+                progressBar.classList.add('complete');
+                // Reset the bar after a short delay
+                setTimeout(() => {
+                    progressBar.style.width = '0%';
+                    progressBar.classList.remove('complete');
+                }, 300);
+            } else {
+                progressBar.classList.remove('complete');
+            }
+        });
+    } else {
+        progressBar.style.width = '0%';
+    }
+}
+
+// Add to the loadSettings function
+function loadProgressBarSettings() {
+    const enabled = localStorage.getItem('progressBarEnabled') === 'true';
+    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
+    const opacity = localStorage.getItem('progressBarOpacity') || '20';
+    
+    const checkbox = document.getElementById('progress-bar');
+    const colorInput = document.getElementById('progress-bar-color');
+    const opacityInput = document.getElementById('progress-bar-opacity');
+    const settings = document.getElementById('progress-bar-settings');
+    
+    if (checkbox && colorInput && opacityInput) {
+        checkbox.checked = enabled;
+        colorInput.value = color;
+        opacityInput.value = opacity;
+        settings.style.display = enabled ? 'block' : 'none';
+        
+        if (enabled) {
+            createProgressBar();
+            updateProgressBarStyle();
+        }
+    }
+}
+
+// Modify the existing startCountdown function to include progress bar updates
+function startCountdown() {
+    updateCountdowns();
+    updateProgressBar(); // Add this line
+    return setInterval(() => {
+        updateCountdowns();
+        updateProgressBar(); // Add this line
+    }, 1000);
+}
+
+function updateFont() {
+    const fontFamily = document.getElementById('font-family').value;
+    document.body.style.fontFamily = fontFamily;
+    localStorage.setItem('fontFamily', fontFamily);
 }
