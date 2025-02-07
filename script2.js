@@ -319,7 +319,7 @@ function applyGradientBackground(settings) {
 
 function removeBackground() {
     clearBackgrounds();
-    document.body.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
+    setDefaultGradient();
     localStorage.removeItem('bgImage');
     localStorage.removeItem('gradientSettings');
     
@@ -373,41 +373,33 @@ function initGradientEditor() {
 }
 
 function updateGradient() {
-    const enabled = document.getElementById('gradient-enabled').checked;
-    const startColor = document.getElementById('gradient-start').value;
-    const endColor = document.getElementById('gradient-end').value;
-    const angle = document.getElementById('gradient-angle').value;
+    const enabled = document.getElementById('gradient-enabled')?.checked || false;
+    const startColor = document.getElementById('gradient-start')?.value || '#000035';
+    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
 
     if (enabled) {
         // Clear any background image
         document.body.style.backgroundImage = '';
         localStorage.removeItem('bgImage');
         
-        // CSS gradients use a different angle system - we need to adjust it
-        // CSS: 0deg points up, and rotates clockwise
-        // Our input: 0deg points right, and rotates clockwise
-        // So we subtract 90 and negate the value to match CSS behavior
-        const cssAngle = (-angle + 90) % 360;
-        
-        // Apply gradient with corrected angle
-        document.body.style.background = `linear-gradient(${cssAngle}deg, ${startColor}, ${endColor})`;
+        // Apply default gradient
+        document.body.style.background = `linear-gradient(to bottom, ${startColor}, ${endColor})`;
         
         // Save settings
         localStorage.setItem('gradientSettings', JSON.stringify({
             enabled,
             startColor,
-            endColor,
-            angle
+            endColor
         }));
-
-        // Update the angle value display
-        const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-        if (angleDisplay) {
-            angleDisplay.textContent = `${angle}°`;
-        }
     } else {
-        removeBackground();
+        setDefaultGradient();
     }
+}
+
+function setDefaultGradient() {
+    // Set default gradient
+    document.body.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
+    localStorage.removeItem('gradientSettings');
 }
 
 // Shadow System
@@ -1270,8 +1262,19 @@ function handleGradientConfirm(confirmed) {
         if (preview) {
             preview.style.backgroundImage = 'none';
         }
+        setDefaultGradient(); // Use default gradient first
         applyGradientToggle(true);
+        initGradientControls(); // Initialize controls after enabling
     }
+}
+
+function initGradientControls() {
+    // Set default values if they don't exist
+    const gradientStart = document.getElementById('gradient-start');
+    const gradientEnd = document.getElementById('gradient-end');
+    
+    if (gradientStart) gradientStart.value = '#000035';
+    if (gradientEnd) gradientEnd.value = '#00bfa5';
 }
 
 function applyGradientToggle(enabled) {
@@ -1286,23 +1289,25 @@ function applyGradientToggle(enabled) {
 }
 
 function updateGradient() {
-    const type = document.getElementById('gradient-type').value;
-    const angle = document.getElementById('gradient-angle').value;
-    const stops = getGradientStops();
-    
-    let gradient;
-    if (type === 'linear') {
-        gradient = `linear-gradient(${angle}deg, ${stops})`;
-    } else {
-        gradient = `radial-gradient(circle at center, ${stops})`;
+    const enabled = document.getElementById('gradient-enabled')?.checked || false;
+    const startColor = document.getElementById('gradient-start')?.value || '#000035';
+    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
+
+    if (enabled) {
+        // Clear any background image
+        document.body.style.backgroundImage = '';
+        localStorage.removeItem('bgImage');
+        
+        // Apply gradient with default direction
+        document.body.style.background = `linear-gradient(to bottom, ${startColor}, ${endColor})`;
+        
+        // Save settings
+        localStorage.setItem('gradientSettings', JSON.stringify({
+            enabled,
+            startColor,
+            endColor
+        }));
     }
-    
-    document.querySelector('.gradient-preview').style.background = gradient;
-    document.querySelector('.gradient-preview-bar').style.background = gradient;
-    document.body.style.background = gradient;
-    
-    // Save settings
-    saveGradientSettings();
 }
 
 function getGradientStops() {
@@ -1422,4 +1427,3 @@ function removeProgressBar() {
 }
 
 // ...existing code...
- 
