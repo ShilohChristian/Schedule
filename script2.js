@@ -397,9 +397,28 @@ function updateGradient() {
 }
 
 function setDefaultGradient() {
-    // Set default gradient
-    document.body.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
-    localStorage.removeItem('gradientSettings');
+    const defaultSettings = {
+        enabled: true,
+        startColor: '#000035',
+        endColor: '#00bfa5'
+    };
+    
+    // Apply the gradient
+    document.body.style.background = `linear-gradient(to bottom, ${defaultSettings.startColor}, ${defaultSettings.endColor})`;
+    
+    // Save settings
+    localStorage.setItem('gradientSettings', JSON.stringify(defaultSettings));
+    
+    // Update UI controls if they exist
+    const gradientEnabled = document.getElementById('gradient-enabled');
+    const gradientControls = document.getElementById('gradient-controls');
+    
+    if (gradientEnabled) {
+        gradientEnabled.checked = true;
+    }
+    if (gradientControls) {
+        gradientControls.classList.add('active');
+    }
 }
 
 // Shadow System
@@ -1262,9 +1281,8 @@ function handleGradientConfirm(confirmed) {
         if (preview) {
             preview.style.backgroundImage = 'none';
         }
-        setDefaultGradient(); // Use default gradient first
-        applyGradientToggle(true);
-        initGradientControls(); // Initialize controls after enabling
+        // Use setDefaultGradient directly instead of going through the toggle flow
+        setDefaultGradient();
     }
 }
 
