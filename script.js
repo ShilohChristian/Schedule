@@ -68,6 +68,16 @@ const scheduleDisplayNames = {
 let currentSchedule = schedules.normal;
 let currentScheduleName = 'normal';
 
+// Wait for both scripts to be loaded
+document.addEventListener("DOMContentLoaded", function() {
+    // First ensure script2.js functions are available
+    if (typeof toggleSettingsSidebar === 'function') {
+        initializeApp();
+    } else {
+        console.error('Required functions not loaded yet');
+    }
+});
+
 // Clean up old interval if it exists when loading new script
 if (window.countdownInterval) {
     clearInterval(window.countdownInterval);
@@ -76,11 +86,19 @@ if (window.countdownInterval) {
 function initializeApp() {
     initializeSavedSchedules(); // Add this line
     
-    const savedScheduleName = localStorage.getItem('currentScheduleName');
-    if (savedScheduleName) {
-        switchSchedule(savedScheduleName);
+    // Check if it's Tuesday and switch to chapel schedule
+    const today = new Date();
+    if (today.getDay() === 2) { // 2 represents Tuesday (0 is Sunday, 1 is Monday, etc.)
+        switchSchedule('chapel');
+        console.log('Tuesday detected - switched to chapel schedule');
     } else {
-        switchSchedule('normal');
+        // Load saved schedule for other days
+        const savedScheduleName = localStorage.getItem('currentScheduleName');
+        if (savedScheduleName) {
+            switchSchedule(savedScheduleName);
+        } else {
+            switchSchedule('normal');
+        }
     }
 
     updateScheduleDisplay();
@@ -533,4 +551,3 @@ function updateCustomSchedule() {
 }
 
 /* ...existing code... */
-
