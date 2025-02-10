@@ -555,14 +555,15 @@ stop-editor input[type="number"] {
     position: relative;
     height: 40px;
     margin: 15px 0;
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 4px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .gradient-preview-bar {
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, #000035, #00bfa5);
+    border-radius: 4px;
 }
 
 .gradient-stops {
@@ -571,44 +572,62 @@ stop-editor input[type="number"] {
     left: 0;
     right: 0;
     height: 100%;
+    cursor: pointer;
 }
 
 .gradient-stop {
     position: absolute;
-    width: 18px;
-    height: 18px;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 24px;
     background: white;
     border: 2px solid #00bfa5;
-    border-radius: 50%;
+    border-radius: 3px;
+    top: 50%;
+    transform: translate(-50%, -50%);
     cursor: grab;
+    transition: all 0.2s ease;
+    z-index: 1;
 }
 
+.gradient-stop:hover,
 .gradient-stop.active {
-    border-color: #ffffff;
+    transform: translate(-50%, -50%) scale(1.2);
+    border-color: white;
     z-index: 2;
-}
-
-.gradient-stop-color {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.5);
 }
 
 .add-stop-btn {
-    background: none;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    color: white;
-    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 191, 165, 0.1);
+    border: 1px solid rgba(0, 191, 165, 0.3);
+    color: inherit;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 10px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
 }
 
 .add-stop-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(0, 191, 165, 0.2);
+    transform: translateY(-1px);
 }
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode .gradient-bar-container {
+    background: var(--chrome-hover);
+    border: 1px solid var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .gradient-stop {
+    border-color: var(--chrome-blue);
+}
+
+/* ...existing code... */
 
 .gradient-options {
     padding: 15px;
@@ -1530,6 +1549,7 @@ settings-sidebar.light-mode select {
 }
 
 #bg-image-drop-area {
+    width: 100%;
     min-height: 120px;
     border: 2px dashed rgba(0, 191, 165, 0.4);
     border-radius: 12px;
@@ -1542,6 +1562,7 @@ settings-sidebar.light-mode select {
     cursor: pointer;
     transition: all 0.3s ease;
     background: rgba(0, 191, 165, 0.05);
+    box-sizing: border-box;
 }
 
 #bg-image-drop-area:hover {
@@ -1582,35 +1603,29 @@ settings-sidebar.light-mode select {
     gap: 0.75rem;
 }
 
-.action-button {
-    flex: 1;
+.remove-bg-btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 59, 48, 0.5);
+    background: rgba(255, 59, 48, 0.1);
+    color: rgb(255, 59, 48);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-    border: none;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
 }
 
-.action-button i {
-    font-size: 1rem;
-}
-
-.action-button:hover {
+.remove-bg-btn:hover {
+    background: rgba(255, 59, 48, 0.2);
     transform: translateY(-1px);
 }
 
-.action-button.secondary {
-    background: rgba(255, 255, 255, 0.1);
-    color: inherit;
-}
-
-.action-button.secondary:hover {
-    background: rgba(255, 255, 255, 0.15);
+.remove-bg-btn i {
+    font-size: 1rem;
 }
 
 .background-preview {
@@ -1644,6 +1659,66 @@ settings-sidebar.light-mode select {
 
 .settings-sidebar.light-mode .action-button.secondary:hover {
     background: rgba(0, 0, 0, 0.08);
+}
+
+/* Add new styles for page-wide drop overlay */
+.drop-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 191, 165, 0.15);
+    z-index: 10000;
+    pointer-events: none;
+    backdrop-filter: blur(5px);
+}
+
+.drop-overlay.active {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.drop-overlay .drop-content {
+    text-align: center;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(20px);
+    animation: slideUp 0.3s ease forwards;
+}
+
+.drop-overlay i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: white;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.drop-overlay .drop-text {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.drop-overlay .drop-subtext {
+    font-size: 1rem;
+    opacity: 0.8;
+    margin: 0.5rem 0 0 0;
+}
+
+@keyframes slideUp {
+    from { 
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to { 
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* ...existing code... */
@@ -1733,6 +1808,184 @@ settings-sidebar.light-mode select {
 
 .gradient-confirm-buttons button:hover {
     transform: translateY(-1px);
+}
+
+/* ...existing code... */
+
+/* Updated gradient controls for clarity */
+.gradient-controls {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.gradient-header {
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.gradient-preview {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-instructions {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0.5rem 0;
+    padding: 0.75rem;
+    background: rgba(0, 191, 165, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(0, 191, 165, 0.2);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.gradient-bar-container {
+    position: relative;
+    width: 100%;
+    height: auto;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.add-stop-btn {
+    align-self: flex-end;
+    background: rgba(0, 191, 165, 0.1);
+    border: 1px solid rgba(0, 191, 165, 0.3);
+    color: inherit;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.add-stop-btn:hover {
+    background: rgba(0, 191, 165, 0.2);
+    transform: translateY(-1px);
+}
+
+.add-stop-btn i {
+    font-size: 0.8rem;
+}
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode .add-stop-btn {
+    background: var(--chrome-hover);
+    border-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .add-stop-btn:hover {
+    background: var(--chrome-active);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+#white-box-opacity {
+    width: calc(100% - 60px);
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+#white-box-opacity + .range-value {
+    display: inline-block;
+    min-width: 45px;
+    text-align: right;
+}
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode #white-box-opacity {
+    background: var(--chrome-hover);
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.about-content {
+    padding: 15px;
+}
+
+.about-content h2 {
+    color: #00bfa5;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+.about-content h4 {
+    color: #00bfa5;
+    margin: 20px 0 10px 0;
+    font-size: 1.1em;
+}
+
+.about-content p {
+    margin-bottom: 15px;
+    line-height: 1.6;
+}
+
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.feature-list li {
+    margin-bottom: 10px;
+    display: flex;
+    align-items: start;
+    gap: 10px;
+}
+
+.feature-list i {
+    color: #00bfa5;
+    margin-top: 3px;
+}
+
+.contact-info {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.version-info, .creator-info {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9em;
+    margin: 5px 0;
+}
+
+/* Light mode adjustments */
+.settings-sidebar.light-mode .about-content h2,
+.settings-sidebar.light-mode .about-content h4 {
+    color: var(--chrome-active-text);
+}
+
+.settings-sidebar.light-mode .feature-list i {
+    color: var(--chrome-active-text);
+}
+
+.settings-sidebar.light-mode .contact-info {
+    border-top-color: var(--chrome-border);
+}
+
+.settings-sidebar.light-mode .version-info,
+.settings-sidebar.light-mode .creator-info {
+    color: var(--chrome-secondary-text);
 }
 
 /* ...existing code... */
