@@ -66,10 +66,6 @@
                                     <i class="fas fa-trash-alt"></i>
                                     <span>Remove Background</span>
                                 </button>
-                                <button id="reset-bg-button" onclick="resetBackground()" class="action-button secondary">
-                                    <i class="fas fa-undo"></i>
-                                    <span>Reset to Default</span>
-                                </button>
                             </div>
                             <div class="background-preview">
                                 <div class="preview-label">Current Background</div>
@@ -79,48 +75,37 @@
                     </div>
 
                     <div class="settings-group">
-                        <h3>Gradient Background</h3>
+                        <h3>Background Gradient</h3>
                         <div class="switch-container">
-                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
+                            <label class="switch-label" for="gradient-enabled">Enable Gradient Background</label>
                             <label class="switch">
                                 <input type="checkbox" id="gradient-enabled" onchange="toggleGradient()">
                                 <span class="slider"></span>
                             </label>
                         </div>
                         <div class="gradient-controls" id="gradient-controls">
-                            <div class="gradient-preview-container">
-                                <div class="gradient-preview"></div>
-                            </div>
-                            <div class="gradient-main-controls">
-                                <div class="gradient-type-selector">
-                                    <label for="gradient-type">Type:</label>
-                                    <select id="gradient-type" onchange="updateGradient()">
-                                        <option value="linear">Linear</option>
-                                        <option value="radial">Radial</option>
-                                    </select>
-                                    <!-- Temporarily hiding angle control
-                                    <label for="gradient-angle">Angle:</label>
-                                    <input type="range" id="gradient-angle" min="0" max="360" value="90" step="1" oninput="updateGradient()">
-                                    <span class="range-value">90°</span>
-                                    -->
-                                </div>
-                                <div class="gradient-stops-editor">
-                                    <div class="gradient-bar-container">
-                                        <div class="gradient-preview-bar"></div>
-                                        <div class="gradient-stops"></div>
-                                    </div>
-                                    <div class="stop-editor">
-                                        <input type="color" id="stop-color" class="color-picker" onchange="updateSelectedStop()">
-                                        <div class="position-control">
-                                            <label for="stop-position">Position:</label>
-                                            <input type="number" id="stop-position" min="0" max="100" value="0" onchange="updateSelectedStop()">
-                                            <span>%</span>
-                                        </div>
-                                        <button class="delete-stop" onclick="deleteSelectedStop()">Delete</button>
-                                    </div>
-                                </div>
+                            <p class="gradient-instructions">
+                                <i class="fas fa-info-circle"></i>
+                                Click on the gradient bar to add new colors. Drag the color stops to adjust their position.
+                            </p>
+                            <div class="gradient-preview"></div>
+                            <div class="gradient-bar-container">
+                                <div class="gradient-preview-bar"></div>
+                                <div class="gradient-stops"></div>
                                 <button class="add-stop-btn" onclick="addGradientStop()">
-                                    <i class="fas fa-plus"></i> Add Color Stop
+                                    <i class="fas fa-plus"></i>
+                                    Add Color Stop
+                                </button>
+                            </div>
+                            <div class="stop-editor">
+                                <input type="color" id="stop-color" class="color-picker" onchange="updateSelectedStop()">
+                                <div class="position-control">
+                                    <label for="stop-position">Position:</label>
+                                    <input type="number" id="stop-position" min="0" max="100" value="0" onchange="updateSelectedStop()">
+                                    <span>%</span>
+                                </div>
+                                <button class="delete-stop" onclick="deleteSelectedStop()">
+                                    <i class="fas fa-trash"></i>
                                 </button>
                             </div>
                         </div>
@@ -131,6 +116,11 @@
                         <div>
                             <label for="white-box-color">Background Color:</label>
                             <input type="color" id="white-box-color" name="white-box-color" value="#ffffff" onchange="updateWhiteBoxColor()">
+                        </div>
+                        <div>
+                            <label for="white-box-opacity">Opacity:</label>
+                            <input type="range" id="white-box-opacity" min="0" max="100" value="90" step="5" onchange="updateWhiteBoxColor()">
+                            <span class="range-value">90%</span>
                         </div>
                         <div>
                             <label for="white-box-text-color">Text Color:</label>
@@ -172,7 +162,7 @@
                             </div>
                             <div>
                                 <label for="progress-bar-opacity">Opacity:</label>
-                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" onchange="updateProgressBarStyle()">
+                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
                                 <span class="range-value">20%</span>
                                 <p class="opacity-helper">Recommended: 15% for gradients, 30% for images</p>
                             </div>
@@ -267,9 +257,29 @@
                 <div class="settings-panel" id="about-panel">
                     <div class="settings-group">
                         <h3>About</h3>
-                        <p>Shiloh Schedule Version 1.7</p>
-                        <p>Created by Brady Blackwell</p>
-                        <p>Note: This project is in a very early version! Please expect a few bugs.</p>
+                        <div class="about-content">
+                            <h2>Shiloh Christian Bell Schedule</h2>
+                            <p>Welcome to the Shiloh Christian Bell Schedule website – your go-to tool for keeping track of class periods throughout the school day. This website provides a real-time countdown for each period, ensuring that students and staff always know how much time remains before the next transition.</p>
+                            
+                            <h4>Features:</h4>
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check"></i> Live Countdown Timer – Displays the remaining time in the current period and updates dynamically.</li>
+                                <li><i class="fas fa-check"></i> Daily Schedule Overview – Shows a clear breakdown of the class periods, including start and end times.</li>
+                                <li><i class="fas fa-check"></i> Automatic Adjustments – The schedule adapts to the current day, ensuring accuracy.</li>
+                                <li><i class="fas fa-check"></i> User-Friendly Interface – A simple, clean design optimized for quick access on both desktop and mobile devices.</li>
+                            </ul>
+                            
+                            <h4>How It Works:</h4>
+                            <p>The website automatically detects the current time and matches it to the school's bell schedule. The active period is highlighted, and a countdown timer updates in real-time. Once a period ends, the timer seamlessly transitions to the next period. Users can quickly glance at the full schedule to plan their day efficiently.</p>
+                            
+                            <p>This tool is designed to help students manage their time effectively and stay informed about their class schedule without the hassle of checking the clock constantly. Whether you're in class, passing between periods, or waiting for lunch, this site keeps you on track.</p>
+                            
+                            <div class="contact-info">
+                                <p>For any questions or suggestions, feel free to reach out to us at ShilohSchedule@outlook.com!</p>
+                                <p class="version-info">Version 1.7b</p>
+                                <p class="creator-info">Created by Brady Blackwell</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
