@@ -1,6 +1,7 @@
 // Global variables
 let activeStop = null;
 let gradientStops = [];
+let dropOverlay = null;
 
 // Settings Management
 function toggleSettingsSidebar() {
@@ -139,16 +140,37 @@ function loadSettings() {
 }
 
 function loadWhiteBoxSettings() {
-    const whiteBoxColor = localStorage.getItem("whiteBoxColor") || "rgba(255, 255, 255, 0.9)";
+    const savedColor = localStorage.getItem("whiteBoxColor") || "rgba(255, 255, 255, 0.9)";
+    const savedOpacity = localStorage.getItem("whiteBoxOpacity") || "90";
     const whiteBoxTextColor = localStorage.getItem("whiteBoxTextColor") || "#000035";
     
-    document.querySelector(".schedule-container").style.backgroundColor = whiteBoxColor;
+    document.querySelector(".schedule-container").style.backgroundColor = savedColor;
     document.querySelector(".schedule-container").style.color = whiteBoxTextColor;
     document.getElementById("white-box-heading").style.color = whiteBoxTextColor;
     
     // Set input values
-    document.getElementById("white-box-color").value = whiteBoxColor.includes("rgba") ? "#ffffff" : whiteBoxColor;
+    const colorMatch = savedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+    if (colorMatch) {
+        const [r, g, b] = [colorMatch[1], colorMatch[2], colorMatch[3]].map(Number);
+        document.getElementById("white-box-color").value = rgbToHex(r, g, b);
+    }
+    
+    document.getElementById("white-box-opacity").value = savedOpacity;
     document.getElementById("white-box-text-color").value = whiteBoxTextColor;
+    
+    // Update opacity display
+    const opacityDisplay = document.querySelector('#white-box-opacity + .range-value');
+    if (opacityDisplay) {
+        opacityDisplay.textContent = `${savedOpacity}%`;
+    }
+}
+
+// Add helper function for RGB to Hex conversion
+function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
 }
 
 // UI Controls
@@ -157,6 +179,11 @@ function handleBgImageUpload(file) {
     if (!file) {
         console.error('No file provided');
         return;
+    }
+
+    // Make sure overlay is hidden when starting upload
+    if (dropOverlay) {
+        dropOverlay.classList.remove('active');
     }
 
     // Check file size (5MB limit)
@@ -318,20 +345,38 @@ function applyGradientBackground(settings) {
 }
 
 function removeBackground() {
-    clearBackgrounds();
-    setDefaultGradient();
+    // Clear any existing background image
+    document.body.style.backgroundImage = 'none';
     localStorage.removeItem('bgImage');
-    localStorage.removeItem('gradientSettings');
     
-    // Reset gradient toggle if it exists
-    const gradientEnabled = document.getElementById('gradient-enabled');
-    if (gradientEnabled) gradientEnabled.checked = false;
+    // Reset the preview
+    const preview = document.getElementById('bg-preview');
+    if (preview) {
+        preview.style.backgroundImage = 'none';
+        preview.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
+    }
+    
+    // Set default gradient
+    setDefaultGradient();
 }
 
 function updateWhiteBoxColor() {
-    const whiteBoxColor = document.getElementById("white-box-color").value;
-    document.querySelector(".schedule-container").style.backgroundColor = whiteBoxColor;
-    localStorage.setItem("whiteBoxColor", whiteBoxColor); // Save to local storage
+    const color = document.getElementById("white-box-color").value;
+    const opacity = document.getElementById("white-box-opacity").value;
+    const rgb = hexToRgb(color);
+    const rgba = `rgba(${rgb}, ${opacity / 100})`;
+    
+    document.querySelector(".schedule-container").style.backgroundColor = rgba;
+    
+    // Update opacity display
+    const opacityDisplay = document.querySelector('#white-box-opacity + .range-value');
+    if (opacityDisplay) {
+        opacityDisplay.textContent = `${opacity}%`;
+    }
+    
+    // Save both color and opacity
+    localStorage.setItem("whiteBoxColor", rgba);
+    localStorage.setItem("whiteBoxOpacity", opacity);
 }
 
 function updateWhiteBoxTextColor() {
@@ -726,6 +771,43 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
     }
+
+    // Add drop overlay to body
+    dropOverlay = document.createElement('div');
+    dropOverlay.className = 'drop-overlay';
+    dropOverlay.innerHTML = `
+        <div class="drop-content">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p class="drop-text">Drop your image here</p>
+            <p class="drop-subtext">Release to upload background</p>
+        </div>
+    `;
+    document.body.appendChild(dropOverlay);
+
+    // Handle drag and drop for the entire document
+    document.addEventListener('dragenter', function(e) {
+        e.preventDefault();
+        dropOverlay.classList.add('active');
+    });
+
+    document.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        if (e.target === document.documentElement) {
+            dropOverlay.classList.remove('active');
+        }
+    });
+
+    document.addEventListener('dragover', function(e) {
+        e.preventDefault();
+    });
+
+    document.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropOverlay.classList.remove('active');
+        const file = e.dataTransfer.files[0];
+        if (file) handleBgImageUpload(file);
+    });
+
 });
 
 function setupDropdownListeners() {
@@ -1240,14 +1322,24 @@ function toggleGradient() {
     const bgImage = localStorage.getItem('bgImage');
     
     if (enabled && bgImage) {
-        // If there's a background image, show confirmation dialog
-        showGradientConfirmDialog();
-        // Uncheck the toggle until confirmed
-        document.getElementById('gradient-enabled').checked = false;
+        if (confirm('Enabling gradient will remove the current background image. Continue?')) {
+            localStorage.removeItem('bgImage');
+            document.body.style.backgroundImage = 'none';
+            const preview = document.getElementById('bg-preview');
+            if (preview) {
+                preview.style.backgroundImage = 'none';
+            }
+            setDefaultGradient();
+        } else {
+            document.getElementById('gradient-enabled').checked = false;
+        }
         return;
     }
     
-    applyGradientToggle(enabled);
+    controls.style.display = enabled ? 'block' : 'none';
+    if (enabled) {
+        setDefaultGradient();
+    }
 }
 
 function showGradientConfirmDialog() {
@@ -1359,21 +1451,52 @@ function deleteSelectedStop() {
 
 function addGradientStop() {
     const container = document.querySelector('.gradient-stops');
+    const bar = document.querySelector('.gradient-bar-container');
+    if (!container || !bar) return;
+
     const stop = document.createElement('div');
-    const color = '#ffffff';
-    const position = 50;
-    
     stop.className = 'gradient-stop';
-    stop.dataset.color = color;
-    stop.style.backgroundColor = color;
-    stop.style.left = `${position}%`;
+    stop.style.left = '50%';
+    stop.style.backgroundColor = '#ffffff';
+    stop.dataset.color = '#ffffff';
+    stop.dataset.position = '50';
     
-    stop.addEventListener('click', selectGradientStop);
     stop.addEventListener('mousedown', startDragging);
+    stop.addEventListener('click', selectGradientStop);
     
     container.appendChild(stop);
+    
+    // Select the new stop
     selectGradientStop({ target: stop });
-    updateGradient();
+    updateGradientPreview();
+}
+
+function startDragging(e) {
+    e.preventDefault();
+    const stop = e.target;
+    document.querySelector('.gradient-stops').style.cursor = 'grabbing';
+    
+    function handleDrag(moveEvent) {
+        const container = document.querySelector('.gradient-bar-container');
+        if (!container) return;
+
+        const rect = container.getBoundingClientRect();
+        const x = moveEvent.clientX - rect.left;
+        const position = Math.max(0, Math.min(100, (x / rect.width) * 100));
+        
+        stop.style.left = `${position}%`;
+        stop.dataset.position = position;
+        updateGradientPreview();
+    }
+    
+    function stopDragging() {
+        document.querySelector('.gradient-stops').style.cursor = '';
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', stopDragging);
+    }
+    
+    document.addEventListener('mousemove', handleDrag);
+    document.addEventListener('mouseup', stopDragging);
 }
 
 function selectGradientStop(e) {
@@ -1383,11 +1506,113 @@ function selectGradientStop(e) {
     const stop = e.target;
     stop.classList.add('active');
     
-    document.getElementById('stop-color').value = stop.dataset.color;
-    document.getElementById('stop-position').value = parseFloat(stop.style.left);
+    // Update color picker and position input
+    const colorPicker = document.getElementById('stop-color');
+    const positionInput = document.getElementById('stop-position');
+    
+    if (colorPicker && positionInput) {
+        colorPicker.value = stop.dataset.color || '#ffffff';
+        positionInput.value = Math.round(parseFloat(stop.dataset.position)) || 0;
+    }
 }
 
-// ...existing code...
+function updateSelectedStop() {
+    const activeStop = document.querySelector('.gradient-stop.active');
+    if (!activeStop) return;
+    
+    const color = document.getElementById('stop-color').value;
+    const position = document.getElementById('stop-position').value;
+    
+    activeStop.style.backgroundColor = color;
+    activeStop.dataset.color = color;
+    activeStop.style.left = `${position}%`;
+    activeStop.dataset.position = position;
+    
+    updateGradientPreview();
+}
+
+function deleteSelectedStop() {
+    const stops = document.querySelectorAll('.gradient-stop');
+    if (stops.length <= 2) return; // Keep minimum 2 stops
+    
+    const activeStop = document.querySelector('.gradient-stop.active');
+    if (activeStop) {
+        activeStop.remove();
+        updateGradientPreview();
+    }
+}
+
+function updateGradientPreview() {
+    const stops = Array.from(document.querySelectorAll('.gradient-stop'))
+        .map(stop => ({
+            color: stop.dataset.color || '#ffffff',
+            position: parseFloat(stop.dataset.position) || 0
+        }))
+        .sort((a, b) => a.position - b.position);
+    
+    if (stops.length < 2) return;
+    
+    const gradientString = `linear-gradient(to bottom, ${
+        stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
+    })`;
+    
+    // Update preview and apply to body
+    document.querySelector('.gradient-preview-bar').style.background = gradientString;
+    document.querySelector('.gradient-preview').style.background = gradientString;
+    document.body.style.background = gradientString;
+    
+    // Save settings
+    localStorage.setItem('gradientSettings', JSON.stringify({
+        enabled: true,
+        stops: stops
+    }));
+}
+
+// Initialize gradient with default stops when enabled
+function initializeGradientStops() {
+    const container = document.querySelector('.gradient-stops');
+    if (!container) return;
+    
+    // Clear existing stops
+    container.innerHTML = '';
+    
+    // Create default stops
+    const defaultStops = [
+        { color: '#000035', position: 0 },
+        { color: '#00bfa5', position: 100 }
+    ];
+    
+    defaultStops.forEach(stopData => {
+        const stop = document.createElement('div');
+        stop.className = 'gradient-stop';
+        stop.style.left = `${stopData.position}%`;
+        stop.style.backgroundColor = stopData.color;
+        stop.dataset.color = stopData.color;
+        stop.dataset.position = stopData.position;
+        
+        stop.addEventListener('mousedown', startDragging);
+        stop.addEventListener('click', selectGradientStop);
+        
+        container.appendChild(stop);
+    });
+    
+    updateGradientPreview();
+}
+
+// Add this to your DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    /* ...existing code... */
+    
+    // Initialize gradient if enabled
+    const gradientEnabled = document.getElementById('gradient-enabled');
+    if (gradientEnabled && gradientEnabled.checked) {
+        initializeGradientStops();
+    }
+    
+    /* ...existing code... */
+});
+
+/* ...existing code... */
 
 function saveGradientSettings() {
     const settings = {
@@ -1402,34 +1627,7 @@ function saveGradientSettings() {
     localStorage.setItem('gradientSettings', JSON.stringify(settings));
 }
 
-function startDragging(e) {
-    e.preventDefault();
-    const stop = e.target;
-    const container = stop.parentElement;
-    const rect = container.getBoundingClientRect();
-    let isDragging = true;
-
-    function handleDrag(moveEvent) {
-        if (!isDragging) return;
-        
-        const x = moveEvent.clientX - rect.left;
-        const position = Math.max(0, Math.min(100, (x / rect.width) * 100));
-        
-        stop.style.left = `${position}%`;
-        updateGradient();
-    }
-
-    function stopDragging() {
-        isDragging = false;
-        document.removeEventListener('mousemove', handleDrag);
-        document.removeEventListener('mouseup', stopDragging);
-    }
-
-    document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('mouseup', stopDragging);
-}
-
-// ...existing code...
+/* ...existing code... */
 
 function removeProgressBar() {
     const progressBar = document.querySelector('.progress-overlay');
@@ -1444,4 +1642,4 @@ function removeProgressBar() {
     }
 }
 
-// ...existing code...
+/* ...existing code... */
