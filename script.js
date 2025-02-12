@@ -84,13 +84,18 @@ if (window.countdownInterval) {
 }
 
 function initializeApp() {
-    initializeSavedSchedules(); // Add this line
+    initializeSavedSchedules();
     
-    // Check if it's Tuesday and switch to chapel schedule
+    // Handle Tuesday chapel and Wednesday normal schedule
     const today = new Date();
-    if (today.getDay() === 2) { // 2 represents Tuesday (0 is Sunday, 1 is Monday, etc.)
+    const dayOfWeek = today.getDay();
+    
+    if (dayOfWeek === 2) { // 2 represents Tuesday
         switchSchedule('chapel');
         console.log('Tuesday detected - switched to chapel schedule');
+    } else if (dayOfWeek === 3) { // 3 represents Wednesday
+        switchSchedule('normal');
+        console.log('Wednesday detected - switched to normal schedule');
     } else {
         // Load saved schedule for other days
         const savedScheduleName = localStorage.getItem('currentScheduleName');
