@@ -12,7 +12,7 @@ body {
     /* Add fallback background color */
     background-color: #000000;
 }
-
+ 
 /* Add global transitions */
 * {
     transition: all 0.3s ease;
