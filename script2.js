@@ -1,6 +1,5 @@
 // Global variables
 let activeStop = null;
-let gradientStops = [];
 let dropOverlay = null;
 
 // Settings Management
@@ -72,41 +71,28 @@ function loadBackground() {
 
 function loadSettings() {
     const fontColor = localStorage.getItem("fontColor") || "#ffffff";
-    const gradientSettings = JSON.parse(localStorage.getItem('gradientSettings'));
-
-    // Set font color if element exists
-    const fontColorInput = document.getElementById("font-color");
-    if (fontColorInput) {
-        fontColorInput.value = fontColor;
-    }
-
-    // Clear any existing backgrounds
-    clearBackgrounds();
-
-    // Try to load background image first
-    if (!loadBackground()) {
-        // If no background image, try gradient
-        if (gradientSettings && gradientSettings.enabled) {
-            const gradientEnabled = document.getElementById('gradient-enabled');
-            const gradientStart = document.getElementById('gradient-start');
-            const gradientEnd = document.getElementById('gradient-end');
-            const gradientAngle = document.getElementById('gradient-angle');
-
-            if (gradientEnabled) gradientEnabled.checked = true;
-            if (gradientStart) gradientStart.value = gradientSettings.startColor || '#000035';
-            if (gradientEnd) gradientEnd.value = gradientSettings.endColor || '#00bfa5';
-            if (gradientAngle) {
-                gradientAngle.value = gradientSettings.angle || '90';
-                const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-                if (angleDisplay) {
-                    angleDisplay.textContent = `${gradientAngle.value}°`;
-                }
-            }
-
-            updateGradient();
-        } else {
-            // Default gradient
-            document.body.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
+    
+    // Fix the duplicate bgImage declaration
+    const storedBgImage = localStorage.getItem('bgImage');
+    if (storedBgImage) {
+        document.body.style.backgroundImage = `url('${storedBgImage}')`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundAttachment = 'fixed';
+        
+        // Update preview if it exists
+        const preview = document.getElementById('bg-preview');
+        if (preview) {
+            preview.style.backgroundImage = `url('${storedBgImage}')`;
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+        }
+        
+        // Ensure gradient is disabled
+        if (window.gradientManager) {
+            window.gradientManager.enabled = false;
+            window.gradientManager.updateUI();
         }
     }
 
@@ -137,6 +123,11 @@ function loadSettings() {
         preview.style.backgroundImage = 'none';
         preview.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
     }
+
+    // Load and apply saved font color
+    const savedFontColor = localStorage.getItem('fontColor') || '#ffffff';
+    document.getElementById('font-color').value = savedFontColor;
+    document.getElementById('countdown-heading').style.color = savedFontColor;
 }
 
 function loadWhiteBoxSettings() {
@@ -181,149 +172,184 @@ function handleBgImageUpload(file) {
         return;
     }
 
-    // Make sure overlay is hidden when starting upload
-    if (dropOverlay) {
-        dropOverlay.classList.remove('active');
-    }
+    // Reset any active states
+    dropOverlay?.classList.remove('active');
+    document.getElementById('bg-image-drop-area')?.classList.remove('drag-over');
 
-    // Check file size (5MB limit)
+    // Validate file
     if (file.size > 5 * 1024 * 1024) {
         alert('File size must be less than 5MB');
         return;
     }
 
-    // Check file type
-    if (!file.type.match('image.*')) {
-        alert('Only image files are allowed');
-        return;
+    // Disable gradient if enabled
+    if (window.gradientManager) {
+        const checkbox = document.getElementById('gradient-enabled');
+        if (checkbox && checkbox.checked) {
+            checkbox.checked = false;
+            window.gradientManager.toggleGradient();
+        }
     }
 
+    // Show processing overlay
+    showProcessingOverlay();
+
+    // Process the image
     const reader = new FileReader();
-    
     reader.onload = function(e) {
-        try {
-            const img = new Image();
-            
-            img.onload = function() {
-                // Compress image if needed
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Set maximum dimensions
-                const MAX_WIDTH = 1920;
-                const MAX_HEIGHT = 1080;
-                
-                let width = img.width;
-                let height = img.height;
-                
-                // Calculate new dimensions while maintaining aspect ratio
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
-                if (height > MAX_HEIGHT) {
-                    width *= MAX_HEIGHT / height;
-                    height = MAX_HEIGHT;
-                }
-                
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                const compressedImage = canvas.toDataURL('image/jpeg', 0.7);
-                
-                // Update UI first
-                const preview = document.getElementById('bg-preview');
-                if (preview) {
-                    preview.style.backgroundImage = `url('${compressedImage}')`;
-                    preview.style.backgroundSize = 'contain';
-                    preview.style.backgroundPosition = 'center';
-                    preview.style.backgroundRepeat = 'no-repeat';
-                    preview.style.backgroundColor = '#000';
-                }
-                
-                // Then try to save and apply
-                try {
-                    localStorage.setItem('bgImage', compressedImage);
-                    document.body.style.backgroundImage = `url('${compressedImage}')`;
-                    document.body.style.backgroundSize = 'cover';
-                    document.body.style.backgroundPosition = 'center';
-                    document.body.style.backgroundRepeat = 'no-repeat';
-                    
-                    // Reset gradient if it's enabled
-                    const gradientEnabled = document.getElementById('gradient-enabled');
-                    if (gradientEnabled) {
-                        gradientEnabled.checked = false;
-                    }
-                    
-                    // Show success message
-                    const successMessage = document.createElement('div');
-                    successMessage.className = 'upload-success';
-                    successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
-                    
-                    const dropArea = document.getElementById('bg-image-drop-area');
-                    if (dropArea && dropArea.parentNode) {
-                        // Remove any existing success message
-                        const existingMessage = dropArea.parentNode.querySelector('.upload-success');
-                        if (existingMessage) {
-                            existingMessage.remove();
-                        }
-                        
-                        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
-                        setTimeout(() => successMessage.remove(), 3000);
-                    }
-                    
-                } catch (storageError) {
-                    console.error('Storage error:', storageError);
-                    alert('Failed to save image. The file might be too large.');
-                }
-            };
-            
-            img.onerror = function() {
-                console.error('Failed to load image');
-                alert('Invalid image file');
-            };
-            
-            img.src = e.target.result;
-            
-        } catch (error) {
-            console.error('Error processing image:', error);
-            alert('Error processing image');
-        }
+        processUploadedImage(e.target.result, file.type);
     };
-    
-    reader.onerror = function(error) {
-        console.error('FileReader error:', error);
+    reader.onerror = function() {
+        hideProcessingOverlay();
         alert('Error reading file');
     };
 
     try {
         reader.readAsDataURL(file);
     } catch (error) {
-        console.error('Error starting file read:', error);
+        hideProcessingOverlay();
         alert('Error reading file');
+    }
+}
+
+// Modified processUploadedImage function to call applyAndSaveImage instead of applyUploadedImage
+function processUploadedImage(dataUrl, fileType) {
+    const img = new Image();
+    
+    img.onload = function() {
+        try {
+            // For GIFs and SVGs, use original file
+            if (fileType === 'image/gif' || fileType === 'image/svg+xml') {
+                applyAndSaveImage(dataUrl); // Replaced applyUploadedImage with applyAndSaveImage
+                return;
+            }
+
+            // For other formats, compress
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            let { width, height } = calculateImageDimensions(img.width, img.height);
+            canvas.width = width;
+            canvas.height = height;
+            
+            ctx.drawImage(img, 0, 0, width, height);
+            const compressedImage = canvas.toDataURL(fileType, 0.7);
+            
+            applyAndSaveImage(compressedImage);
+        } catch (error) {
+            console.error('Error processing image:', error);
+            hideProcessingOverlay();
+            alert('Error processing image');
+        }
+    };
+    
+    img.onerror = function() {
+        hideProcessingOverlay();
+        alert('Invalid image file');
+    };
+    
+    img.src = dataUrl;
+}
+
+function applyAndSaveImage(imageData) {
+    try {
+        // Update preview
+        const preview = document.getElementById('bg-preview');
+        if (preview) {
+            preview.style.backgroundImage = `url('${imageData}')`;
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+        }
+        
+        // Apply to body
+        document.body.style.backgroundImage = `url('${imageData}')`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        
+        // Save to localStorage
+        localStorage.setItem('bgImage', imageData);
+        
+        // Show success message
+        showSuccessMessage();
+    } catch (error) {
+        console.error('Error applying image:', error);
+        alert('Error applying image');
+    } finally {
+        hideProcessingOverlay();
+    }
+}
+
+function showProcessingOverlay() {
+    let overlay = document.querySelector('.processing-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'processing-overlay';
+        overlay.innerHTML = `
+            <div class="processing-content">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Processing image...</p>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+    overlay.classList.add('active');
+}
+
+function hideProcessingOverlay() {
+    const overlay = document.querySelector('.processing-overlay');
+    if (overlay) {
+        overlay.classList.remove('active');
+    }
+}
+
+function showSuccessMessage() {
+    const successMessage = document.createElement('div');
+    successMessage.className = 'upload-success';
+    successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
+    
+    const dropArea = document.getElementById('bg-image-drop-area');
+    if (dropArea && dropArea.parentNode) {
+        const existingMessage = dropArea.parentNode.querySelector('.upload-success');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
+        setTimeout(() => successMessage.remove(), 3000);
     }
 }
 
 function applyImageBackground(imageUrl) {
     if (!imageUrl) return;
     
-    clearBackgrounds();
-    
-    // Apply the background directly
+    // Set background properties
     document.body.style.backgroundImage = `url('${imageUrl}')`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
     
     // Save to localStorage
     localStorage.setItem('bgImage', imageUrl);
+    
+    // Update preview if it exists
+    const preview = document.getElementById('bg-preview');
+    if (preview) {
+        preview.style.backgroundImage = `url('${imageUrl}')`;
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+    }
+
+    // Disable gradient if it's enabled
+    if (window.gradientManager) {
+        window.gradientManager.enabled = false;
+        window.gradientManager.updateUI();
+        window.gradientManager.saveSettings();
+    }
 }
 
 function clearBackgrounds() {
+    // Modified to only reset backgroundImage, not the gradient
     document.body.style.backgroundImage = 'none';
-    document.body.style.background = 'none';
-    document.body.style.opacity = 1;
 }
 
 function applyGradientBackground(settings) {
@@ -345,19 +371,33 @@ function applyGradientBackground(settings) {
 }
 
 function removeBackground() {
-    // Clear any existing background image
-    document.body.style.backgroundImage = 'none';
+    // First check if there's actually a background to remove
+    const hasBackground = document.body.style.backgroundImage || localStorage.getItem('bgImage');
+    if (!hasBackground || hasBackground === 'none') return;
+
+    // Clear the background
+    document.body.style.backgroundImage = '';
     localStorage.removeItem('bgImage');
     
-    // Reset the preview
-    const preview = document.getElementById('bg-preview');
-    if (preview) {
-        preview.style.backgroundImage = 'none';
-        preview.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
-    }
-    
-    // Set default gradient
-    setDefaultGradient();
+    // Enable gradient with a small delay to ensure proper state update
+    setTimeout(() => {
+        if (window.gradientManager) {
+            window.gradientManager.enabled = true;
+            const checkbox = document.getElementById('gradient-enabled');
+            if (checkbox) checkbox.checked = true;
+            
+            window.gradientManager.updateUI();
+            window.gradientManager.applyGradient();
+            window.gradientManager.saveSettings();
+        }
+        
+        // Update preview
+        const preview = document.getElementById('bg-preview');
+        if (preview) {
+            preview.style.backgroundImage = 'none';
+            preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
+        }
+    }, 50);
 }
 
 function updateWhiteBoxColor() {
@@ -385,85 +425,6 @@ function updateWhiteBoxTextColor() {
     whiteBoxHeading.style.color = whiteBoxTextColor;
     document.querySelector(".schedule-container").style.color = whiteBoxTextColor; // Change text color in the white box
     localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor); // Save to local storage
-}
-
-// Gradient Management
-function initGradientEditor() {
-    const bar = document.querySelector('.gradient-bar');
-    let isDragging = false;
-    let activeStop = null;
-
-    // Initialize default start and end colors
-    document.getElementById('gradient-start').value = '#000035';
-    document.getElementById('gradient-end').value = '#00bfa5';
-    
-    // Setup drag handling
-    bar.addEventListener('mousedown', handleStopDrag);
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', () => {
-        isDragging = false;
-        activeStop = null;
-    });
-
-    // Add stop on click (if not clicking a stop)
-    bar.addEventListener('click', (e) => {
-        if (e.target === bar) {
-            const rect = bar.getBoundingClientRect();
-            const position = (e.clientX - rect.left) / rect.width;
-            addGradientStop(position * 100);
-        }
-    });
-
-    updateGradient();
-}
-
-function updateGradient() {
-    const enabled = document.getElementById('gradient-enabled')?.checked || false;
-    const startColor = document.getElementById('gradient-start')?.value || '#000035';
-    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
-
-    if (enabled) {
-        // Clear any background image
-        document.body.style.backgroundImage = '';
-        localStorage.removeItem('bgImage');
-        
-        // Apply default gradient
-        document.body.style.background = `linear-gradient(to bottom, ${startColor}, ${endColor})`;
-        
-        // Save settings
-        localStorage.setItem('gradientSettings', JSON.stringify({
-            enabled,
-            startColor,
-            endColor
-        }));
-    } else {
-        setDefaultGradient();
-    }
-}
-
-function setDefaultGradient() {
-    const defaultSettings = {
-        enabled: true,
-        startColor: '#000035',
-        endColor: '#00bfa5'
-    };
-    
-    // Apply the gradient
-    document.body.style.background = `linear-gradient(to bottom, ${defaultSettings.startColor}, ${defaultSettings.endColor})`;
-    
-    // Save settings
-    localStorage.setItem('gradientSettings', JSON.stringify(defaultSettings));
-    
-    // Update UI controls if they exist
-    const gradientEnabled = document.getElementById('gradient-enabled');
-    const gradientControls = document.getElementById('gradient-controls');
-    
-    if (gradientEnabled) {
-        gradientEnabled.checked = true;
-    }
-    if (gradientControls) {
-        gradientControls.classList.add('active');
-    }
 }
 
 // Shadow System
@@ -630,22 +591,6 @@ function closeOtherDropdowns(exceptContent) {
     });
 }
 
-function toggleGradientControls() {
-    const content = document.querySelector('.gradient-controls');
-    const toggle = document.querySelector('#gradient-section .dropdown-toggle');
-    content.classList.toggle("show");
-    toggle.classList.toggle("active");
-}
-
-function toggleGradientEditor() {
-    const content = document.querySelector(".gradient-editor");
-    if (!content) {
-        console.error('Gradient editor element not found');
-        return;
-    }
-    content.classList.toggle("show");
-}
-
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
     console.log('DOM Content Loaded');
@@ -760,18 +705,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Add gradient angle input listener
-    const gradientAngle = document.getElementById('gradient-angle');
-    if (gradientAngle) {
-        gradientAngle.addEventListener('input', (e) => {
-            updateGradient();
-            const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-            if (angleDisplay) {
-                angleDisplay.textContent = `${e.target.value}°`;
-            }
-        });
-    }
-
     // Add drop overlay to body
     dropOverlay = document.createElement('div');
     dropOverlay.className = 'drop-overlay';
@@ -787,13 +720,15 @@ document.addEventListener("DOMContentLoaded", function() {
     // Handle drag and drop for the entire document
     document.addEventListener('dragenter', function(e) {
         e.preventDefault();
-        dropOverlay.classList.add('active');
+        if (dropOverlay && !document.getElementById('settings-sidebar').classList.contains('open')) {
+            dropOverlay.classList.add('active');
+        }
     });
 
     document.addEventListener('dragleave', function(e) {
         e.preventDefault();
         if (e.target === document.documentElement) {
-            dropOverlay.classList.remove('active');
+            dropOverlay?.classList.remove('active');
         }
     });
 
@@ -808,6 +743,25 @@ document.addEventListener("DOMContentLoaded", function() {
         if (file) handleBgImageUpload(file);
     });
 
+    // Ensure drop overlay is only shown when settings are closed
+    const settingsSidebar = document.getElementById('settings-sidebar');
+    if (settingsSidebar) {
+        settingsSidebar.addEventListener('transitionend', function() {
+            if (!this.classList.contains('open')) {
+                dropOverlay?.classList.remove('active');
+            }
+        });
+    }
+
+    // Setup drag and drop handling
+    setupDragAndDrop();
+
+    // Add font color change handler
+    document.getElementById('font-color')?.addEventListener('input', function(e) {
+        const color = e.target.value;
+        document.getElementById('countdown-heading').style.color = color;
+        localStorage.setItem('fontColor', color);
+    });
 });
 
 function setupDropdownListeners() {
@@ -817,7 +771,6 @@ function setupDropdownListeners() {
         populateRenamePeriods(); // Populate rename periods when the dropdown is opened
     });
     document.getElementById('custom-schedule-toggle')?.addEventListener('click', () => toggleDropdown('custom-schedule-content', 'custom-schedule-toggle'));
-    document.getElementById('gradient-section-toggle')?.addEventListener('click', () => toggleDropdown('gradient-controls', 'gradient-section-toggle'));
     
     // Remove the old event listeners first
     const timerShadowCheckbox = document.getElementById('timer-shadow');
@@ -898,253 +851,19 @@ function renamePeriod(index, newName) {
 
 // Add new gradient functionality
 
-class GradientStop {
-    constructor(color, position) {
-        this.color = color;
-        this.position = position;
-        this.element = null;
-    }
-}
-
-class GradientControls {
-    constructor() {
-        this.stops = [
-            new GradientStop('#000035', 0),
-            new GradientStop('#00bfa5', 100)
-        ];
-        this.activeStop = null;
-        this.type = 'linear';
-        this.selectedStop = null;
-        this.init();
-    }
-
-    init() {
-        this.initializeControls();
-        this.setupEventListeners();
-        this.updatePreview();
-    }
-
-    initializeControls() {
-        const container = document.querySelector('.gradient-stops');
-        container.innerHTML = '';
-        this.stops.forEach(stop => this.createStopElement(stop));
-    }
-
-    createStopElement(stop) {
-        const el = document.createElement('div');
-        el.className = 'gradient-stop';
-        el.style.left = `${stop.position}%`;
-        el.style.backgroundColor = stop.color;
-        
-        el.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.selectStop(stop);
-        });
-        
-        document.querySelector('.gradient-stops').appendChild(el);
-        stop.element = el;
-        
-        this.setupStopEvents(stop);
-    }
-
-    selectStop(stop) {
-        // Remove active class from previous stop
-        if (this.selectedStop) {
-            this.selectedStop.element.classList.remove('active');
-        }
-        
-        this.selectedStop = stop;
-        stop.element.classList.add('active');
-        
-        // Update color picker and position input
-        const colorPicker = document.getElementById('stop-color');
-        const positionInput = document.getElementById('stop-position');
-        
-        colorPicker.value = stop.color;
-        positionInput.value = Math.round(stop.position);
-    }
-
-    setupStopEvents(stop) {
-        stop.element.addEventListener('mousedown', (e) => {
-            this.activeStop = stop;
-            this.updateStopPosition(e);
-            document.addEventListener('mousemove', this.handleMouseMove);
-            document.addEventListener('mouseup', this.handleMouseUp);
-        });
-    }
-
-    handleMouseMove = (e) => {
-        if (this.activeStop) {
-            this.updateStopPosition(e);
-        }
-    }
-
-    handleMouseUp = () => {
-        this.activeStop = null;
-        document.removeEventListener('mousemove', this.handleMouseMove);
-        document.removeEventListener('mouseup', this.handleMouseUp);
-    }
-
-    updateStopPosition(e) {
-        const container = document.querySelector('.gradient-bar-container');
-        const rect = container.getBoundingClientRect();
-        let position = ((e.clientX - rect.left) / rect.width) * 100;
-        position = Math.max(0, Math.min(100, position));
-        
-        this.activeStop.position = position;
-        this.activeStop.element.style.left = `${position}%`;
-        this.updatePreview();
-    }
-
-    updatePreview() {
-        const stops = this.stops
-            .sort((a, b) => a.position - b.position)
-            .map(stop => `${stop.color} ${stop.position}%`)
-            .join(', ');
-
-        const gradient = this.type === 'linear'
-            ? `linear-gradient(to right, ${stops})`
-            : `radial-gradient(circle, ${stops})`;
-
-        document.querySelector('.gradient-preview').style.background = gradient;
-        document.querySelector('.gradient-preview-bar').style.background = gradient;
-        document.body.style.background = gradient;
-        
-        this.saveSettings();
-    }
-
-    saveSettings() {
-        const settings = {
-            type: this.type,
-            angle: this.angle,
-            centerX: this.centerX,
-            centerY: this.centerY,
-            stops: this.stops.map(stop => ({
-                color: stop.color,
-                position: stop.position
-            }))
-        };
-        localStorage.setItem('gradientSettings', JSON.stringify(settings));
-    }
-
-    setupEventListeners() {
-        // Type selector
-        document.getElementById('gradient-type').addEventListener('change', (e) => {
-            this.type = e.target.value;
-            this.updatePreview();
-        });
-
-        // Stop color picker
-        document.getElementById('stop-color').addEventListener('input', (e) => {
-            if (this.selectedStop) {
-                this.selectedStop.color = e.target.value;
-                this.selectedStop.element.style.backgroundColor = e.target.value;
-                this.updatePreview();
-            }
-        });
-
-        // Stop position input
-        document.getElementById('stop-position').addEventListener('input', (e) => {
-            if (this.selectedStop) {
-                const position = Math.min(100, Math.max(0, parseInt(e.target.value)));
-                this.selectedStop.position = position;
-                this.selectedStop.element.style.left = `${position}%`;
-                this.updatePreview();
-            }
-        });
-
-        // Delete stop button
-        document.querySelector('.delete-stop').addEventListener('click', () => {
-            if (this.selectedStop && this.stops.length > 2) {
-                const index = this.stops.indexOf(this.selectedStop);
-                if (index > -1) {
-                    this.stops.splice(index, 1);
-                    this.selectedStop.element.remove();
-                    this.selectedStop = null;
-                    this.updatePreview();
-                }
-            }
-        });
-
-        // Add stop button
-        document.querySelector('.add-stop-btn').addEventListener('click', () => {
-            const newPosition = 50;
-            const newColor = '#ffffff';
-            const newStop = new GradientStop(newColor, newPosition);
-            this.stops.push(newStop);
-            this.createStopElement(newStop);
-            this.selectStop(newStop);
-            this.updatePreview();
-        });
-    }
-}
-
-// Initialize gradient controls
-document.addEventListener('DOMContentLoaded', () => {
-    window.gradientControls = new GradientControls();
-});
-
-function toggleTheme() {
-    const sidebar = document.getElementById('settings-sidebar');
-    const icon = document.querySelector('.theme-toggle i');
-    const text = document.querySelector('.theme-toggle-text');
-    
-    sidebar.classList.toggle('light-mode');
-    
-    // Update icon, text and save preference
-    if (sidebar.classList.contains('light-mode')) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
-        localStorage.setItem('theme', 'light');
-    } else {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-        text.textContent = 'Dark Mode';
-        localStorage.setItem('theme', 'dark');
-    }
-
-    // Add smooth transition effect
-    icon.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-        icon.style.transform = '';
-    }, 300);
-}
-
-// Add the new navigation functionality
-function initializeSettingsPanels() {
-    const navItems = document.querySelectorAll('.nav-item');
-    
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            // Remove active class from all items and panels
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
-            
-            // Add active class to clicked item and corresponding panel
-            item.classList.add('active');
-            const targetPanel = document.getElementById(`${item.dataset.target}-panel`);
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-            }
-        });
-    });
-}
-
-// Update the theme loading code
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme');
-    const sidebar = document.getElementById('settings-sidebar');
-    const icon = document.querySelector('.theme-toggle i');
-    const text = document.querySelector('.theme-toggle-text');
-    
-    if (savedTheme === 'light') {
-        sidebar.classList.add('light-mode');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
-    }
-});
+// Remove all gradient-related functions
+/* Remove these functions:
+- updateGradient()
+- setDefaultGradient()
+- initGradientEditor()
+- toggleGradientControls()
+- toggleGradientEditor()
+- showGradientConfirmDialog()
+- handleGradientConfirm()
+- initGradientControls()
+- applyGradientToggle()
+- GradientControls class
+*/
 
 // Progress Bar Functions
 function toggleProgressBar() {
@@ -1316,318 +1035,88 @@ function updateFont() {
 
 // ...existing code...
 
-function toggleGradient() {
-    const enabled = document.getElementById('gradient-enabled').checked;
-    const controls = document.getElementById('gradient-controls');
-    const bgImage = localStorage.getItem('bgImage');
-    
-    if (enabled && bgImage) {
-        if (confirm('Enabling gradient will remove the current background image. Continue?')) {
-            localStorage.removeItem('bgImage');
-            document.body.style.backgroundImage = 'none';
-            const preview = document.getElementById('bg-preview');
-            if (preview) {
-                preview.style.backgroundImage = 'none';
-            }
-            setDefaultGradient();
-        } else {
-            document.getElementById('gradient-enabled').checked = false;
-        }
-        return;
-    }
-    
-    controls.style.display = enabled ? 'block' : 'none';
-    if (enabled) {
-        setDefaultGradient();
-    }
-}
+// ...existing code...
 
-function showGradientConfirmDialog() {
-    // Create dialog if it doesn't exist
-    let dialog = document.querySelector('.gradient-confirm-dialog');
-    if (!dialog) {
-        dialog = document.createElement('div');
-        dialog.className = 'gradient-confirm-dialog';
-        dialog.innerHTML = `
-            <p>Enabling gradient will remove the current background image. Continue?</p>
-            <div class="gradient-confirm-buttons">
-                <button class="confirm" onclick="handleGradientConfirm(true)">Yes, enable gradient</button>
-                <button class="cancel" onclick="handleGradientConfirm(false)">Cancel</button>
-            </div>
-        `;
-        document.body.appendChild(dialog);
-    }
+function toggleTheme() {
+    const sidebar = document.getElementById('settings-sidebar');
+    const icon = document.querySelector('.theme-toggle i');
+    const text = document.querySelector('.theme-toggle-text');
     
-    dialog.classList.add('show');
-}
-
-function handleGradientConfirm(confirmed) {
-    const dialog = document.querySelector('.gradient-confirm-dialog');
-    dialog.classList.remove('show');
+    sidebar.classList.toggle('light-mode');
     
-    if (confirmed) {
-        document.getElementById('gradient-enabled').checked = true;
-        localStorage.removeItem('bgImage');
-        document.body.style.backgroundImage = 'none';
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = 'none';
-        }
-        // Use setDefaultGradient directly instead of going through the toggle flow
-        setDefaultGradient();
-    }
-}
-
-function initGradientControls() {
-    // Set default values if they don't exist
-    const gradientStart = document.getElementById('gradient-start');
-    const gradientEnd = document.getElementById('gradient-end');
-    
-    if (gradientStart) gradientStart.value = '#000035';
-    if (gradientEnd) gradientEnd.value = '#00bfa5';
-}
-
-function applyGradientToggle(enabled) {
-    const controls = document.getElementById('gradient-controls');
-    controls.classList.toggle('active', enabled);
-    
-    if (enabled) {
-        updateGradient();
+    // Update icon, text and save preference
+    if (sidebar.classList.contains('light-mode')) {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        text.textContent = 'Light Mode';
+        localStorage.setItem('theme', 'light');
     } else {
-        removeBackground();
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+        text.textContent = 'Dark Mode';
+        localStorage.setItem('theme', 'dark');
     }
+
+    // Add smooth transition effect
+    icon.style.transform = 'rotate(360deg)';
+    setTimeout(() => {
+        icon.style.transform = '';
+    }, 300);
 }
 
-function updateGradient() {
-    const enabled = document.getElementById('gradient-enabled')?.checked || false;
-    const startColor = document.getElementById('gradient-start')?.value || '#000035';
-    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
-
-    if (enabled) {
-        // Clear any background image
-        document.body.style.backgroundImage = '';
-        localStorage.removeItem('bgImage');
-        
-        // Apply gradient with default direction
-        document.body.style.background = `linear-gradient(to bottom, ${startColor}, ${endColor})`;
-        
-        // Save settings
-        localStorage.setItem('gradientSettings', JSON.stringify({
-            enabled,
-            startColor,
-            endColor
-        }));
-    }
-}
-
-function getGradientStops() {
-    return Array.from(document.querySelectorAll('.gradient-stop'))
-        .sort((a, b) => parseFloat(a.style.left) - parseFloat(b.style.left))
-        .map(stop => `${stop.dataset.color} ${parseFloat(stop.style.left)}%`)
-        .join(', ');
-}
-
-function updateSelectedStop() {
-    const activeStop = document.querySelector('.gradient-stop.active');
-    if (!activeStop) return;
+// Add the new navigation functionality
+function initializeSettingsPanels() {
+    const navItems = document.querySelectorAll('.nav-item');
     
-    const color = document.getElementById('stop-color').value;
-    const position = document.getElementById('stop-position').value;
-    
-    activeStop.dataset.color = color;
-    activeStop.style.backgroundColor = color;
-    activeStop.style.left = `${position}%`;
-    
-    updateGradient();
-}
-
-function deleteSelectedStop() {
-    const activeStop = document.querySelector('.gradient-stop.active');
-    if (!activeStop || document.querySelectorAll('.gradient-stop').length <= 2) return;
-    
-    activeStop.remove();
-    updateGradient();
-}
-
-function addGradientStop() {
-    const container = document.querySelector('.gradient-stops');
-    const bar = document.querySelector('.gradient-bar-container');
-    if (!container || !bar) return;
-
-    const stop = document.createElement('div');
-    stop.className = 'gradient-stop';
-    stop.style.left = '50%';
-    stop.style.backgroundColor = '#ffffff';
-    stop.dataset.color = '#ffffff';
-    stop.dataset.position = '50';
-    
-    stop.addEventListener('mousedown', startDragging);
-    stop.addEventListener('click', selectGradientStop);
-    
-    container.appendChild(stop);
-    
-    // Select the new stop
-    selectGradientStop({ target: stop });
-    updateGradientPreview();
-}
-
-function startDragging(e) {
-    e.preventDefault();
-    const stop = e.target;
-    document.querySelector('.gradient-stops').style.cursor = 'grabbing';
-    
-    function handleDrag(moveEvent) {
-        const container = document.querySelector('.gradient-bar-container');
-        if (!container) return;
-
-        const rect = container.getBoundingClientRect();
-        const x = moveEvent.clientX - rect.left;
-        const position = Math.max(0, Math.min(100, (x / rect.width) * 100));
-        
-        stop.style.left = `${position}%`;
-        stop.dataset.position = position;
-        updateGradientPreview();
-    }
-    
-    function stopDragging() {
-        document.querySelector('.gradient-stops').style.cursor = '';
-        document.removeEventListener('mousemove', handleDrag);
-        document.removeEventListener('mouseup', stopDragging);
-    }
-    
-    document.addEventListener('mousemove', handleDrag);
-    document.addEventListener('mouseup', stopDragging);
-}
-
-function selectGradientStop(e) {
-    const stops = document.querySelectorAll('.gradient-stop');
-    stops.forEach(s => s.classList.remove('active'));
-    
-    const stop = e.target;
-    stop.classList.add('active');
-    
-    // Update color picker and position input
-    const colorPicker = document.getElementById('stop-color');
-    const positionInput = document.getElementById('stop-position');
-    
-    if (colorPicker && positionInput) {
-        colorPicker.value = stop.dataset.color || '#ffffff';
-        positionInput.value = Math.round(parseFloat(stop.dataset.position)) || 0;
-    }
-}
-
-function updateSelectedStop() {
-    const activeStop = document.querySelector('.gradient-stop.active');
-    if (!activeStop) return;
-    
-    const color = document.getElementById('stop-color').value;
-    const position = document.getElementById('stop-position').value;
-    
-    activeStop.style.backgroundColor = color;
-    activeStop.dataset.color = color;
-    activeStop.style.left = `${position}%`;
-    activeStop.dataset.position = position;
-    
-    updateGradientPreview();
-}
-
-function deleteSelectedStop() {
-    const stops = document.querySelectorAll('.gradient-stop');
-    if (stops.length <= 2) return; // Keep minimum 2 stops
-    
-    const activeStop = document.querySelector('.gradient-stop.active');
-    if (activeStop) {
-        activeStop.remove();
-        updateGradientPreview();
-    }
-}
-
-function updateGradientPreview() {
-    const stops = Array.from(document.querySelectorAll('.gradient-stop'))
-        .map(stop => ({
-            color: stop.dataset.color || '#ffffff',
-            position: parseFloat(stop.dataset.position) || 0
-        }))
-        .sort((a, b) => a.position - b.position);
-    
-    if (stops.length < 2) return;
-    
-    const gradientString = `linear-gradient(to bottom, ${
-        stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
-    })`;
-    
-    // Update preview and apply to body
-    document.querySelector('.gradient-preview-bar').style.background = gradientString;
-    document.querySelector('.gradient-preview').style.background = gradientString;
-    document.body.style.background = gradientString;
-    
-    // Save settings
-    localStorage.setItem('gradientSettings', JSON.stringify({
-        enabled: true,
-        stops: stops
-    }));
-}
-
-// Initialize gradient with default stops when enabled
-function initializeGradientStops() {
-    const container = document.querySelector('.gradient-stops');
-    if (!container) return;
-    
-    // Clear existing stops
-    container.innerHTML = '';
-    
-    // Create default stops
-    const defaultStops = [
-        { color: '#000035', position: 0 },
-        { color: '#00bfa5', position: 100 }
-    ];
-    
-    defaultStops.forEach(stopData => {
-        const stop = document.createElement('div');
-        stop.className = 'gradient-stop';
-        stop.style.left = `${stopData.position}%`;
-        stop.style.backgroundColor = stopData.color;
-        stop.dataset.color = stopData.color;
-        stop.dataset.position = stopData.position;
-        
-        stop.addEventListener('mousedown', startDragging);
-        stop.addEventListener('click', selectGradientStop);
-        
-        container.appendChild(stop);
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all items and panels
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
+            
+            // Add active class to clicked item and corresponding panel
+            item.classList.add('active');
+            const targetPanel = document.getElementById(`${item.dataset.target}-panel`);
+            if (targetPanel) {
+                targetPanel.classList.add('active');
+            }
+        });
     });
-    
-    updateGradientPreview();
 }
 
-// Add this to your DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', function() {
-    /* ...existing code... */
+// Update the theme loading code
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('theme');
+    const sidebar = document.getElementById('settings-sidebar');
+    const icon = document.querySelector('.theme-toggle i');
+    const text = document.querySelector('.theme-toggle-text');
     
-    // Initialize gradient if enabled
-    const gradientEnabled = document.getElementById('gradient-enabled');
-    if (gradientEnabled && gradientEnabled.checked) {
-        initializeGradientStops();
+    if (savedTheme === 'light') {
+        sidebar.classList.add('light-mode');
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+        text.textContent = 'Light Mode';
     }
-    
-    /* ...existing code... */
 });
 
-/* ...existing code... */
+// ...existing code...
 
-function saveGradientSettings() {
-    const settings = {
-        type: document.getElementById('gradient-type').value,
-        angle: document.getElementById('gradient-angle').value,
-        stops: Array.from(document.querySelectorAll('.gradient-stop')).map(stop => ({
-            color: stop.dataset.color,
-            position: parseFloat(stop.style.left)
-        }))
-    };
+window.addEventListener('beforeunload', function (e) {
+    // Save settings before closing the tab
+    if (typeof window.gradientControls !== 'undefined') {
+        window.gradientControls.saveSettings();
+    }
     
-    localStorage.setItem('gradientSettings', JSON.stringify(settings));
-}
+    // You can add other settings to save here as well
+    // For example, save white box settings
+    const whiteBoxColor = document.querySelector(".schedule-container").style.backgroundColor;
 
-/* ...existing code... */
+    const whiteBoxTextColor = document.getElementById("white-box-heading").style.color;
+    localStorage.setItem("whiteBoxColor", whiteBoxColor);
+    localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
+});
+
+// ...existing code...
 
 function removeProgressBar() {
     const progressBar = document.querySelector('.progress-overlay');
@@ -1642,4 +1131,394 @@ function removeProgressBar() {
     }
 }
 
-/* ...existing code... */ 
+/* ...existing code... */
+
+function setupDragAndDrop() {
+    // Create drop overlay if it doesn't exist
+    if (!dropOverlay) {
+        dropOverlay = document.createElement('div');
+        dropOverlay.className = 'drop-overlay';
+        dropOverlay.innerHTML = `
+            <div class="drop-content">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p class="drop-text">Drop your image here</p>
+                <p class="drop-subtext">Release to upload background</p>
+            </div>
+        `;
+        document.body.appendChild(dropOverlay);
+    }
+
+    // Create settings overlay
+    const settingsOverlay = dropOverlay.cloneNode(true);
+    settingsOverlay.classList.add('settings-overlay');
+    document.querySelector('.settings-sidebar')?.appendChild(settingsOverlay);
+
+    const handleDrag = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const isSettingsSidebarOpen = document.getElementById('settings-sidebar').classList.contains('open');
+        if (isSettingsSidebarOpen) {
+            settingsOverlay.classList.add('active');
+        } else {
+            dropOverlay.classList.add('active');
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        if (e.target === document.documentElement || e.relatedTarget === null) {
+            dropOverlay.classList.remove('active');
+            settingsOverlay.classList.remove('active');
+        }
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        dropOverlay.classList.remove('active');
+        settingsOverlay.classList.remove('active');
+        
+        const file = e.dataTransfer.files[0];
+        if (file) handleBgImageUpload(file);
+    };
+
+    // Add event listeners
+    ['dragenter', 'dragover'].forEach(event => {
+        document.addEventListener(event, handleDrag);
+    });
+
+    document.addEventListener('dragleave', handleDragLeave);
+    document.addEventListener('drop', handleDrop);
+
+    // Setup the drop area in settings panel
+    const dropArea = document.getElementById('bg-image-drop-area');
+    const fileInput = document.getElementById('bg-image');
+
+    if (dropArea && fileInput) {
+        dropArea.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) handleBgImageUpload(e.target.files[0]);
+        });
+        fileInput.accept = "image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml";
+    }
+}
+
+// Update the handleBgImageUpload function to show better feedback
+function handleBgImageUpload(file) {
+    if (!file) {
+        console.error('No file provided');
+        return;
+    }
+
+    // Reset any active states
+    dropOverlay?.classList.remove('active');
+    document.getElementById('bg-image-drop-area')?.classList.remove('drag-over');
+
+    // Validate file
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+    }
+
+    // Updated file type check
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/avif',
+        'image/bmp',
+        'image/tiff',
+        'image/svg+xml'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+        alert('Supported formats: JPG, PNG, GIF, WebP, AVIF, BMP, TIFF, SVG');
+        return;
+    }
+
+    // Disable gradient if enabled
+    if (window.gradientManager) {
+        const checkbox = document.getElementById('gradient-enabled');
+        if (checkbox && checkbox.checked) {
+            checkbox.checked = false;
+            window.gradientManager.toggleGradient();
+        }
+    }
+
+    // Show loading state
+    const dropArea = document.getElementById('bg-image-drop-area');
+    if (dropArea) {
+        dropArea.style.opacity = '0.5';
+        dropArea.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    }
+
+    // Process the image
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        processUploadedImage(e.target.result, dropArea, file.type);
+    };
+    reader.onerror = function(error) {
+        console.error('FileReader error:', error);
+        alert('Error reading file');
+    };
+
+    try {
+        reader.readAsDataURL(file);
+    } catch (error) {
+        console.error('Error starting file read:', error);
+        alert('Error reading file');
+    }
+}
+
+function processUploadedImage(dataUrl, dropArea, fileType) {
+    const img = new Image();
+    img.onload = function() {
+        // For GIFs and SVGs, use original file to preserve animation/vectors
+        if (fileType === 'image/gif' || fileType === 'image/svg+xml') {
+            applyUploadedImage(dataUrl, dropArea);
+            return;
+        }
+
+        // For other formats, compress if needed
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let { width, height } = calculateImageDimensions(img.width, img.height);
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Use original format if possible, fallback to JPEG
+        let outputType = fileType;
+        if (!['image/webp', 'image/avif', 'image/png'].includes(fileType)) {
+            outputType = 'image/jpeg';
+        }
+        
+        const compressedImage = canvas.toDataURL(outputType, 0.7);
+        applyUploadedImage(compressedImage, dropArea);
+    };
+    
+    img.onerror = function() {
+        console.error('Image loading error');
+        resetDropArea(dropArea);
+        alert('Invalid image file');
+    };
+    
+    img.src = dataUrl;
+}
+
+function calculateImageDimensions(width, height) {
+    const MAX_WIDTH = 1920;
+    const MAX_HEIGHT = 1080;
+    
+    if (width > MAX_WIDTH) {
+        height *= MAX_WIDTH / width;
+        width = MAX_WIDTH;
+    }
+    if (height > MAX_HEIGHT) {
+        width *= MAX_HEIGHT / height;
+        height = MAX_HEIGHT;
+    }
+    
+    return { width, height };
+}
+
+function resetDropArea(dropArea) {
+    if (dropArea) {
+        dropArea.style.opacity = '1';
+        dropArea.innerHTML = `
+            <i class="fas fa-cloud-upload-alt"></i>
+            <div class="upload-text">
+                <p class="main-text">Drop image here or click to upload</p>
+                <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
+            </div>
+        `;
+    }
+}
+
+// Fix for the first error: Missing gradient-stops container
+function initializeGradientControls() {
+    const container = document.querySelector('.gradient-controls');
+    if (!container) return;
+
+    // Create gradient-stops container if it doesn't exist
+    let stopsContainer = container.querySelector('.gradient-stops');
+    if (!stopsContainer) {
+        stopsContainer = document.createElement('div');
+        stopsContainer.className = 'gradient-stops';
+        container.appendChild(stopsContainer);
+    }
+
+    // Initialize default stops
+    stopsContainer.innerHTML = ''; // Clear existing stops
+    const defaultStops = [
+        { color: '#000035', position: 0 },
+        { color: '#00bfa5', position: 100 }
+    ];
+
+    defaultStops.forEach(stop => {
+        const stopElement = document.createElement('div');
+        stopElement.className = 'gradient-stop';
+        stopElement.style.left = `${stop.position}%`;
+        stopElement.style.backgroundColor = stop.color;
+        stopElement.dataset.color = stop.color;
+        stopElement.dataset.position = stop.position;
+        stopsContainer.appendChild(stopElement);
+    });
+}
+
+// Fix for the second error: Add missing applyUploadedImage function
+function applyUploadedImage(imageData, dropArea) {
+    try {
+        // Update preview
+        const preview = document.getElementById('bg-preview');
+        if (preview) {
+            preview.style.backgroundImage = `url('${imageData}')`;
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+        }
+        
+        // Apply to body
+        document.body.style.backgroundImage = `url('${imageData}')`;
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        
+        // Save to localStorage
+        localStorage.setItem('bgImage', imageData);
+        
+        // Reset gradient if enabled
+        const gradientEnabled = document.getElementById('gradient-enabled');
+        if (gradientEnabled) {
+            gradientEnabled.checked = false;
+            const gradientControls = document.getElementById('gradient-controls');
+            if (gradientControls) {
+                gradientControls.classList.remove('active');
+            }
+        }
+        
+        // Reset drop area
+        resetDropArea(dropArea);
+        
+        // Show success message
+        const successMessage = document.createElement('div');
+        successMessage.className = 'upload-success';
+        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
+        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
+        
+        // Remove success message after 3 seconds
+        setTimeout(() => successMessage.remove(), 3000);
+        
+    } catch (error) {
+        console.error('Error applying image:', error);
+        alert('Error applying image');
+        resetDropArea(dropArea);
+    }
+}
+
+// Update the GradientControls class initialization
+document.addEventListener('DOMContentLoaded', () => {
+    initializeGradientControls();
+    // Initialize other components...
+});
+
+// ...existing code...
+
+window.addEventListener('beforeunload', function (e) {
+    // Save settings before closing the tab
+    if (typeof window.gradientControls !== 'undefined') {
+        window.gradientControls.saveSettings();
+    }
+    
+    // You can add other settings to save here as well
+    // For example, save white box settings
+    const whiteBoxColor = document.querySelector(".schedule-container").style.backgroundColor;
+
+    const whiteBoxTextColor = document.getElementById("white-box-heading").style.color;
+    localStorage.setItem("whiteBoxColor", whiteBoxColor);
+    localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
+});
+
+// ...existing code...
+
+// Simplified gradient management
+function updateGradient(save = true) {
+    const enabled = document.getElementById('gradient-enabled')?.checked || false;
+    const startColor = document.getElementById('gradient-start')?.value || '#000035';
+    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
+    const angle = document.getElementById('gradient-angle')?.value || '90';
+
+    if (enabled) {
+        // Clear any background image
+        document.body.style.backgroundImage = '';
+        localStorage.removeItem('bgImage');
+        
+        // Apply gradient
+        const gradientString = `linear-gradient(${angle}deg, ${startColor}, ${endColor})`;
+        document.body.style.background = gradientString;
+        
+        // Update preview if it exists
+        const preview = document.querySelector('.gradient-preview');
+        if (preview) {
+            preview.style.background = gradientString;
+        }
+        
+        // Save settings only if requested
+        if (save) {
+            const settings = {
+                enabled,
+                startColor,
+                endColor,
+                angle
+            };
+            localStorage.setItem('gradientSettings', JSON.stringify(settings));
+        }
+    }
+}
+
+function loadGradientSettings() {
+    const savedSettings = JSON.parse(localStorage.getItem('gradientSettings')) || {
+        enabled: true,
+        startColor: '#000035',
+        endColor: '#00bfa5',
+        angle: '90'
+    };
+
+    // Set the controls
+    const gradientEnabled = document.getElementById('gradient-enabled');
+    const gradientStart = document.getElementById('gradient-start');
+    const gradientEnd = document.getElementById('gradient-end');
+    const gradientAngle = document.getElementById('gradient-angle');
+    const gradientControls = document.querySelector('.gradient-controls');
+
+    if (gradientEnabled) gradientEnabled.checked = savedSettings.enabled;
+    if (gradientStart) gradientStart.value = savedSettings.startColor;
+    if (gradientEnd) gradientEnd.value = savedSettings.endColor;
+    if (gradientAngle) gradientAngle.value = savedSettings.angle;
+    
+    // Show controls if enabled
+    if (gradientControls && savedSettings.enabled) {
+        gradientControls.classList.add('active');
+    }
+
+    // Apply the gradient without saving
+    updateGradient(false);
+}
+
+// Add this to your DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', () => {
+    loadGradientSettings();
+    
+    // Set up gradient control listeners
+    document.getElementById('gradient-enabled')?.addEventListener('change', () => updateGradient(true));
+    document.getElementById('gradient-start')?.addEventListener('input', () => updateGradient(true));
+    document.getElementById('gradient-end')?.addEventListener('input', () => updateGradient(true));
+    document.getElementById('gradient-angle')?.addEventListener('input', (e) => {
+        updateGradient(true);
+        const angleDisplay = document.querySelector('#gradient-angle + .range-value');
+        if (angleDisplay) {
+            angleDisplay.textContent = `${e.target.value}°`;
+        }
+    });
+});
