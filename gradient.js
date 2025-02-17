@@ -10,7 +10,7 @@ class GradientManager {
         
         this.init();
     }
-
+ 
     init() {
         // Wait for both DOM and other scripts
         if (document.readyState !== 'complete') {
