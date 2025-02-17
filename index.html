@@ -9,6 +9,29 @@
     <link rel="stylesheet" type="text/css" href="./styles2.css">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="./gradient.js"></script>
+    <script defer src="./script2.js"></script>
+    <script defer src="./script.js"></script>
+    <script defer>
+        function initializeApplication() {
+            let attempts = 0;
+            const maxAttempts = 10;
+            const checkInterval = setInterval(() => {
+                if (typeof toggleSettingsSidebar === 'function' && typeof initializeApp === 'function') {
+                    clearInterval(checkInterval);
+                    initializeApp();
+                } else {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('Failed to initialize application after multiple attempts');
+                    }
+                }
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApplication);
+    </script>
 </head>
 <body>
     <div class="container">
@@ -41,9 +64,10 @@
                 <button class="nav-item" data-target="timer">Timer</button>
                 <button class="nav-item" data-target="about">About</button>
                 <div class="nav-spacer"></div>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
+                <!-- Hide light/dark button -->
+                <!-- <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
                     <i class="fas fa-moon"></i>
-                </button>
+                </button> -->
             </div>
             
             <div class="settings-panels">
@@ -52,12 +76,12 @@
                         <h3>Background Image</h3>
                         <div class="background-controls">
                             <div class="image-upload-container">
-                                <input type="file" id="bg-image" accept="image/*">
+                                <input type="file" id="bg-image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml">
                                 <div id="bg-image-drop-area">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <div class="upload-text">
                                         <p class="main-text">Drop image here or click to upload</p>
-                                        <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
+                                        <p class="sub-text">Supports JPG, PNG, GIF, WebP, AVIF & more • Max 5MB</p>
                                     </div>
                                 </div>
                             </div>
@@ -75,39 +99,23 @@
                     </div>
 
                     <div class="settings-group">
-                        <h3>Background Gradient</h3>
+                        <h3>Gradient Background</h3>
                         <div class="switch-container">
-                            <label class="switch-label" for="gradient-enabled">Enable Gradient Background</label>
+                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
                             <label class="switch">
-                                <input type="checkbox" id="gradient-enabled" onchange="toggleGradient()">
+                                <input type="checkbox" id="gradient-enabled">
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <div class="gradient-controls" id="gradient-controls">
-                            <p class="gradient-instructions">
-                                <i class="fas fa-info-circle"></i>
-                                Click on the gradient bar to add new colors. Drag the color stops to adjust their position.
-                            </p>
-                            <div class="gradient-preview"></div>
-                            <div class="gradient-bar-container">
-                                <div class="gradient-preview-bar"></div>
-                                <div class="gradient-stops"></div>
-                                <button class="add-stop-btn" onclick="addGradientStop()">
-                                    <i class="fas fa-plus"></i>
-                                    Add Color Stop
-                                </button>
+                        <div id="gradient-settings">
+                            <div id="gradient-preview"></div>
+                            <div>
+                                <label for="gradient-angle">Angle:</label>
+                                <input type="range" id="gradient-angle" min="0" max="360" value="90">
+                                <span class="range-value">90°</span>
                             </div>
-                            <div class="stop-editor">
-                                <input type="color" id="stop-color" class="color-picker" onchange="updateSelectedStop()">
-                                <div class="position-control">
-                                    <label for="stop-position">Position:</label>
-                                    <input type="number" id="stop-position" min="0" max="100" value="0" onchange="updateSelectedStop()">
-                                    <span>%</span>
-                                </div>
-                                <button class="delete-stop" onclick="deleteSelectedStop()">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
+                            <div id="gradient-stops"></div>
+                            <button id="add-stop">Add Color Stop</button>
                         </div>
                     </div>
 
@@ -285,28 +293,8 @@
             </div>
         </div>
     </div>
-    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()">
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
         <i class="fas fa-cog"></i>
     </button>
-    <!-- Load scripts at the end of body -->
-    <script src="./script.js" defer></script>
-    <script src="./script2.js" defer></script>
-    <script>
-        // Add fallback initialization
-        window.addEventListener('load', function() {
-            if (typeof initializeApp === 'function') {
-                initializeApp();
-            } else {
-                console.error('Required functions not loaded. Retrying...');
-                setTimeout(() => {
-                    if (typeof initializeApp === 'function') {
-                        initializeApp();
-                    } else {
-                        console.error('Failed to initialize application');
-                    }
-                }, 1000);
-            }
-        });
-    </script>
 </body>
 </html>
