@@ -1,394 +1,568 @@
-class GradientManager {
-    constructor() {
-        this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ];
-        this.angle = 90;
-        this.enabled = false;
-        this.initialized = false;
-        
-        this.init();
+// Declare schedules first
+const schedules = {
+    normal: [
+        { name: "Period 1", start: "08:15", end: "09:00" },
+        { name: "Passing", start: "09:00", end: "09:06" },
+        { name: "Period 2", start: "09:06", end: "09:51" },
+        { name: "Passing", start: "09:51", end: "09:57" },
+        { name: "Period 3", start: "09:57", end: "10:42" },
+        { name: "Passing", start: "10:42", end: "10:48" },
+        { name: "Period 4", start: "10:48", end: "11:33" },
+        { name: "Passing", start: "11:33", end: "11:39" },
+        { name: "Period 5", start: "11:39", end: "12:25" },
+        { name: "Lunch", start: "12:25", end: "13:07" },
+        { name: "Passing", start: "13:07", end: "13:13" },
+        { name: "Period 6", start: "13:13", end: "13:58" },
+        { name: "Passing", start: "13:58", end: "14:04" },
+        { name: "Period 7", start: "14:04", end: "14:49" },
+        { name: "Passing", start: "14:49", end: "14:55" },
+        { name: "Period 8", start: "14:55", end: "15:40" },
+    ],
+    chapel: [
+        { name: "Period 1", start: "08:15", end: "08:53" },
+        { name: "Period 2", start: "08:59", end: "09:38" },
+        { name: "Period 3", start: "09:44", end: "10:23" },
+        { name: "Chapel", start: "10:29", end: "11:14" },
+        { name: "Period 4", start: "11:20", end: "12:00" },
+        { name: "Period 5", start: "12:06", end: "12:46" },
+        { name: "Lunch", start: "12:46", end: "13:28" },
+        { name: "Period 6", start: "13:34", end: "14:12" },
+        { name: "Period 7", start: "14:18", end: "14:56" },
+        { name: "Period 8", start: "15:02", end: "15:40" },
+    ],
+    latePepRally: [
+        { name: "Period 1", start: "08:15", end: "08:53" },
+        { name: "Period 2", start: "08:59", end: "09:37" },
+        { name: "Period 3", start: "09:43", end: "10:21" },
+        { name: "Period 4", start: "10:27", end: "11:05" },
+        { name: "Period 5", start: "11:11", end: "11:49" },
+        { name: "Period 6", start: "11:55", end: "12:33" },
+        { name: "Lunch", start: "12:33", end: "13:10" },
+        { name: "Period 7", start: "13:16", end: "13:54" },
+        { name: "Period 8", start: "14:00", end: "14:38" },
+        { name: "Pep Rally", start: "14:45", end: "15:40" },
+    ],
+    earlyPepRally: [
+        { name: "Period 1", start: "08:15", end: "08:55" },
+        { name: "Period 2", start: "09:01", end: "09:41" },
+        { name: "Period 3", start: "09:47", end: "10:27" },
+        { name: "Period 4", start: "10:33", end: "11:13" },
+        { name: "Period 5", start: "11:19", end: "11:59" },
+        { name: "Pep Rally", start: "12:05", end: "12:30" },
+        { name: "Lunch", start: "12:30", end: "13:13" },
+        { name: "Period 6", start: "13:19", end: "14:02" },
+        { name: "Period 7", start: "14:08", end: "14:51" },
+        { name: "Period 8", start: "14:57", end: "15:40" },
+    ]
+};
+
+// Then declare schedule display names
+const scheduleDisplayNames = {
+    normal: 'Normal',
+    chapel: 'Chapel Bell',
+    latePepRally: 'Late Pep Rally',
+    earlyPepRally: 'Early Pep Rally'  // Fixed the display name
+};
+
+// Initialize global variables
+let currentSchedule = schedules.normal;
+let currentScheduleName = 'normal';
+
+// Wait for both scripts to be loaded
+document.addEventListener("DOMContentLoaded", function() {
+    // First ensure script2.js functions are available
+    if (typeof toggleSettingsSidebar === 'function') {
+        initializeApp();
+    } else {
+        console.error('Required functions not loaded yet');
     }
- 
-    init() {
-        // Wait for both DOM and other scripts
-        if (document.readyState !== 'complete') {
-            window.addEventListener('load', () => this.setupManager());
+});
+
+// Clean up old interval if it exists when loading new script
+if (window.countdownInterval) {
+    clearInterval(window.countdownInterval);
+}
+
+function initializeApp() {
+    initializeSavedSchedules();
+    
+    // Handle Tuesday chapel and Wednesday normal schedule
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    
+    if (dayOfWeek === 2) { // 2 represents Tuesday
+        switchSchedule('chapel');
+        console.log('Tuesday detected - switched to chapel schedule');
+    } else if (dayOfWeek === 3) { // 3 represents Wednesday
+        switchSchedule('normal');
+        console.log('Wednesday detected - switched to normal schedule');
+    } else {
+        // Load saved schedule for other days
+        const savedScheduleName = localStorage.getItem('currentScheduleName');
+        if (savedScheduleName) {
+            switchSchedule(savedScheduleName);
         } else {
-            this.setupManager();
+            switchSchedule('normal');
         }
     }
 
-    setupManager() {
-        if (this.initialized) return;
+    updateScheduleDisplay();
+    window.countdownInterval = startCountdown();
+}
+
+// Schedule management functions
+function switchSchedule(scheduleName) {
+    if (!scheduleName) return;
+    
+    try {
+        let schedule;
         
-        // Wait for required elements
-        const requiredElements = [
-            'gradient-stops',
-            'gradient-enabled',
-            'gradient-angle',
-            'add-stop',
-            'gradient-settings'
-        ];
-
-        if (!requiredElements.every(id => document.getElementById(id))) {
-            setTimeout(() => this.setupManager(), 100);
-            return;
-        }
-
-        // Load settings first before any other initialization
-        this.loadSettings();
-
-        // Check for background image after settings are loaded
-        const hasBackgroundImage = localStorage.getItem('bgImage');
-        if (hasBackgroundImage) {
-            this.enabled = false;
-            document.body.style.backgroundImage = `url('${hasBackgroundImage}')`;
-        } else {
-            // Only apply gradient if no background image exists
-            this.enabled = true;
-            this.applyGradient();
-        }
-
-        this.initializeEventListeners();
-        this.initialized = true;
-        this.updateGradientSettingsVisibility();
-    }
-
-    initializeEventListeners() {
-        document.getElementById('gradient-enabled')?.addEventListener('change', () => this.toggleGradient());
-        document.getElementById('gradient-angle')?.addEventListener('input', (e) => this.updateAngle(e.target.value));
-        document.getElementById('add-stop')?.addEventListener('click', () => this.addStop());
-    }
-
-    loadSettings() {
-        const stored = localStorage.getItem('gradientSettings');
-        if (stored) {
-            try {
-                const settings = JSON.parse(stored);
-                if (settings) {
-                    // Always load stops and angle, even if gradient is disabled
-                    if (Array.isArray(settings.stops)) {
-                        this.stops = settings.stops;
-                        this.angle = settings.angle || 90;
-                        this.stops.sort((a, b) => a.position - b.position);
-                    }
-                    
-                    // Check if background image exists - if so, don't enable gradient
-                    const hasBackgroundImage = localStorage.getItem('bgImage');
-                    this.enabled = hasBackgroundImage ? false : settings.enabled;
-                    
-                    // Update UI with loaded settings
-                    this.updateUI();
-                    
-                    // Apply gradient only if enabled and no background image
-                    if (this.enabled && !hasBackgroundImage) {
-                        requestAnimationFrame(() => this.applyGradient());
-                    }
-                }
-            } catch (error) {
-                console.warn('Error parsing gradient settings:', error);
+        // Check if it's a custom schedule
+        if (scheduleName.startsWith('customSchedule_')) {
+            const savedSchedule = localStorage.getItem(scheduleName);
+            if (savedSchedule) {
+                schedule = JSON.parse(savedSchedule);
+            } else {
+                console.error(`Custom schedule ${scheduleName} not found`);
+                return;
             }
-        }
-        
-        // Always show/hide gradient settings based on enabled state
-        this.updateGradientSettingsVisibility();
-    }
-
-    saveSettings() {
-        localStorage.setItem('gradientSettings', JSON.stringify({
-            enabled: this.enabled,
-            stops: this.stops,
-            angle: this.angle
-        }));
-    }
-
-    // Updated popup method: set the popup text color inline for better contrast
-    showBgRemovalPopup(callback) {
-        const overlay = document.createElement('div');
-        overlay.className = 'popup-overlay';
-        overlay.innerHTML = `
-            <div class="popup-box">
-                <p style="color: #000;">Enabling gradient will remove the background image. Do you want to proceed?</p>
-                <div class="popup-buttons">
-                    <button id="popup-no" class="popup-btn cancel">Cancel</button>
-                    <button id="popup-yes" class="popup-btn confirm">Yes, remove image</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-        overlay.querySelector('#popup-yes').addEventListener('click', () => {
-            callback(true);
-            document.body.removeChild(overlay);
-        });
-        overlay.querySelector('#popup-no').addEventListener('click', () => {
-            callback(false);
-            document.body.removeChild(overlay);
-        });
-    }
-
-    // In toggleGradient we now ensure the gradient settings are saved after confirming.
-    toggleGradient() {
-        const checkbox = document.getElementById('gradient-enabled');
-        if (!checkbox) return;
-
-        if (checkbox.checked) {
-            // When enabling gradient, show confirmation if there's a background
-            const bgImage = document.body.style.backgroundImage || localStorage.getItem('bgImage');
-            if (bgImage && bgImage !== 'none') {
-                this.showBgRemovalPopup((proceed) => {
-                    if (proceed) {
-                        document.body.style.backgroundImage = '';
-                        localStorage.removeItem('bgImage');
-                        this.enabled = true;
-                        // Load saved gradient settings before applying
-                        const savedSettings = localStorage.getItem('gradientSettings');
-                        if (savedSettings) {
-                            const settings = JSON.parse(savedSettings);
-                            if (settings.stops) this.stops = settings.stops;
-                            if (settings.angle) this.angle = settings.angle;
-                        }
-                        this.applyGradient();
-                    } else {
-                        checkbox.checked = false;
-                        this.enabled = false;
-                    }
-                    this.updateGradientSettingsVisibility();
-                    this.saveSettings();
-                });
+        } else {
+            // Handle built-in schedules
+            const savedSchedule = localStorage.getItem('savedSchedule_' + scheduleName);
+            if (savedSchedule) {
+                schedule = JSON.parse(savedSchedule);
+            } else if (schedules[scheduleName]) {
+                schedule = JSON.parse(JSON.stringify(schedules[scheduleName]));
+                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
+            } else {
+                console.error(`Schedule ${scheduleName} not found`);
                 return;
             }
         }
+
+        // Update current schedule
+        currentSchedule = schedule;
+        currentScheduleName = scheduleName;
+        localStorage.setItem('currentScheduleName', scheduleName);
         
-        this.enabled = checkbox.checked;
-        if (this.enabled) {
-            document.body.style.backgroundImage = '';
-            // Load saved settings when enabling
-            const savedSettings = localStorage.getItem('gradientSettings');
-            if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                if (settings.stops) this.stops = settings.stops;
-                if (settings.angle) this.angle = settings.angle;
-            }
-            this.applyGradient();
+        // Update display name
+        const displayName = scheduleName.startsWith('customSchedule_') 
+            ? scheduleName.replace('customSchedule_', '')
+            : scheduleDisplayNames[scheduleName] || scheduleName;
+        
+        const headingText = `${displayName} Schedule ▸ ${schedule[0].name}`;
+        document.getElementById("countdown-heading").innerText = headingText;
+        
+        // Update dropdown if it exists
+        const dropdown = document.getElementById("schedule-dropdown");
+        if (dropdown) dropdown.value = scheduleName;
+        
+        updateScheduleDisplay();
+        updateCountdowns();
+
+        console.log(`Switched to schedule: ${scheduleName}`);
+    } catch (error) {
+        console.error('Error switching schedule:', error);
+    }
+}
+
+// Countdown functions
+function updateCountdowns() {
+    const now = new Date();
+    const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const fontColor = document.getElementById("font-color").value;
+
+    let currentPeriod = currentSchedule.find(period => 
+        currentTimeInSeconds >= getTimeInSeconds(period.start) && 
+        currentTimeInSeconds < getTimeInSeconds(period.end)
+    );
+
+    if (currentPeriod) {
+        const countdown = getTimeInSeconds(currentPeriod.end) - currentTimeInSeconds;
+        const timeRemaining = formatCountdown(countdown);
+        document.getElementById("current-period-time").innerText = timeRemaining;
+        
+        const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
+        const headerText = `${scheduleName} Schedule ▸ ${currentPeriod.name}`;
+        document.getElementById("countdown-heading").innerText = headerText;
+        
+        // Update page title
+        document.title = `${currentPeriod.name} | ${timeRemaining}`;
+    } else {
+        let nextPeriod = currentSchedule.find(period => 
+            getTimeInSeconds(period.start) > currentTimeInSeconds
+        );
+
+        if (!nextPeriod) {
+            nextPeriod = currentSchedule[0];
+            const countdown = getTimeInSeconds(nextPeriod.start) + (24 * 3600 - currentTimeInSeconds);
+            const timeRemaining = formatCountdownHHMMSS(countdown);
+            document.getElementById("current-period-time").innerText = timeRemaining;
+            
+            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
+            document.getElementById("countdown-heading").innerText = 
+                `${scheduleName} Schedule ▸ Free`;
+            
+            // Update page title
+            document.title = `Free | ${timeRemaining}`;
         } else {
-            document.body.style.background = 'none';
-        }
-        this.updateGradientSettingsVisibility();
-        this.saveSettings();
-    }
-
-    // Optional helper extracted for clarity
-    loadSavedGradientSettings() {
-        const savedSettings = JSON.parse(localStorage.getItem('gradientSettings'));
-        if (savedSettings && Array.isArray(savedSettings.stops)) {
-            this.stops = savedSettings.stops;
-            this.angle = savedSettings.angle || 90;
-        }
-    }
-
-    updateAngle(value) {
-        // Debounce rapid changes to the angle input: clear previous timeout
-        clearTimeout(this._updateAngleDebounce);
-        this._updateAngleDebounce = setTimeout(() => {
-            const newAngle = parseInt(value);
-            if (isNaN(newAngle)) {
-                console.warn('Invalid angle value:', value);
-                return;
+            const countdown = getTimeInSeconds(nextPeriod.start) - currentTimeInSeconds;
+            const timeRemaining = formatCountdown(countdown);
+            document.getElementById("current-period-time").innerText = timeRemaining;
+            
+            const previousPeriod = currentSchedule.find(period => 
+                getTimeInSeconds(period.end) <= currentTimeInSeconds
+            );
+            
+            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
+            if (previousPeriod && (currentTimeInSeconds - getTimeInSeconds(previousPeriod.end)) < 360) {
+                document.getElementById("countdown-heading").innerText = 
+                    `${scheduleName} Schedule ▸ Passing to ${nextPeriod.name}`;
+                // Update page title
+                document.title = `Passing | ${timeRemaining}`;
+            } else {
+                document.getElementById("countdown-heading").innerText = 
+                    `${scheduleName} Schedule ▸ Free until ${nextPeriod.name}`;
+                // Update page title
+                document.title = `Free | ${timeRemaining}`;
             }
-            this.angle = newAngle;
-            document.querySelector('#gradient-angle + .range-value').textContent = `${newAngle}°`;
-        
-            if (this.enabled && Array.isArray(this.stops) && this.stops.length >= 2) {
-                // Use a sorted copy without mutating the stored stops
-                const sortedStops = this.stops.slice().sort((a, b) => a.position - b.position);
-                const gradientString = `linear-gradient(${this.angle}deg, ${sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')})`;
-                document.body.style.backgroundImage = gradientString;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundAttachment = 'fixed';
-                const preview = document.getElementById('gradient-preview');
-                if (preview) {
-                    preview.style.background = gradientString;
+        }
+    }
+    
+    document.getElementById("countdown-heading").style.color = fontColor;
+    localStorage.setItem("fontColor", fontColor);
+}
+
+function getTimeInSeconds(time) {
+    const [hour, minute] = time.split(":").map(Number);
+    return hour * 3600 + minute * 60;
+}
+
+function formatCountdown(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function formatCountdownHHMMSS(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function startCountdown() {
+    // Run immediately once
+    updateCountdowns();
+    // Then set up interval
+    return setInterval(updateCountdowns, 1000);
+}
+
+// Schedule display functions
+function updateScheduleDisplay() {
+    const scheduleContainer = document.getElementById("schedule");
+    scheduleContainer.innerHTML = "";
+    currentSchedule.forEach((period) => {
+        if (period.name !== "Passing") {
+            const periodDiv = document.createElement("div");
+            periodDiv.className = "period";
+            const label = document.createElement("label");
+            label.innerText = `${period.name}`;
+            const timer = document.createElement("span");
+            timer.id = `Period_Timer`;
+            periodDiv.appendChild(label);
+            periodDiv.appendChild(timer);
+            scheduleContainer.appendChild(periodDiv);
+        }
+    });
+    updateCountdowns();
+}
+
+function setupCustomSchedule() {
+    const numPeriods = document.getElementById("num-periods").value;
+    const periodInputs = document.getElementById("period-inputs");
+    const saveButton = document.getElementById("save-schedule-button");
+    periodInputs.innerHTML = '';
+
+    if (numPeriods > 0) {
+        saveButton.style.display = 'block';
+        for (let i = 0; i < numPeriods; i++) {
+            const periodDiv = document.createElement("div");
+            periodDiv.innerHTML = `
+                <label for="period-start-${i}">Period ${i + 1} Start Time:</label>
+                <input type="time" id="period-start-${i}" onchange="updateCustomSchedule()" required />
+                <label for="period-end-${i}">End Time:</label>
+                <input type="time" id="period-end-${i}" onchange="updateCustomSchedule()" required />
+            `;
+            periodInputs.appendChild(periodDiv);
+        }
+    }
+}
+
+function saveCustomSchedule() {
+    const scheduleName = document.getElementById("schedule-name").value;
+    const numPeriods = document.getElementById("num-periods").value;
+    const newSchedule = [];
+
+    for (let i = 0; i < numPeriods; i++) {
+        const startTime = document.getElementById(`period-start-${i}`).value;
+        const endTime = document.getElementById(`period-end-${i}`).value;
+
+        if (startTime && endTime) {
+            newSchedule.push({
+                name: `Period ${i + 1}`,
+                start: startTime,
+                end: endTime
+            });
+        }
+    }
+
+    if (scheduleName) {
+        localStorage.setItem(`customSchedule_${scheduleName}`, JSON.stringify(newSchedule));
+        alert(`Schedule "${scheduleName}" saved successfully!`);
+        updateScheduleDropdown();
+        switchSchedule(`customSchedule_${scheduleName}`);
+    } else {
+        alert("Please enter a schedule name.");
+    }
+}
+
+function updateScheduleDropdown() {
+    const dropdown = document.getElementById("schedule-dropdown");
+    dropdown.innerHTML = "";
+
+    for (let key in schedules) {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = scheduleDisplayNames[key] || key.charAt(0).toUpperCase() + key.slice(1);
+        dropdown.appendChild(option);
+    }
+
+    for (let key in localStorage) {
+        if (key.startsWith("customSchedule_")) {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = key.replace("customSchedule_", "");
+            dropdown.appendChild(option);
+        }
+    }
+}
+
+// Load countdowns on page load
+window.addEventListener('load', function() {
+    const savedScheduleName = localStorage.getItem('currentScheduleName');
+    if (savedScheduleName) {
+        switchSchedule(savedScheduleName);
+    }
+});
+
+// Add this to your initialization code if not already present
+document.addEventListener('DOMContentLoaded', () => {
+    /* ...existing code... */
+    
+    // Add rename periods dropdown listener
+    const renameToggle = document.getElementById('rename-periods-toggle');
+    if (renameToggle) {
+        renameToggle.addEventListener('click', () => {
+            toggleDropdown('rename-periods-content', 'rename-periods-toggle');
+            populateRenamePeriods();
+        });
+    }
+});
+
+// Add this function to initialize saved schedules
+function initializeSavedSchedules() {
+    // First load any existing saved schedules
+    const savedSchedules = {};
+    Object.keys(schedules).forEach(scheduleName => {
+        const saved = localStorage.getItem('savedSchedule_' + scheduleName);
+        if (saved) {
+            savedSchedules[scheduleName] = JSON.parse(saved);
+        } else {
+            // Only save default if no saved version exists
+            savedSchedules[scheduleName] = JSON.parse(JSON.stringify(schedules[scheduleName]));
+            localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedules[scheduleName]));
+        }
+    });
+    
+    // Update the global schedules object with saved versions
+    Object.assign(schedules, savedSchedules);
+}
+
+// Add this helper function
+function updateAllSchedules(oldName, newName) {
+    // Update all default schedules
+    Object.keys(schedules).forEach(scheduleName => {
+        const savedSchedule = JSON.parse(localStorage.getItem('savedSchedule_' + scheduleName));
+        if (savedSchedule) {
+            let modified = false;
+            savedSchedule.forEach(period => {
+                if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
+                    period.name = newName;
+                    modified = true;
+                }
+            });
+            if (modified) {
+                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(savedSchedule));
+            }
+        }
+    });
+
+    // Update custom schedules
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('customSchedule_')) {
+            const customSchedule = JSON.parse(localStorage.getItem(key));
+            let modified = false;
+            customSchedule.forEach(period => {
+                if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
+                    period.name = newName;
+                    modified = true;
+                }
+            });
+            if (modified) {
+                localStorage.setItem(key, JSON.stringify(customSchedule));
+            }
+        }
+    });
+}
+
+// Update the renamePeriod function
+function renamePeriod(index, newName) {
+    if (!newName.trim()) return;
+    
+    const oldName = currentSchedule[index].name;
+    
+    // Don't rename special periods
+    if (oldName.includes("Passing") || oldName.includes("Lunch") || 
+        oldName.includes("Chapel") || oldName.includes("Pep Rally")) {
+        return;
+    }
+
+    try {
+        // Update all schedules both in memory and localStorage
+        Object.keys(schedules).forEach(scheduleName => {
+            const schedule = schedules[scheduleName];
+            let modified = false;
+            
+            schedule.forEach(period => {
+                if (period.name === oldName) {
+                    period.name = newName;
+                    modified = true;
+                }
+            });
+            
+            if (modified) {
+                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
+                console.log(`Updated schedule: ${scheduleName}`);
+            }
+        });
+
+        // Update current schedule
+        currentSchedule = JSON.parse(localStorage.getItem('savedSchedule_' + currentScheduleName));
+
+        // Update all displays
+        updateScheduleDisplay();
+        updateCountdowns();
+        populateRenamePeriods();
+
+        // Force refresh the schedule display
+        const scheduleContainer = document.getElementById("schedule");
+        if (scheduleContainer) {
+            scheduleContainer.innerHTML = '';
+            currentSchedule.forEach(period => {
+                if (period.name !== "Passing") {
+                    const periodDiv = document.createElement("div");
+                    periodDiv.className = "period";
+                    periodDiv.innerHTML = `<label>${period.name}</label><span id="Period_Timer"></span>`;
+                    scheduleContainer.appendChild(periodDiv);
+                }
+            });
+        }
+
+        console.log(`Successfully renamed ${oldName} to ${newName}`);
+    } catch (error) {
+        console.error('Error renaming period:', error);
+    }
+}
+
+// Update the populateRenamePeriods function
+function populateRenamePeriods() {
+    const content = document.getElementById("rename-periods-content");
+    if (!content) return;
+    
+    content.innerHTML = ''; // Clear existing content
+    
+    // Get all periods except Passing and Lunch
+    currentSchedule.forEach((period, index) => {
+        if (!period.name.includes("Passing") && !period.name.includes("Lunch")) {
+            const div = document.createElement('div');
+            div.className = 'rename-period';
+            
+            // Find the original period number
+            let periodNumber = '';
+            if (period.name.includes("Period")) {
+                periodNumber = period.name.split(" ")[1]; // Get the number after "Period"
+            } else {
+                // If it's been renamed, find the corresponding period in the original schedule
+                const originalPeriod = schedules[currentScheduleName].find((p, i) => i === index);
+                if (originalPeriod && originalPeriod.name.includes("Period")) {
+                    periodNumber = originalPeriod.name.split(" ")[1];
                 }
             }
-            this.saveSettings();
-            this.updateUI();
-        }, 50); // 50ms debounce delay
-    }
-
-    addStop() {
-        // Add a new stop with a default color
-        this.stops.push({ color: '#ffffff', position: 0 });
-        // Recalculate positions evenly across all stops
-        const totalStops = this.stops.length;
-        this.stops = this.stops.map((stop, index) => ({
-            ...stop,
-            position: Math.round((index / (totalStops - 1)) * 100)
-        }));
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    removeStop(index) {
-        if (this.stops.length > 2) {
-            this.stops.splice(index, 1);
-            this.updateUI();
-            this.applyGradient();
-            this.saveSettings();
+            
+            const label = document.createElement('label');
+            label.htmlFor = `period-${index}`;
+            label.textContent = `Period ${periodNumber}:`; // Show "Period X:"
+            
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `period-${index}`;
+            input.value = period.name;
+            input.onchange = (e) => renamePeriod(index, e.target.value);
+            
+            div.appendChild(label);
+            div.appendChild(input);
+            content.appendChild(div);
         }
-    }
+    });
+}
 
-    updateStop(index, color, position) {
-        let pos = parseInt(position);
-        // Ensure the new stop's position has at least a 1% gap from its neighbors
-        if (index > 0 && pos <= this.stops[index - 1].position) {
-            pos = this.stops[index - 1].position + 1;
-        }
-        if (index < this.stops.length - 1 && pos >= this.stops[index + 1].position) {
-            pos = this.stops[index + 1].position - 1;
-        }
-        this.stops[index].color = color;
-        this.stops[index].position = pos;
+function updateCustomSchedule() {
+    const numPeriods = document.getElementById("num-periods").value;
+    const saveButton = document.getElementById("save-schedule-button");
+    let isValid = true;
 
-        // Immediately sort the stored stops array
-        this.stops.sort((a, b) => a.position - b.position);
+    // Validate all periods
+    for (let i = 0; i < numPeriods; i++) {
+        const startTime = document.getElementById(`period-start-${i}`).value;
+        const endTime = document.getElementById(`period-end-${i}`).value;
         
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    // Modify applyGradient to use a sorted copy rather than sorting in–place
-    applyGradient() {
-        if (!this.enabled) return;
-        try {
-            if (!Array.isArray(this.stops) || this.stops.length < 2) {
-                throw new Error('Invalid gradient stops');
-            }
-            // Use a sorted copy instead of mutating this.stops:
-            const sortedStops = this.stops.slice().sort((a, b) => a.position - b.position);
-            const gradientString = `linear-gradient(${this.angle}deg, ${sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')})`;
-            
-            // Always update preview regardless of enabled state
-            const preview = document.getElementById('gradient-preview');
-            if (preview) { preview.style.background = gradientString; }
-
-            // Only apply to body if enabled
-            if (this.enabled) {
-                document.body.style.backgroundImage = gradientString;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundAttachment = 'fixed';
-            }
-            
-            this.saveSettings();
-        } catch (error) {
-            console.error('Error applying gradient:', error);
+        if (!startTime || !endTime) {
+            isValid = false;
+            break;
+        }
+        
+        // Check if end time is after start time
+        if (startTime >= endTime) {
+            isValid = false;
+            break;
         }
     }
 
-    resetToDefaults() {
-        this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ];
-        this.angle = 90;
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    updateUI() {
-        const container = document.getElementById('gradient-stops');
-        if (!container) {
-            console.warn('Gradient stops container not found');
-            return;
-        }
-
-        // Ensure this.stops exists and is an array
-        if (!Array.isArray(this.stops)) {
-            console.warn('Stops array is invalid, resetting to defaults');
-            this.stops = [
-                { color: '#000035', position: 0 },
-                { color: '#00bfa5', position: 100 }
-            ];
-        }
-
-        container.innerHTML = this.stops.map((stop, index) => `
-            <div class="gradient-stop">
-                <input type="color" value="${stop.color}" 
-                    onchange="gradientManager.updateStop(${index}, this.value, this.nextElementSibling.value)">
-                <input type="number" min="0" max="100" value="${stop.position}" 
-                    onchange="gradientManager.updateStop(${index}, this.previousElementSibling.value, this.value)">
-                ${this.stops.length > 2 ? `
-                    <button class="remove-stop" onclick="gradientManager.removeStop(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                ` : ''}
-            </div>
-        `).join('');
-
-        // Update enabled state with null check
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox) checkbox.checked = this.enabled;
-
-        // Update angle with null check
-        const angleInput = document.getElementById('gradient-angle');
-        if (angleInput) {
-            angleInput.value = this.angle;
-            const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-            if (angleDisplay) angleDisplay.textContent = `${this.angle}°`;
-        }
-    }
-
-    updateGradientSettingsVisibility() {
-        const settings = document.getElementById('gradient-settings');
-        if (settings) {
-            settings.style.display = this.enabled ? 'block' : 'none';
-        }
+    // Enable/disable save button based on validation
+    if (saveButton) {
+        saveButton.disabled = !isValid;
     }
 }
 
-// Initialize only once and ensure it's available globally
-if (!window.gradientManager) {
-    window.gradientManager = new GradientManager();
-}
+// Add a check to ensure script2.js is loaded
+window.addEventListener('load', function() {
+    if (typeof toggleSettingsSidebar !== 'function') {
+        console.error('Required functions not loaded. Please check script loading order.');
+        return;
+    }
+    // Continue with initialization
+    initializeApp();
+});
 
-// Update handleBgImageUpload in script2.js to properly handle gradient toggle
-function handleBgImageUpload(file) {
-    // ...existing code...
-    if (window.gradientManager) {
-        window.gradientManager.enabled = false;
-        window.gradientManager.updateUI();
-        window.gradientManager.updateGradientSettingsVisibility();
-        window.gradientManager.saveSettings();
-    }
-    // ...existing code...
-}
-
-// Update removeBackground in script2.js
-function removeBackground() {
-    document.body.style.backgroundImage = '';
-    localStorage.removeItem('bgImage');
-    
-    // Enable gradient when background is removed
-    if (window.gradientManager) {
-        window.gradientManager.enabled = true;
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox) {
-            checkbox.checked = true;
-        }
-        window.gradientManager.updateUI();
-        window.gradientManager.applyGradient();
-        window.gradientManager.saveSettings();
-    }
-    
-    // Update preview
-    const preview = document.getElementById('bg-preview');
-    if (preview) {
-        preview.style.backgroundImage = 'none';
-        preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
-    }
-}
- 
+/* ...existing code... */
