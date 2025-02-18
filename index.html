@@ -12,6 +12,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    <!-- Add Firestore compat script -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script type="text/javascript" src="auth.js"></script>
     <script defer src="./gradient.js"></script>
     <script defer src="./script2.js"></script>
@@ -53,6 +55,13 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-SST4P7CNRH');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YS6FHHEGFZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YS6FHHEGFZ');
     </script>
 </head>
 <body>
@@ -174,6 +183,17 @@
                                 <option value="Montserrat">Montserrat</option>
                                 <option value="'Segoe UI'">Segoe UI</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Profile</h3>
+                        <div class="profile-visibility-control">
+                            <label class="switch-label" for="profile-visibility-toggle">Show Profile Picture</label>
+                            <label class="switch">
+                                <input type="checkbox" id="profile-visibility-toggle" onchange="authManager.toggleProfileVisibility()" checked>
+                                <span class="slider"></span>
+                            </label>
                         </div>
                     </div>
 
