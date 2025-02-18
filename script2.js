@@ -2,6 +2,34 @@
 let activeStop = null;
 let dropOverlay = null;
 
+// Add this at the start of the file
+function waitForAuth() {
+    return new Promise((resolve) => {
+        const checkAuth = () => {
+            if (window.authManager) {
+                resolve(window.authManager);
+            } else {
+                setTimeout(checkAuth, 50);
+            }
+        };
+        checkAuth();
+    });
+}
+
+// Add a check for auth manager availability
+function getAuthManager() {
+    return new Promise((resolve) => {
+        const check = () => {
+            if (window.authManager) {
+                resolve(window.authManager);
+            } else {
+                setTimeout(check, 50);
+            }
+        };
+        check();
+    });
+}
+
 // Settings Management
 function toggleSettingsSidebar() {
     const sidebar = document.getElementById("settings-sidebar");
@@ -69,7 +97,9 @@ function loadBackground() {
     }
 }
 
-function loadSettings() {
+// Modify your loadSettings function
+async function loadSettings() {
+    await waitForAuth(); // Wait for auth to be available
     const fontColor = localStorage.getItem("fontColor") || "#ffffff";
     
     // Fix the duplicate bgImage declaration
@@ -128,6 +158,8 @@ function loadSettings() {
     const savedFontColor = localStorage.getItem('fontColor') || '#ffffff';
     document.getElementById('font-color').value = savedFontColor;
     document.getElementById('countdown-heading').style.color = savedFontColor;
+
+    updateAuthButtonText(); // Add this line
 }
 
 function loadWhiteBoxSettings() {
@@ -762,6 +794,8 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('countdown-heading').style.color = color;
         localStorage.setItem('fontColor', color);
     });
+
+    updateAuthButtonText();
 });
 
 function setupDropdownListeners() {
@@ -1522,4 +1556,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
- 
+
+// ...existing code...
+
+async function handleAuthButton() {
+    const auth = await getAuthManager();
+    if (auth.isAuthenticated) {
+        auth.logout();
+    } else {
+        auth.signIn(); // Directly call signIn instead of showLoginModal
+    }
+}
+
+// Modify your updateAuthButtonText function
+async function updateAuthButtonText() {
+    const auth = await getAuthManager();
+    const buttonText = document.getElementById('auth-button-text');
+    const headerButtonText = document.getElementById('header-auth-text');
+    
+    if (buttonText) {
+        buttonText.textContent = auth.isAuthenticated ? 'Sign Out' : 'Sign In';
+    }
+    if (headerButtonText) {
+        headerButtonText.textContent = auth.isAuthenticated ? 'Sign Out' : 'Sign In';
+    }
+}
+
+// Add this to your initialization code or DOM content loaded event
+document.addEventListener('DOMContentLoaded', () => {
+    updateAuthButtonText();
+});
+
+// ...existing code...
