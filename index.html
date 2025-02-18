@@ -9,9 +9,24 @@
     <link rel="stylesheet" type="text/css" href="./styles2.css">
     <link rel="icon" type="image/png" href="favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    <script type="text/javascript" src="auth.js"></script>
     <script defer src="./gradient.js"></script>
     <script defer src="./script2.js"></script>
     <script defer src="./script.js"></script>
+    <script>
+        // Add message handler before other scripts
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            // Reload the page only if authentication was successful
+            if (event.data.type === 'AUTH_SUCCESS') {
+                window.location.reload();
+            }
+        });
+    </script>
     <script defer>
         function initializeApplication() {
             let attempts = 0;
@@ -34,6 +49,9 @@
     </script>
 </head>
 <body>
+    <button id="sign-in-button" onclick="handleAuthButton()">
+        <i class="fas fa-user"></i>
+    </button>
     <div class="container">
         <div class="main-content">
             <div class="schedule-container">
@@ -63,11 +81,9 @@
                 <button class="nav-item" data-target="schedule">Schedule</button>
                 <button class="nav-item" data-target="timer">Timer</button>
                 <button class="nav-item" data-target="about">About</button>
+                <!-- New Legal nav item -->
+                <button class="nav-item" data-target="legal">Legal</button>
                 <div class="nav-spacer"></div>
-                <!-- Hide light/dark button -->
-                <!-- <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
-                    <i class="fas fa-moon"></i>
-                </button> -->
             </div>
             
             <div class="settings-panels">
@@ -284,9 +300,23 @@
                             
                             <div class="contact-info">
                                 <p>For any questions or suggestions, feel free to reach out to us at ShilohSchedule@outlook.com!</p>
-                                <p class="version-info">Version 1.7b</p>
+                                <p class="version-info">Version 1.8</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- New legal panel -->
+                <div class="settings-panel" id="legal-panel">
+                    <div class="settings-group">
+                        <h3>Legal</h3>
+                        <div class="legal-links">
+                            <p>
+                                <a href="terms.html" target="_blank">Terms of Service</a>
+                            </p>
+                            <p>
+                                <a href="privacy.html" target="_blank">Privacy Policy</a>
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -296,5 +326,15 @@
     <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
         <i class="fas fa-cog"></i>
     </button>
+    <div id="login-modal" class="login-modal">
+        <div class="login-container">
+            <h2>Sign In</h2>
+            <div class="login-content">
+                <p>Sign in with your Google account to continue</p>
+                <div id="google-signin"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
