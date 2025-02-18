@@ -15,7 +15,7 @@ function waitForAuth() {
         checkAuth();
     });
 }
- 
+
 // Add a check for auth manager availability
 function getAuthManager() {
     return new Promise((resolve) => {
@@ -35,9 +35,9 @@ function toggleSettingsSidebar() {
     const sidebar = document.getElementById("settings-sidebar");
     sidebar.classList.toggle("open");
     
-    // Initialize panels if opening
-    if (sidebar.classList.contains("open")) {
-        initializeSettingsPanels();
+    // Save settings when closing the sidebar
+    if (!sidebar.classList.contains("open")) {
+        saveSettings();
     }
 }
 
@@ -99,10 +99,25 @@ function loadBackground() {
 
 // Modify your loadSettings function
 async function loadSettings() {
-    await waitForAuth(); // Wait for auth to be available
-    const fontColor = localStorage.getItem("fontColor") || "#ffffff";
+    await waitForAuth(); // Wait for auth
+    // Try loading settings from Firestore first
+    const firestoreSettings = await loadUserSettings();
+    if (firestoreSettings) {
+        console.log("Applying settings from Firestore");
+        // Use values from firestoreSettings instead of localStorage:
+        const fontColor = firestoreSettings.fontColor || "#ffffff";
+        document.getElementById('font-color').value = fontColor;
+        document.getElementById('countdown-heading').style.color = fontColor;
+        // (Apply other settings similarly as needed)
+    } else {
+        console.log("No Firestore settings found. Falling back to localStorage.");
+        // Fallback: load settings from localStorage
+        const fontColor = localStorage.getItem("fontColor") || "#ffffff";
+        document.getElementById('font-color').value = fontColor;
+        document.getElementById('countdown-heading').style.color = fontColor;
+    }
     
-    // Fix the duplicate bgImage declaration
+    // ...existing loading logic for background, white box, shadow, progress bar, etc.
     const storedBgImage = localStorage.getItem('bgImage');
     if (storedBgImage) {
         document.body.style.backgroundImage = `url('${storedBgImage}')`;
@@ -160,6 +175,13 @@ async function loadSettings() {
     document.getElementById('countdown-heading').style.color = savedFontColor;
 
     updateAuthButtonText(); // Add this line
+
+    // Load profile visibility state
+    const isProfileHidden = localStorage.getItem('profileHidden') === 'true';
+    const visibilityToggle = document.getElementById('profile-visibility-toggle');
+    if (visibilityToggle) {
+        visibilityToggle.checked = !isProfileHidden;
+    }
 }
 
 function loadWhiteBoxSettings() {
@@ -449,6 +471,7 @@ function updateWhiteBoxColor() {
     // Save both color and opacity
     localStorage.setItem("whiteBoxColor", rgba);
     localStorage.setItem("whiteBoxOpacity", opacity);
+    saveSettings();
 }
 
 function updateWhiteBoxTextColor() {
@@ -457,6 +480,7 @@ function updateWhiteBoxTextColor() {
     whiteBoxHeading.style.color = whiteBoxTextColor;
     document.querySelector(".schedule-container").style.color = whiteBoxTextColor; // Change text color in the white box
     localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor); // Save to local storage
+    saveSettings();
 }
 
 // Shadow System
@@ -505,6 +529,7 @@ function updateTimerShadow() {
 
     // Save settings
     localStorage.setItem("timerShadowSettings", JSON.stringify(settings));
+    saveSettings();
 }
 
 function updateRangeValues(settings) {
@@ -793,6 +818,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const color = e.target.value;
         document.getElementById('countdown-heading').style.color = color;
         localStorage.setItem('fontColor', color);
+        saveSettings();
     });
 
     updateAuthButtonText();
@@ -841,6 +867,7 @@ function updateCountdownColor() {
     const color = document.getElementById("countdown-color").value;
     document.getElementById("current-period-time").style.color = color;
     localStorage.setItem("countdownColor", color);
+    saveSettings();
 }
 
 // Also add this new function since it's referenced but missing
@@ -880,6 +907,7 @@ function renamePeriod(index, newName) {
         updateScheduleDisplay();
         updateCountdowns();
         localStorage.setItem('currentSchedule', JSON.stringify(currentSchedule)); // Save renamed periods
+        saveSettings();
     }
 }
 
@@ -915,6 +943,7 @@ function toggleProgressBar() {
     
     // Save preference
     localStorage.setItem('progressBarEnabled', checkbox.checked);
+    saveSettings();
 }
 
 function createProgressBar() {
@@ -957,6 +986,7 @@ function updateProgressBarStyle() {
     // Save settings
     localStorage.setItem('progressBarColor', color);
     localStorage.setItem('progressBarOpacity', opacity);
+    saveSettings();
 }
 
 function updateProgressBar() {
@@ -1065,6 +1095,7 @@ function updateFont() {
     const fontFamily = document.getElementById('font-family').value;
     document.body.style.fontFamily = fontFamily;
     localStorage.setItem('fontFamily', fontFamily);
+    saveSettings();
 }
 
 // ...existing code...
@@ -1588,4 +1619,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ...existing code...
- 
+
+// New function: Update Firestore settings on settings close
+async function updateFirestoreSettings() {
+    if (window.authManager && window.authManager.currentUser) {
+        await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
+        console.log("Firestore settings updated on settings close.");
+    }
+}
+
+// Add this function to handle saving settings
+async function saveSettings() {
+    // Only save to Firestore if user is authenticated
+    if (window.authManager?.currentUser) {
+        await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
+    }
+}
+
+// ...existing code...
