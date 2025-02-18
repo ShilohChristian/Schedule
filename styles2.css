@@ -305,24 +305,32 @@
 
 #sign-in-button {
     position: fixed;
-    top: 20px;
-    right: 20px;
+    top: 30px; /* increased from 25px */
+    right: 30px; /* increased from 25px */
     z-index: 1000;
     background: transparent;
     border: none;
     padding: 0;
     margin: 0;
     cursor: pointer;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#sign-in-button i {
+    font-size: 48px; /* increased from 40px */
 }
 
 /* Update fixed sign-in button icon size */
-#sign-in-button i {
-    font-size: 32px; /* increased from 24px */
+#sign-in-button[style*="display: none"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-/* Style the icon inside the sign in button */
-#sign-in-button i {
-    font-size: 32px;
+#sign-in-button[style*="display: block"] {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 /* When not signed in - show rounded button */
@@ -330,9 +338,9 @@
     background: rgba(0, 0, 0, 0.4);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-size: 14px;
+    padding: 15px 30px; /* increased from 12px 24px */
+    border-radius: 30px; /* increased from 25px */
+    font-size: 18px; /* increased from 16px */
     backdrop-filter: blur(8px);
     cursor: pointer;
     transition: all 0.3s ease;
@@ -352,8 +360,8 @@
     background: none !important;
     padding: 0;
     box-shadow: none !important;
-    width: 50px;  /* increased from 40px */
-    height: 50px; /* increased from 40px */
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
     padding: 0;
     border-radius: 50%;
     cursor: pointer;
@@ -373,8 +381,8 @@ button.profile-button {
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
-    width: 50px;  /* increased from 40px */
-    height: 50px; /* increased from 40px */
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
 }
 
 .profile-button:hover {
@@ -393,26 +401,55 @@ button.profile-button {
     position: absolute;
     right: 100%;
     top: 50%;
-    transform: translateX(-10px) translateY(-50%);
+    transform: translateX(-25px) translateY(-50%); /* increased X offset from -15px */
     white-space: nowrap; /* keep text on one line */
     background: rgba(0, 0, 0, 0.8);
     color: white;
     border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
+    padding: 15px 30px; /* increased padding */
+    border-radius: 30px; /* increased border radius */
+    font-size: 16px; /* increased from 14px */
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    min-width: 120px; /* ensure minimum width */
+}
+
+/* Add hide profile button */
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    top: calc(50% + 45px); /* Position below logout button */
+    transform: translateX(-25px);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
     font-size: 14px;
     cursor: pointer;
     opacity: 0;
     pointer-events: none;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: all 0.3s ease;
     backdrop-filter: blur(8px);
 }
 
-/* On hover, slide the logout button in from the left */
-.profile-container:hover .logout-button {
-    transform: translateX(0) translateY(-50%);
+/* Show both buttons on container hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    transform: translateX(0);
     opacity: 1;
     pointer-events: all;
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(0) scale(1.05) !important;
 }
 
 /* Wrap profile picture and logout button in a relative container */
@@ -431,8 +468,8 @@ button.profile-button {
     outline: none;
     padding: 0;
     box-shadow: none;
-    width: 50px;  /* increased from 40px */
-    height: 50px; /* increased from 40px */
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
     border-radius: 50%;
     cursor: pointer;
     overflow: hidden;
@@ -446,6 +483,225 @@ button.profile-button {
     height: 100%;
     border-radius: 50%;
     object-fit: cover;
+}
+
+/* ...existing code... */
+
+/* Updated profile container spacing */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 5px;
+}
+
+/* Updated profile button styles */
+.profile-button {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+/* Increase spacing between logout button and profile picture */
+.logout-button {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateX(-35px) translateY(-50%); /* increased spacing */
+    min-width: 120px;
+    padding: 15px 30px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* Add hide profile button styles */
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    top: calc(50% + 50px); /* Position below logout button */
+    transform: translateX(-35px); /* match logout button spacing */
+    min-width: 120px;
+    padding: 12px 24px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* Show buttons on hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) translateY(-50%);
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(0) scale(1.05) !important;
+}
+
+/* ...existing code... */
+
+/* Updated profile container and buttons */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+}
+
+.profile-button {
+    position: relative;
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Shared button styles */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateX(-20px);
+}
+
+/* Position each button */
+.logout-button {
+    top: 0;
+    transform: translateX(-20px);
+}
+
+.hide-profile-button {
+    top: calc(100% - 15px);
+    transform: translateX(-20px);
+}
+
+/* Show buttons on hover with improved timing */
+.profile-container:hover .logout-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-10px);
+    transition-delay: 0s;
+}
+
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-10px);
+    transition-delay: 0.1s;
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(-10px) scale(1.05) !important;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state for buttons */
+.logout-button:active,
+.hide-profile-button:active {
+    transform: translateX(-10px) scale(0.98) !important;
+}
+
+/* ...existing code... */
+
+/* Updated button spacing and hit areas */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Improved button positioning and spacing */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logout-button {
+    top: -5px; /* Adjusted position */
+    padding: 15px 30px;
+}
+
+.hide-profile-button {
+    top: 60px; /* Increased separation */
+    padding: 15px 30px;
+}
+
+/* Improved hover area and visibility */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-15px);
+}
+
+/* Add gaps between buttons */
+.profile-container:hover .hide-profile-button {
+    transition-delay: 0.1s;
 }
 
 /* ...existing code... */
@@ -674,6 +930,260 @@ button.profile-button {
 .google-btn img {
     width: 18px;
     height: 18px;
+}
+
+/* ...existing code... */
+
+/* Improved profile container with hover area */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Create an invisible hover area */
+.profile-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: -250px; /* Extend left to cover buttons */
+    z-index: -1;
+}
+
+/* Updated button styles with hover persistence */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001; /* Ensure buttons are above the hover area */
+}
+
+/* Position buttons */
+.logout-button {
+    top: 5px;
+    transform: translateX(-20px);
+}
+
+.hide-profile-button {
+    top: 70px; /* Increased separation */
+    transform: translateX(-20px);
+}
+
+/* Show buttons with delay on container hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-15px);
+}
+
+/* Keep buttons visible while hovering over them */
+.logout-button:hover,
+.hide-profile-button:hover {
+    opacity: 1 !important;
+    transform: translateX(-15px) scale(1.05) !important;
+    background: rgba(0, 0, 0, 0.95);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Keep buttons visible when hovering the hover area */
+.profile-container:hover::before {
+    pointer-events: all;
+}
+
+/* ...existing code... */
+
+/* Updated button container and positioning */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Shared button styles with fixed width */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    width: 160px; /* Fixed width for both buttons */
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Position buttons centered relative to profile picture */
+.logout-button {
+    top: calc(50% - 30px); /* Center minus half the gap between buttons */
+    transform: translateY(-50%) translateX(-20px);
+}
+
+.hide-profile-button {
+    top: calc(50% + 30px); /* Center plus half the gap between buttons */
+    transform: translateY(-50%) translateX(-20px);
+}
+
+/* Update hover states */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateY(-50%) translateX(-10px) scale(1.05) !important;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state */
+.logout-button:active,
+.hide-profile-button:active {
+    transform: translateY(-50%) translateX(-10px) scale(0.98) !important;
+}
+
+/* ...existing code... */
+
+/* Profile visibility controls */
+.profile-visibility-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    pointer-events: none;
+}
+
+.profile-container[data-hidden="true"] .profile-button {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.profile-container[data-hidden="true"] .logout-button,
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* Keep only the hide-profile-button clickable when hidden */
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Show hide-profile-button on hover only when container is hidden */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+#sign-in-button[style*="display: none"] {
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* Remove the hover effects when hidden */
+.profile-container[data-hidden="true"]:hover .logout-button,
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] .profile-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .logout-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Show only hide-profile-button on hover when hidden */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
+    visibility: visible !important;
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    pointer-events: none !important;
+}
+
+.profile-container[data-hidden="true"] .profile-button,
+.profile-container[data-hidden="true"] .logout-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+}
+
+/* Show hide-profile-button on hover */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
 }
 
 /* ...existing code... */
