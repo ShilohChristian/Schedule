@@ -1,3 +1,17 @@
+// Add this at the start of the file
+async function initializeAuth() {
+    await new Promise((resolve) => {
+        const checkAuth = () => {
+            if (window.authManager) {
+                resolve();
+            } else {
+                setTimeout(checkAuth, 50);
+            }
+        };
+        checkAuth();
+    });
+}
+
 // Declare schedules first
 const schedules = {
     normal: [
@@ -68,8 +82,39 @@ const scheduleDisplayNames = {
 let currentSchedule = schedules.normal;
 let currentScheduleName = 'normal';
 
-// Wait for both scripts to be loaded
-document.addEventListener("DOMContentLoaded", function() {
+// Modify your DOMContentLoaded handler
+document.addEventListener("DOMContentLoaded", async function() {
+    await initializeAuth();
+    // Remove the auth check that was showing the modal
+    initializeApp();
+    
+    // Add login form handler
+    document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const errorElement = document.getElementById('login-error');
+        const loginButton = document.getElementById('login-button');
+
+        try {
+            loginButton.disabled = true;
+            loginButton.textContent = 'Signing in...';
+            
+            const success = await window.authManager.login(username, password);
+            if (success) {
+                window.authManager.hideLoginModal();
+                initializeApp(); // Initialize app after successful login
+            } else {
+                errorElement.textContent = 'Invalid username or password';
+            }
+        } catch (error) {
+            errorElement.textContent = 'An error occurred during sign in';
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Sign In';
+        }
+    });
+
     // First ensure script2.js functions are available
     if (typeof toggleSettingsSidebar === 'function') {
         initializeApp();
