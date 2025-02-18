@@ -19,7 +19,7 @@ class GradientManager {
             this.setupManager();
         }
     }
-
+ 
     setupManager() {
         if (this.initialized) return;
         
