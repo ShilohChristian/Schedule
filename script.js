@@ -11,7 +11,7 @@ async function initializeAuth() {
         checkAuth();
     });
 }
-
+ 
 // Declare schedules first
 const schedules = {
     normal: [
