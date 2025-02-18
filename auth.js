@@ -8,7 +8,7 @@ const firebaseConfig = {
     appId: "1:161561389660:web:baed586fb33c4961aed499",
     measurementId: "G-YS6FHHEGFZ"
 };
- 
+
 class AuthManager {
     constructor() {
         // Initialize Firebase first
@@ -32,6 +32,10 @@ class AuthManager {
                     this.currentUser = user;
                     this.isAuthenticated = !!user;
                     this.updateUI();
+                    if (user) {
+                        // Instead of saving local settings immediately, load Firestore settings if they exist.
+                        this._maybeLoadUserSettings();
+                    }
                 });
             });
         } else {
@@ -42,6 +46,10 @@ class AuthManager {
                 this.currentUser = user;
                 this.isAuthenticated = !!user;
                 this.updateUI();
+                if (user) {
+                    // Instead of saving local settings immediately, load Firestore settings if they exist.
+                    this._maybeLoadUserSettings();
+                }
             });
         }
         
@@ -84,14 +92,120 @@ class AuthManager {
             this.hideLoginModal();
             this.updateUI();
             
+            // Save user settings to Firestore if this is the first login
+            await this._maybeSaveUserSettings();
+            
             console.log('Auth success - user data:', {
                 name: this.currentUser.displayName,
                 email: this.currentUser.email,
                 photo: this.currentUser.photoURL
             });
+            // Refresh the page after successful login
+            window.location.reload();
         } catch (error) {
             console.error('Error handling auth success:', error);
             this.showError('Error loading user profile');
+        }
+    }
+
+    // New function to save ALL settings
+    async saveAllUserSettings(userId) {
+        try {
+            const db = firebase.firestore();
+            const userDocRef = db.collection("users").doc(userId);
+            
+            // Collect all settings
+            const settings = {
+                whiteBoxColor: localStorage.getItem("whiteBoxColor"),
+                whiteBoxOpacity: localStorage.getItem("whiteBoxOpacity"),
+                whiteBoxTextColor: localStorage.getItem("whiteBoxTextColor"),
+                fontFamily: localStorage.getItem("fontFamily"),
+                fontColor: localStorage.getItem("fontColor"),
+                theme: localStorage.getItem("theme"),
+                countdownColor: localStorage.getItem("countdownColor"),
+                progressBarEnabled: localStorage.getItem("progressBarEnabled"),
+                progressBarColor: localStorage.getItem("progressBarColor"),
+                progressBarOpacity: localStorage.getItem("progressBarOpacity"),
+                timerShadowSettings: localStorage.getItem("timerShadowSettings"),
+                gradientSettings: localStorage.getItem("gradientSettings"),
+                bgImage: localStorage.getItem("bgImage"),
+                profileHidden: localStorage.getItem("profileHidden"),
+                currentScheduleName: localStorage.getItem("currentScheduleName")
+            };
+
+            // Remove any null or undefined values
+            Object.keys(settings).forEach(key => 
+                settings[key] === null && delete settings[key]
+            );
+
+            // Save to Firestore
+            await userDocRef.set({ settings }, { merge: true });
+            console.log("✅ All settings saved to Firestore");
+            
+            return true;
+        } catch (error) {
+            console.error("❌ Error saving settings:", error);
+            return false;
+        }
+    }
+
+    // Replace _maybeSaveUserSettings with _maybeLoadUserSettings to avoid overwriting Firestore
+    async _maybeLoadUserSettings() {
+        try {
+            const db = firebase.firestore();
+            const userDocRef = db.collection("users").doc(this.currentUser.uid);
+            const doc = await userDocRef.get();
+            
+            if (doc.exists) {
+                console.log("User settings found in Firestore, loading them.");
+                const settings = await loadUserSettings(); // Get the loaded settings
+                
+                if (settings) {
+                    // Clear any existing background first
+                    document.body.style.backgroundImage = '';
+                    localStorage.removeItem('bgImage');
+                    
+                    // Apply settings in correct order
+                    // First apply gradient if it exists and is enabled
+                    if (settings.gradientSettings) {
+                        const gradientSettings = JSON.parse(settings.gradientSettings);
+                        if (window.gradientManager && gradientSettings.enabled) {
+                            window.gradientManager.enabled = true;
+                            window.gradientManager.stops = gradientSettings.stops;
+                            window.gradientManager.angle = gradientSettings.angle;
+                            window.gradientManager.updateUI();
+                            window.gradientManager.applyGradient();
+                        }
+                    }
+                    
+                    // Then apply background image if it exists (will override gradient if present)
+                    if (settings.bgImage) {
+                        document.body.style.backgroundImage = `url('${settings.bgImage}')`;
+                        // Disable gradient if background image is applied
+                        if (window.gradientManager) {
+                            window.gradientManager.enabled = false;
+                            window.gradientManager.updateUI();
+                        }
+                    }
+                    
+                    // Apply other settings
+                    if (settings.fontColor) document.getElementById('countdown-heading').style.color = settings.fontColor;
+                    if (settings.fontFamily) document.body.style.fontFamily = settings.fontFamily;
+                    // ...rest of settings application
+                    
+                    // Update UI elements
+                    if (typeof loadSettings === 'function') {
+                        loadSettings();
+                    }
+                    
+                    console.log("✅ Settings applied successfully");
+                }
+            } else {
+                console.log("No settings found in Firestore, saving current local settings.");
+                await this.saveAllUserSettings(this.currentUser.uid);
+            }
+        } catch (e) {
+            console.error("Error handling user settings:", e);
         }
     }
 
@@ -165,15 +279,43 @@ class AuthManager {
 
         if (this.isAuthenticated && this.currentUser) {
             const photoURL = this.currentUser.photoURL || 'https://www.gravatar.com/avatar/?d=mp';
+            const isHidden = localStorage.getItem('profileHidden') === 'true';
+            
+            headerButton.style.display = 'block';
             headerButton.innerHTML = `
-                <div class="profile-container">
-                    <button class="profile-button" title="${this.currentUser.displayName}" onclick="handleAuthButton()">
+                <div class="profile-container" data-hidden="${isHidden}">
+                    <button class="profile-button" title="${this.currentUser.displayName}" 
+                        style="opacity: ${isHidden ? '0' : '1'}" 
+                        disabled="${isHidden}" 
+                        aria-hidden="${isHidden}"
+                        tabindex="${isHidden ? '-1' : '0'}">
                         <img src="${photoURL}" alt="Profile">
                     </button>
-                    <button class="logout-button" onclick="authManager.logout()">Sign Out</button>
+                    <button class="logout-button" ${isHidden ? 'disabled aria-hidden="true" tabindex="-1"' : ''}>
+                        Sign Out
+                    </button>
+                    <button class="hide-profile-button" onclick="window.authManager.toggleProfileVisibility()">
+                        ${isHidden ? 'Show Profile' : 'Hide Profile'}
+                    </button>
                 </div>
             `;
+            
+            // Attach event listener for sign out:
+            const logoutBtn = headerButton.querySelector('.logout-button');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => window.authManager.logout());
+            }
+            
+            // Only add click handler if not hidden
+            const profileButton = headerButton.querySelector('.profile-button');
+            if (profileButton && !isHidden) {
+                profileButton.onclick = (e) => {
+                    e.stopPropagation();
+                    this.handleAuthButton();
+                };
+            }
         } else {
+            headerButton.style.display = 'block';
             headerButton.innerHTML = `
                 <button class="sign-in-btn" onclick="handleAuthButton()">
                     Sign In
@@ -199,6 +341,39 @@ class AuthManager {
         }
     }
 
+    // Add new method to handle profile visibility
+    toggleProfileVisibility(e) {
+        if (e) e.stopPropagation();
+        
+        const isCurrentlyHidden = localStorage.getItem('profileHidden') === 'true';
+        const newHiddenState = !isCurrentlyHidden; // Flip the current state
+        
+        // Update localStorage
+        localStorage.setItem('profileHidden', newHiddenState);
+        
+        // Update UI
+        const headerButton = document.getElementById('sign-in-button');
+        const settingsSwitch = document.getElementById('profile-visibility-toggle');
+        
+        if (headerButton) {
+            headerButton.style.display = newHiddenState ? 'none' : 'block';
+            if (!newHiddenState) {
+                // Re-render the profile UI when showing
+                this.updateUI();
+            }
+        }
+        
+        // Update settings switch if it exists
+        if (settingsSwitch) {
+            settingsSwitch.checked = !newHiddenState;
+        }
+
+        // Save to Firestore if authenticated
+        if (this.currentUser) {
+            this.saveAllUserSettings(this.currentUser.uid);
+        }
+    }
+
     checkAuthentication() {
         const token = localStorage.getItem('authToken');
         this.isAuthenticated = !!token;
@@ -208,23 +383,41 @@ class AuthManager {
 
     async logout() {
         try {
+            // Call Firebase signOut and wait for completion.
             await this.auth.signOut();
-            localStorage.removeItem('authToken');
-            this.isAuthenticated = false;
-            
-            // Use location.reload() only if not in a popup
-            if (window.opener) {
-                window.opener.location.reload();
-                window.close();
-            } else {
-                window.location.reload();
-            }
         } catch (error) {
             console.error('Error signing out:', error);
-            // Attempt force logout
-            localStorage.removeItem('authToken');
+        } finally {
+            // Immediately reload to update application state.
+            window.location.href = window.location.pathname;
+        }
+    }
+
+    async forceLogout() {
+        try {
+            // Clear auth state first
+            localStorage.clear();
             this.isAuthenticated = false;
-            window.location.reload();
+            this.currentUser = null;
+            
+            // Reset all styles synchronously
+            document.body.style.backgroundImage = 'none';
+            document.body.style.background = '#000035';
+            
+            // Sign out of Firebase
+            try {
+                await this.auth.signOut();
+            } catch (e) {
+                console.warn('Firebase signOut error:', e);
+            }
+            
+            // Force redirect to home page
+            window.location = window.location.pathname;
+            
+        } catch (error) {
+            console.error('Error during force logout:', error);
+            // Last resort: hard reload
+            window.location.reload(true);
         }
     }
 
@@ -296,12 +489,66 @@ class AuthManager {
     }
 }
 
+// Add helper functions for saving and fetching user settings
+function saveUserSettings(userId, settings) {
+    const db = firebase.firestore();
+    db.collection("users").doc(userId).set(settings, { merge: true })
+    .then(() => {
+        console.log("✅ User settings saved successfully!");
+    })
+    .catch((error) => {
+        console.error("❌ Error saving settings: ", error);
+    });
+}
+
+function getUserSettings(userId) {
+    const db = firebase.firestore();
+    db.collection("users").doc(userId).get()
+    .then((doc) => {
+        if (doc.exists) {
+            console.log("✅ Retrieved settings:", doc.data());
+        } else {
+            console.log("⚠️ No settings found for this user.");
+        }
+    })
+    .catch((error) => {
+        console.error("❌ Error fetching settings:", error);
+    });
+}
+
 // Add window message handler for popup communication
 window.addEventListener('message', (event) => {
     if (event.data === 'auth-success') {
         window.location.reload();
     }
 });
+
+// New helper function to load user settings from Firestore
+async function loadUserSettings() {
+    if (!window.authManager || !window.authManager.currentUser) return null;
+    try {
+        const db = firebase.firestore();
+        const userDoc = await db.collection("users").doc(window.authManager.currentUser.uid).get();
+        if (userDoc.exists) {
+            const settings = userDoc.data().settings;
+            console.log("✅ Loaded settings from Firestore:", settings);
+            // Update localStorage to mirror Firestore settings
+            Object.keys(settings).forEach(key => {
+                if (settings[key] !== null) {
+                    if (key === 'gradientSettings' && typeof settings[key] === 'object') {
+                        localStorage.setItem(key, JSON.stringify(settings[key]));
+                    } else {
+                        localStorage.setItem(key, settings[key]);
+                    }
+                }
+            });
+            return settings;
+        }
+    } catch (error) {
+        console.error("❌ Error loading settings from Firestore:", error);
+    }
+    return null;
+}
 
 // Initialize immediately
 window.authManager = new AuthManager();
