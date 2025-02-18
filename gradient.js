@@ -19,7 +19,7 @@ class GradientManager {
             this.setupManager();
         }
     }
- 
+
     setupManager() {
         if (this.initialized) return;
         
@@ -391,4 +391,3 @@ function removeBackground() {
         preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
     }
 }
- 
