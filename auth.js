@@ -8,7 +8,7 @@ const firebaseConfig = {
     appId: "1:161561389660:web:baed586fb33c4961aed499",
     measurementId: "G-YS6FHHEGFZ"
 };
-
+ 
 class AuthManager {
     constructor() {
         // Initialize Firebase first
