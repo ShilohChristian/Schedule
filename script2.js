@@ -15,7 +15,7 @@ function waitForAuth() {
         checkAuth();
     });
 }
-
+ 
 // Add a check for auth manager availability
 function getAuthManager() {
     return new Promise((resolve) => {
