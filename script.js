@@ -11,7 +11,7 @@ async function initializeAuth() {
         checkAuth();
     });
 }
- 
+
 // Declare schedules first
 const schedules = {
     normal: [
@@ -611,4 +611,3 @@ window.addEventListener('load', function() {
 });
 
 /* ...existing code... */
- 
