@@ -121,6 +121,8 @@ document.addEventListener("DOMContentLoaded", async function() {
     } else {
         console.error('Required functions not loaded yet');
     }
+
+    initializeSettingsPanels();
 });
 
 // Clean up old interval if it exists when loading new script
@@ -611,3 +613,29 @@ window.addEventListener('load', function() {
 });
 
 /* ...existing code... */
+
+// Add this function at an appropriate location in the file:
+function initializeSettingsPanels() {
+    const navItems = document.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            // Remove active class from all nav items and panels
+            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+            document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
+            // Add active class to the clicked item
+            item.classList.add('active');
+            // Show the corresponding panel based on data-target attribute
+            const target = item.getAttribute("data-target");
+            const panel = document.getElementById(`${target}-panel`);
+            if (panel) {
+                panel.classList.add('active');
+            }
+        });
+    });
+}
+
+// Wire the above function to DOMContentLoaded (ensure it's not already added)
+document.addEventListener("DOMContentLoaded", () => {
+    // ...existing code...
+    initializeSettingsPanels();
+});
