@@ -1418,3 +1418,23 @@ input, select {
 }
 
 /* ...existing code... */
+
+/* ...existing code... */
+
+.legal-links {
+    padding: 10px 0;
+}
+
+.legal-links a {
+    color: #00bfa5;
+    text-decoration: none;
+    padding: 8px 0;
+    display: inline-block;
+    transition: color 0.3s ease;
+}
+
+.legal-links a:hover {
+    color: #ffffff;
+}
+
+/* ...existing code... */
