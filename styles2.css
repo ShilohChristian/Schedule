@@ -1,0 +1,1189 @@
+/* Remove all gradient-related CSS classes */
+/* ...existing code... */
+
+/* Remove these classes and their related styles */
+.gradient-preview,
+.gradient-controls,
+.gradient-options,
+.gradient-bar-container,
+.gradient-stops,
+.gradient-editor,
+.gradient-bar,
+.gradient-confirm-dialog {
+    display: none !important;
+}
+
+/* ...existing code... */
+
+#bg-image-drop-area {
+    position: relative;
+    border: 2px dashed rgba(0, 191, 165, 0.5);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(0, 191, 165, 0.05);
+    margin: 10px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+#bg-image {
+    display: none;
+}
+
+.image-upload-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Add positioning for the upload text */
+.upload-text {
+    position: relative;
+    z-index: 2;
+}
+
+/* Update background preview styles */
+.background-preview {
+    margin-top: 20px;
+    width: 100%;
+}
+
+#bg-preview {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Updated Drop Area Styles */
+.drop-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 191, 165, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.drop-overlay.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: all;
+}
+
+.settings-sidebar .drop-overlay {
+    position: absolute;
+    z-index: 10001;
+}
+
+.drop-content {
+    text-align: center;
+    padding: 40px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.drop-overlay.active .drop-content {
+    transform: translateY(0);
+}
+
+.drop-text {
+    color: #ffffff;
+    font-size: 2.5em;
+    margin: 20px 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.drop-subtext {
+    color: #00bfa5;
+    font-size: 1.1em;
+    margin: 10px 0;
+    opacity: 0.9;
+}
+
+.drop-overlay i {
+    font-size: 4em;
+    color: #00bfa5;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Settings Panel Drop Area */
+#bg-image-drop-area:hover {
+    border-color: #00bfa5;
+    background: rgba(0, 191, 165, 0.1);
+}
+
+#bg-image-drop-area.drag-over {
+    border-color: #00bfa5;
+    background: rgba(0, 191, 165, 0.15);
+    transform: scale(1.02);
+}
+
+.upload-success {
+    background: rgba(0, 191, 165, 0.2);
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: fadeInOut 3s ease forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-10px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Processing indicator styles */
+.processing-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10002;
+}
+
+.processing-overlay.active {
+    display: flex;
+}
+
+.processing-content {
+    text-align: center;
+    color: white;
+}
+
+.processing-content i {
+    font-size: 3em;
+    color: #00bfa5;
+    margin-bottom: 15px;
+}
+
+/* Remove all gradient-bar related styles */
+
+/* ...existing code... */
+
+#gradient-settings {
+    margin-top: 15px;
+}
+
+#gradient-preview {
+    width: 100%;
+    height: 80px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#gradient-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.gradient-stop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gradient-stop input[type="color"] {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: none;
+}
+
+.gradient-stop input[type="number"] {
+    width: 70px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.remove-stop {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.remove-stop:hover {
+    background: rgba(255, 68, 68, 0.1);
+}
+
+#add-stop {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#add-stop:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+
+/* ...existing code... */
+
+/* Add or update auth button styles */
+.auth-button {
+    position: absolute !important;
+    bottom: 20px !important;
+    left: 20px !important;
+    right: 20px !important;
+    padding: 12px !important;
+    margin: 0 !important;
+    background: rgba(0, 191, 165, 0.1) !important;
+    border: 1px solid rgba(0, 191, 165, 0.3) !important;
+    border-radius: 8px !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: all 0.3s ease !important;
+    width: calc(100% - 40px) !important;
+}
+
+.auth-button i {
+    font-size: 16px !important;
+}
+
+.auth-button:hover {
+    background: rgba(0, 191, 165, 0.2) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Update settings nav to accommodate fixed auth button */
+.settings-nav {
+    position: relative !important;
+    padding-bottom: 80px !important;
+}
+
+/* ...existing code... */
+
+#sign-in-button {
+    position: fixed;
+    top: 30px; /* increased from 25px */
+    right: 30px; /* increased from 25px */
+    z-index: 1000;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#sign-in-button i {
+    font-size: 48px; /* increased from 40px */
+}
+
+/* Update fixed sign-in button icon size */
+#sign-in-button[style*="display: none"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+#sign-in-button[style*="display: block"] {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+/* When not signed in - show rounded button */
+.sign-in-btn {
+    background: rgba(0, 0, 0, 0.4);
+    color: white;
+    border: none;
+    padding: 15px 30px; /* increased from 12px 24px */
+    border-radius: 30px; /* increased from 25px */
+    font-size: 18px; /* increased from 16px */
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sign-in-btn:hover {
+    background: rgba(0, 0, 0, 0.6);
+    transform: translateY(-1px);
+}
+
+/* When signed in - just show profile picture */
+.profile-button {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    border: none !important;
+    outline: none !important;
+    background: none !important;
+    padding: 0;
+    box-shadow: none !important;
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
+    padding: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+    background: none;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+button.profile-button {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background: transparent !important;
+    border: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
+}
+
+.profile-button:hover {
+    transform: scale(1.05);
+}
+
+.profile-button img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Updated logout button style: slide out from the left of the image */
+.logout-button {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateX(-25px) translateY(-50%); /* increased X offset from -15px */
+    white-space: nowrap; /* keep text on one line */
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    padding: 15px 30px; /* increased padding */
+    border-radius: 30px; /* increased border radius */
+    font-size: 16px; /* increased from 14px */
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+    min-width: 120px; /* ensure minimum width */
+}
+
+/* Add hide profile button */
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    top: calc(50% + 45px); /* Position below logout button */
+    transform: translateX(-25px);
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.6);
+    color: #ffffff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* Show both buttons on container hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(0) scale(1.05) !important;
+}
+
+/* Wrap profile picture and logout button in a relative container */
+.profile-container {
+    position: relative;
+    display: inline-block;
+}
+
+/* Ensure profile-button has no extra default box */
+.profile-button {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background: none;
+    border: none;
+    outline: none;
+    padding: 0;
+    box-shadow: none;
+    width: 70px !important;  /* increased from 60px */
+    height: 70px !important; /* increased from 60px */
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+.profile-button:hover {
+    transform: scale(1.05);
+}
+.profile-button img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ...existing code... */
+
+/* Updated profile container spacing */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 5px;
+}
+
+/* Updated profile button styles */
+.profile-button {
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+/* Increase spacing between logout button and profile picture */
+.logout-button {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateX(-35px) translateY(-50%); /* increased spacing */
+    min-width: 120px;
+    padding: 15px 30px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* Add hide profile button styles */
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    top: calc(50% + 50px); /* Position below logout button */
+    transform: translateX(-35px); /* match logout button spacing */
+    min-width: 120px;
+    padding: 12px 24px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(8px);
+}
+
+/* Show buttons on hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(0) translateY(-50%);
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(0) scale(1.05) !important;
+}
+
+/* ...existing code... */
+
+/* Updated profile container and buttons */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+}
+
+.profile-button {
+    position: relative;
+    width: 70px !important;
+    height: 70px !important;
+    border-radius: 50%;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 1;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.profile-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Shared button styles */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateX(-20px);
+}
+
+/* Position each button */
+.logout-button {
+    top: 0;
+    transform: translateX(-20px);
+}
+
+.hide-profile-button {
+    top: calc(100% - 15px);
+    transform: translateX(-20px);
+}
+
+/* Show buttons on hover with improved timing */
+.profile-container:hover .logout-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-10px);
+    transition-delay: 0s;
+}
+
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-10px);
+    transition-delay: 0.1s;
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateX(-10px) scale(1.05) !important;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state for buttons */
+.logout-button:active,
+.hide-profile-button:active {
+    transform: translateX(-10px) scale(0.98) !important;
+}
+
+/* ...existing code... */
+
+/* Updated button spacing and hit areas */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Improved button positioning and spacing */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.logout-button {
+    top: -5px; /* Adjusted position */
+    padding: 15px 30px;
+}
+
+.hide-profile-button {
+    top: 60px; /* Increased separation */
+    padding: 15px 30px;
+}
+
+/* Improved hover area and visibility */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-15px);
+}
+
+/* Add gaps between buttons */
+.profile-container:hover .hide-profile-button {
+    transition-delay: 0.1s;
+}
+
+/* ...existing code... */
+
+#header-auth-text {
+    display: none; /* Hide the text */
+}
+
+/* ...existing code... */
+
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 10px;
+    background: rgba(26, 26, 26, 0.95);
+    border-radius: 12px;
+    padding: 16px;
+    min-width: 240px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+}
+
+#sign-in-button:hover .profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 12px;
+}
+
+.profile-pic-large {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.profile-text {
+    flex: 1;
+}
+
+.profile-name {
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.profile-email {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+}
+
+.sign-out-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sign-out-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.sign-out-btn i {
+    font-size: 14px;
+}
+
+/* ...existing code... */
+
+.login-modal {
+    display: none; /* Start hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.login-modal.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.login-container {
+    background: #1a1a1a;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 400px;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.login-modal.show .login-container {
+    transform: translateY(0);
+}
+
+.login-content {
+    text-align: center;
+}
+
+.login-content p {
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+}
+
+#google-signin {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.login-container h2 {
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+.input-group label {
+    display: block;
+    color: #00bfa5;
+    margin-bottom: 0.5rem;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid rgba(0, 191, 165, 0.3);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #ffffff;
+    transition: all 0.3s ease;
+}
+
+.input-group input:focus {
+    border-color: #00bfa5;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 191, 165, 0.2);
+}
+
+#login-button {
+    width: 100%;
+    padding: 0.75rem;
+    background: #00bfa5;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+#login-button:hover {
+    background: #00a693;
+    transform: translateY(-1px);
+}
+
+.error-message {
+    color: #ff4444;
+    margin-top: 1rem;
+    text-align: center;
+    min-height: 20px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add Google button styles */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: white;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.google-btn:hover {
+    background-color: #f8f8f8;
+}
+
+.google-btn img {
+    width: 18px;
+    height: 18px;
+}
+
+/* ...existing code... */
+
+/* Improved profile container with hover area */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Create an invisible hover area */
+.profile-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: -250px; /* Extend left to cover buttons */
+    z-index: -1;
+}
+
+/* Updated button styles with hover persistence */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    white-space: nowrap;
+    min-width: 120px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    z-index: 1001; /* Ensure buttons are above the hover area */
+}
+
+/* Position buttons */
+.logout-button {
+    top: 5px;
+    transform: translateX(-20px);
+}
+
+.hide-profile-button {
+    top: 70px; /* Increased separation */
+    transform: translateX(-20px);
+}
+
+/* Show buttons with delay on container hover */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateX(-15px);
+}
+
+/* Keep buttons visible while hovering over them */
+.logout-button:hover,
+.hide-profile-button:hover {
+    opacity: 1 !important;
+    transform: translateX(-15px) scale(1.05) !important;
+    background: rgba(0, 0, 0, 0.95);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Keep buttons visible when hovering the hover area */
+.profile-container:hover::before {
+    pointer-events: all;
+}
+
+/* ...existing code... */
+
+/* Updated button container and positioning */
+.profile-container {
+    position: relative;
+    display: inline-block;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+/* Shared button styles with fixed width */
+.logout-button,
+.hide-profile-button {
+    position: absolute;
+    right: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 30px;
+    font-size: 15px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    width: 160px; /* Fixed width for both buttons */
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Position buttons centered relative to profile picture */
+.logout-button {
+    top: calc(50% - 30px); /* Center minus half the gap between buttons */
+    transform: translateY(-50%) translateX(-20px);
+}
+
+.hide-profile-button {
+    top: calc(50% + 30px); /* Center plus half the gap between buttons */
+    transform: translateY(-50%) translateX(-20px);
+}
+
+/* Update hover states */
+.profile-container:hover .logout-button,
+.profile-container:hover .hide-profile-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* Button hover effects */
+.logout-button:hover,
+.hide-profile-button:hover {
+    background: rgba(0, 0, 0, 0.95);
+    transform: translateY(-50%) translateX(-10px) scale(1.05) !important;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Active state */
+.logout-button:active,
+.hide-profile-button:active {
+    transform: translateY(-50%) translateX(-10px) scale(0.98) !important;
+}
+
+/* ...existing code... */
+
+/* Profile visibility controls */
+.profile-visibility-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    pointer-events: none;
+}
+
+.profile-container[data-hidden="true"] .profile-button {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+.profile-container[data-hidden="true"] .logout-button,
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: none;
+    visibility: hidden;
+}
+
+/* Keep only the hide-profile-button clickable when hidden */
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Show hide-profile-button on hover only when container is hidden */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+#sign-in-button[style*="display: none"] {
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* Remove the hover effects when hidden */
+.profile-container[data-hidden="true"]:hover .logout-button,
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] .profile-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .logout-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Show only hide-profile-button on hover when hidden */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
+    visibility: visible !important;
+}
+
+/* ...existing code... */
+
+/* Update profile container visibility */
+.profile-container[data-hidden="true"] {
+    pointer-events: none !important;
+}
+
+.profile-container[data-hidden="true"] .profile-button,
+.profile-container[data-hidden="true"] .logout-button {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+}
+
+.profile-container[data-hidden="true"] .hide-profile-button {
+    opacity: 0 !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+}
+
+/* Show hide-profile-button on hover */
+.profile-container[data-hidden="true"]:hover .hide-profile-button {
+    opacity: 1 !important;
+    transform: translateY(-50%) translateX(-10px);
+}
+
+/* ...existing code... */

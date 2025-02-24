@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule Popup</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&family=Source+Sans+Pro&family=Inter&family=Montserrat&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <link rel="stylesheet" type="text/css" href="./styles2.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    <!-- Add Firestore compat script -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script type="text/javascript" src="auth.js"></script>
+    <script defer src="./gradient.js"></script>
+    <script defer src="./script2.js"></script>
+    <script defer src="./script.js"></script>
+    <script>
+        // Add message handler before other scripts
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            // Reload the page only if authentication was successful
+            if (event.data.type === 'AUTH_SUCCESS') {
+                window.location.reload();
+            }
+        });
+    </script>
+    <script defer>
+        function initializeApplication() {
+            let attempts = 0;
+            const maxAttempts = 10;
+            const checkInterval = setInterval(() => {
+                if (typeof toggleSettingsSidebar === 'function' && typeof initializeApp === 'function') {
+                    clearInterval(checkInterval);
+                    initializeApp();
+                } else {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('Failed to initialize application after multiple attempts');
+                    }
+                }
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApplication);
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SST4P7CNRH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-SST4P7CNRH');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YS6FHHEGFZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YS6FHHEGFZ');
+    </script>
+</head>
+<body>
+    <button id="sign-in-button" onclick="handleAuthButton()">
+        <i class="fas fa-user"></i>
+    </button>
+    <div class="container">
+        <div class="main-content">
+            <div class="schedule-container">
+                <h1 id="white-box-heading">Schedule</h1>
+                <div id="schedule"></div>
+            </div>
+            <div class="current-period">
+                <h2 id="countdown-heading" class="countdown-header">Normal Schedule ▸ Period 1</h2>
+                <div id="current-period-time">00:00</div>
+            </div>
+        </div>
+    </div>
+    <div id="settings-sidebar" class="settings-sidebar">
+        <div class="settings-header">
+            <div class="header-left">
+                <i class="fas fa-sliders-h"></i>
+                <h2>Settings</h2>
+            </div>
+            <button class="close-settings" onclick="toggleSettingsSidebar()" title="Close settings">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="settings-content">
+            <div class="settings-nav">
+                <button class="nav-item active" data-target="appearance">Appearance</button>
+                <button class="nav-item" data-target="schedule">Schedule</button>
+                <button class="nav-item" data-target="timer">Timer</button>
+                <button class="nav-item" data-target="about">About</button>
+                <!-- New Legal nav item -->
+                <button class="nav-item" data-target="legal">Legal</button>
+                <div class="nav-spacer"></div>
+            </div>
+            
+            <div class="settings-panels">
+                <div class="settings-panel active" id="appearance-panel">
+                    <div class="settings-group">
+                        <h3>Background Image</h3>
+                        <div class="background-controls">
+                            <div class="image-upload-container">
+                                <input type="file" id="bg-image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml">
+                                <div id="bg-image-drop-area">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <div class="upload-text">
+                                        <p class="main-text">Drop image here or click to upload</p>
+                                        <p class="sub-text">Supports JPG, PNG, GIF, WebP, AVIF & more • Max 5MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="background-actions">
+                                <button id="remove-bg-button" onclick="removeBackground()" class="action-button">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span>Remove Background</span>
+                                </button>
+                            </div>
+                            <div class="background-preview">
+                                <div class="preview-label">Current Background</div>
+                                <div id="bg-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Gradient Background</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
+                            <label class="switch">
+                                <input type="checkbox" id="gradient-enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="gradient-settings">
+                            <div id="gradient-preview"></div>
+                            <div>
+                                <label for="gradient-angle">Angle:</label>
+                                <input type="range" id="gradient-angle" min="0" max="360" value="90">
+                                <span class="range-value">90°</span>
+                            </div>
+                            <div id="gradient-stops"></div>
+                            <button id="add-stop">Add Color Stop</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Colors</h3>
+                        <div>
+                            <label for="white-box-color">Background Color:</label>
+                            <input type="color" id="white-box-color" name="white-box-color" value="#ffffff" onchange="updateWhiteBoxColor()">
+                        </div>
+                        <div>
+                            <label for="white-box-opacity">Opacity:</label>
+                            <input type="range" id="white-box-opacity" min="0" max="100" value="90" step="5" onchange="updateWhiteBoxColor()">
+                            <span class="range-value">90%</span>
+                        </div>
+                        <div>
+                            <label for="white-box-text-color">Text Color:</label>
+                            <input type="color" id="white-box-text-color" name="white-box-text-color" value="#000035" onchange="updateWhiteBoxTextColor()">
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Fonts</h3>
+                        <div class="font-selector">
+                            <label for="font-family">Font:</label>
+                            <select id="font-family" onchange="updateFont()">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="'Open Sans'">Open Sans</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="'Source Sans Pro'">Source Sans Pro</option>
+                                <option value="'SF Pro Text'">SF Pro</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="'Segoe UI'">Segoe UI</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Profile</h3>
+                        <div class="profile-visibility-control">
+                            <label class="switch-label" for="profile-visibility-toggle">Show Profile Picture</label>
+                            <label class="switch">
+                                <input type="checkbox" id="profile-visibility-toggle" onchange="authManager.toggleProfileVisibility()" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Progress Bar</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="progress-bar">Show Progress Bar</label>
+                            <label class="switch">
+                                <input type="checkbox" id="progress-bar" onchange="toggleProgressBar()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="progress-bar-settings" class="dropdown-content">
+                            <div>
+                                <label for="progress-bar-color">Bar Color:</label>
+                                <input type="color" id="progress-bar-color" value="#000000" onchange="updateProgressBarStyle()">
+                            </div>
+                            <div>
+                                <label for="progress-bar-opacity">Opacity:</label>
+                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
+                                <span class="range-value">20%</span>
+                                <p class="opacity-helper">Recommended: 15% for gradients, 30% for images</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="schedule-panel">
+                    <div class="settings-group">
+                        <h3>Schedule Management</h3>
+                        <div>
+                            <h3>Select Schedule:</h3>
+                            <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
+                                <option value="normal">Normal Schedule</option>
+                                <option value="chapel">Chapel Bell Schedule</option>
+                                <option value="latePepRally">Late Pep Rally Schedule</option>
+                                <option value="earlyPepRally">Early Pep Rally Schedule</option>
+                            </select>
+                        </div>
+                        <div id="rename-periods">
+                            <h3 id="rename-periods-toggle" class="dropdown-toggle">
+                                Rename Periods <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="rename-periods-content" class="dropdown-content">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div id="custom-schedule">
+                            <h3 id="custom-schedule-toggle" class="dropdown-toggle">
+                                Custom Schedule <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="custom-schedule-content" class="dropdown-content">
+                                <label for="schedule-name">Schedule Name:</label>
+                                <input type="text" id="schedule-name" placeholder="Enter schedule name" />
+                                <label for="num-periods">Number of Periods:</label>
+                                <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
+                                <div id="period-inputs"></div>
+                                <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="timer-panel">
+                    <div class="settings-group">
+                        <h3>Countdown Settings</h3>
+                        <div>
+                            <label for="countdown-color">Timer Color:</label>
+                            <input type="color" id="countdown-color" name="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+                        </div>
+                        <div>
+                            <label for="font-color">Header Color:</label>
+                            <input type="color" id="font-color" name="font-color" value="#ffffff">
+                        </div>
+                        <div class="switch-container">
+                            <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                            <label class="switch">
+                                <input type="checkbox" id="timer-shadow" onchange="toggleShadowSettings(); updateTimerShadow();">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="shadow-settings-content" class="dropdown-content">
+                            <div id="shadow-preview">12:34</div>
+                            <div>
+                                <label for="shadow-color">Shadow Color:</label>
+                                <input type="color" id="shadow-color" value="#000000" onchange="updateTimerShadow()">
+                            </div>
+                            <div>
+                                <label for="shadow-opacity">Shadow Opacity:</label>
+                                <input type="range" id="shadow-opacity" min="0" max="100" value="50" onchange="updateTimerShadow()">
+                                <span class="range-value">50%</span>
+                            </div>
+                            <div>
+                                <label for="shadow-blur">Shadow Blur:</label>
+                                <input type="range" id="shadow-blur" min="0" max="20" value="4" onchange="updateTimerShadow()">
+                                <span class="range-value">4px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-distance">Shadow Distance:</label>
+                                <input type="range" id="shadow-distance" min="0" max="20" value="2" onchange="updateTimerShadow()">
+                                <span class="range-value">2px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-angle">Shadow Angle:</label>
+                                <input type="range" id="shadow-angle" min="0" max="360" value="45" onchange="updateTimerShadow()">
+                                <span class="range-value">45°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="about-panel">
+                    <div class="settings-group">
+                        <h3>About</h3>
+                        <div class="about-content">
+                            <h2>Shiloh Christian Bell Schedule</h2>
+                            <p>Welcome to the Shiloh Christian Bell Schedule website – your go-to tool for keeping track of class periods throughout the school day. This website provides a real-time countdown for each period, ensuring that students and staff always know how much time remains before the next transition.</p>
+                            
+                            <h4>Features:</h4>
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check"></i> Live Countdown Timer – Displays the remaining time in the current period and updates dynamically.</li>
+                                <li><i class="fas fa-check"></i> Daily Schedule Overview – Shows a clear breakdown of the class periods, including start and end times.</li>
+                                <li><i class="fas fa-check"></i> Automatic Adjustments – The schedule adapts to the current day, ensuring accuracy.</li>
+                                <li><i class="fas fa-check"></i> User-Friendly Interface – A simple, clean design optimized for quick access on both desktop and mobile devices.</li>
+                            </ul>
+                            
+                            <h4>How It Works:</h4>
+                            <p>The website automatically detects the current time and matches it to the school's bell schedule. The active period is highlighted, and a countdown timer updates in real-time. Once a period ends, the timer seamlessly transitions to the next period. Users can quickly glance at the full schedule to plan their day efficiently.</p>
+                            
+                            <p>This tool is designed to help students manage their time effectively and stay informed about their class schedule without the hassle of checking the clock constantly. Whether you're in class, passing between periods, or waiting for lunch, this site keeps you on track.</p>
+                            
+                            <div class="contact-info">
+                                <p>For any questions or suggestions, feel free to reach out to us at ShilohSchedule@outlook.com!</p>
+                                <p class="version-info">Version 1.8</p>
+                                <p class="creator-info">Created by Brady Blackwell</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- New legal panel -->
+                <div class="settings-panel" id="legal-panel">
+                    <div class="settings-group">
+                        <h3>Legal</h3>
+                        <div class="legal-links">
+                            <p>
+                                <a href="terms.html" target="_blank">Terms of Service</a>
+                            </p>
+                            <p>
+                                <a href="privacy.html" target="_blank">Privacy Policy</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="login-modal" class="login-modal">
+        <div class="login-container">
+            <h2>Sign In</h2>
+            <div class="login-content">
+                <p>Sign in with your Google account to continue</p>
+                <div id="google-signin"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
