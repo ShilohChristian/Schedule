@@ -1438,3 +1438,52 @@ input, select {
 }
 
 /* ...existing code... */
+
+/* Gradient Test Panel Styles */
+.gradient-preview {
+    width: 300px;
+    height: 100px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.gradient-controls {
+    margin: 20px 0;
+}
+
+.gradient-controls .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gradient-controls label {
+    color: inherit;
+    margin-right: 10px;
+}
+
+.gradient-controls input[type="color"] {
+    width: 60px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+.gradient-save-btn {
+    background: #00bfa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+.gradient-save-btn:hover {
+    background: #00a693;
+}
+
+/* ...existing code... */
