@@ -248,6 +248,17 @@ class GradientManager {
         }, 50); // 50ms debounce delay
     }
 
+    updateDirection(value) {
+        const angle = parseInt(value);
+        if (!isNaN(angle)) {
+            this.angle = angle;
+            document.getElementById('gradient-angle').value = angle;
+            document.querySelector('#gradient-angle + .range-value').textContent = `${angle}°`;
+            this.applyGradient();
+            this.saveSettings();
+        }
+    }
+
     addStop() {
         // Add a new stop with a default color
         this.stops.push({ color: '#ffffff', position: 0 });
@@ -295,27 +306,66 @@ class GradientManager {
     applyGradient() {
         if (!this.enabled) return;
         try {
+            // Ensure stops is an array (convert if needed)
+            if (!Array.isArray(this.stops)) {
+                this.stops = Array.isArray(this.stops.values)
+                    ? Array.from(this.stops.values())
+                    : Array.from(this.stops);
+            }
             if (!Array.isArray(this.stops) || this.stops.length < 2) {
                 throw new Error('Invalid gradient stops');
             }
-            // Use a sorted copy instead of mutating this.stops:
+            // Use a sorted copy without mutating the stored stops
             const sortedStops = this.stops.slice().sort((a, b) => a.position - b.position);
             const gradientString = `linear-gradient(${this.angle}deg, ${sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')})`;
             
-            // Always update preview regardless of enabled state
             const preview = document.getElementById('gradient-preview');
             if (preview) { preview.style.background = gradientString; }
-
-            // Only apply to body if enabled
             if (this.enabled) {
                 document.body.style.backgroundImage = gradientString;
                 document.body.style.backgroundSize = 'cover';
                 document.body.style.backgroundAttachment = 'fixed';
             }
             
+            // Send updated gradient to extension
+            this.sendToExtensionWithRetry({
+                type: 'UPDATE_GRADIENT',
+                settings: { angle: this.angle, stops: this.stops }
+            });
+            
             this.saveSettings();
         } catch (error) {
             console.error('Error applying gradient:', error);
+        }
+    }
+
+    async sendToExtensionWithRetry(message, attempts = 0) {
+        const MAX_ATTEMPTS = 5;
+        const DELAY = 1000;
+        const EXTENSION_ID = 'oemfbiadnodoedigdccmifdljakjmcph';
+
+        try {
+            if (!chrome?.runtime?.sendMessage) {
+                return;
+            }
+
+            await new Promise((resolve, reject) => {
+                chrome.runtime.sendMessage(EXTENSION_ID, {
+                    type: 'UPDATE_GRADIENT',
+                    settings: message.settings
+                }, response => {
+                    if (chrome.runtime.lastError) {
+                        reject(chrome.runtime.lastError);
+                        return;
+                    }
+                    resolve(response);
+                });
+            });
+        } catch (error) {
+            if (attempts < MAX_ATTEMPTS) {
+                await new Promise(resolve => setTimeout(resolve, DELAY));
+                return this.sendToExtensionWithRetry(message, attempts + 1);
+            }
         }
     }
 
