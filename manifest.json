@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Gradient Grabber",
+  "version": "1.0",
+  "description": "Captures gradients from websites",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "tabs"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://127.0.0.1:5500/*",
+      "http://localhost/*",
+      "https://shilohchristian.github.io/*",
+      "https://bradyblackwell.github.io/*"
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["index.html"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Open Gradient Settings"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  }
+}
