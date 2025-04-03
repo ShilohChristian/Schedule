@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiloh Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&family=Source+Sans+Pro&family=Inter&family=Montserrat&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <link rel="stylesheet" type="text/css" href="./styles2.css">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    <!-- Add Firestore compat script -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script type="text/javascript" src="auth.js"></script>
+    <script defer src="./gradient.js"></script>
+    <script defer src="./script2.js"></script>
+    <script defer src="./script.js"></script>
+    <script>
+        // Add message handler before other scripts
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            // Reload the page only if authentication was successful
+            if (event.data.type === 'AUTH_SUCCESS') {
+                window.location.reload();
+            }
+        });
+    </script>
+    <script defer>
+        function initializeApplication() {
+            let attempts = 0;
+            const maxAttempts = 10;
+            const checkInterval = setInterval(() => {
+                if (typeof toggleSettingsSidebar === 'function' && typeof initializeApp === 'function') {
+                    clearInterval(checkInterval);
+                    initializeApp();
+                } else {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('Failed to initialize application after multiple attempts');
+                    }
+                }
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApplication);
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SST4P7CNRH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-SST4P7CNRH');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YS6FHHEGFZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YS6FHHEGFZ');
+    </script>
+</head>
+<body>
+    <button id="sign-in-button" onclick="handleAuthButton()">
+        <i class="fas fa-user"></i>
+    </button>
+    <div class="container">
+        <div class="main-content">
+            <div class="schedule-container">
+                <h1 id="white-box-heading">Schedule</h1>
+                <div id="schedule"></div>
+            </div>
+            <div class="current-period">
+                <h2 id="countdown-heading" class="countdown-header">Normal Schedule ▸ Period 1</h2>
+                <div id="current-period-time">00:00</div>
+            </div>
+        </div>
+    </div>
+    <div id="settings-sidebar" class="settings-sidebar">
+        <div class="settings-header">
+            <div class="header-left">
+                <i class="fas fa-sliders-h"></i>
+                <h2>Settings</h2>
+            </div>
+            <button class="close-settings" onclick="toggleSettingsSidebar()" title="Close settings">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="settings-content">
+            <div class="settings-nav">
+                <button class="nav-item active" data-target="appearance">Appearance</button>
+                <button class="nav-item" data-target="schedule">Schedule</button>
+                <button class="nav-item" data-target="timer">Timer</button>
+                <button class="nav-item" data-target="about">About</button>
+                <button class="nav-item" data-target="legal">Legal</button>
+                <!-- Temporarily hide the Extension tab -->
+                <!-- <button class="nav-item" data-target="test">Extension</button> -->
+                <div class="nav-spacer"></div>
+            </div>
+            
+            <div class="settings-panels">
+                <div class="settings-panel active" id="appearance-panel">
+                    <div class="settings-group">
+                        <h3>Background Image</h3>
+                        <div class="background-controls">
+                            <div class="image-upload-container">
+                                <input type="file" id="bg-image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml">
+                                <div id="bg-image-drop-area">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <div class="upload-text">
+                                        <p class="main-text">Drop image here or click to upload</p>
+                                        <p class="sub-text">Supports JPG, PNG, GIF, WebP, AVIF & more • Max 5MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="background-actions">
+                                <button id="remove-bg-button" onclick="removeBackground()" class="action-button">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span>Remove Background</span>
+                                </button>
+                            </div>
+                            <div class="background-preview">
+                                <div class="preview-label">Current Background</div>
+                                <div id="bg-preview"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Gradient Background</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
+                            <label class="switch">
+                                <input type="checkbox" id="gradient-enabled">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="gradient-settings">
+                            <div id="gradient-preview"></div>
+                            <div class="gradient-direction">
+                                <label for="gradient-direction">Direction:</label>
+                                <select id="gradient-direction" onchange="gradientManager.updateDirection(this.value)">
+                                    <option value="90">To Right</option>
+                                    <option value="0">To Top</option>
+                                    <option value="180">To Bottom</option>
+                                    <option value="45">To Top Right</option>
+                                    <option value="135">To Bottom Right</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="gradient-angle">Custom Angle:</label>
+                                <input type="range" id="gradient-angle" min="0" max="360" value="90">
+                                <span class="range-value">90°</span>
+                            </div>
+                            <div id="gradient-stops"></div>
+                            <button id="add-stop">Add Color Stop</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Colors</h3>
+                        <div>
+                            <label for="white-box-color">Background Color:</label>
+                            <input type="color" id="white-box-color" name="white-box-color" value="#ffffff" onchange="updateWhiteBoxColor()">
+                        </div>
+                        <div>
+                            <label for="white-box-opacity">Opacity:</label>
+                            <input type="range" id="white-box-opacity" min="0" max="100" value="90" step="5" onchange="updateWhiteBoxColor()">
+                            <span class="range-value">90%</span>
+                        </div>
+                        <div>
+                            <label for="white-box-text-color">Text Color:</label>
+                            <input type="color" id="white-box-text-color" name="white-box-text-color" value="#000035" onchange="updateWhiteBoxTextColor()">
+                        </div>
+                        <div class="border-controls">
+                            <h4>Box Border</h4>
+                            <div>
+                                <label for="box-border-color">Border Color:</label>
+                                <input type="color" id="box-border-color" value="#000035" onchange="updateBoxBorder()">
+                            </div>
+                            <div>
+                                <label for="box-border-width">Border Width:</label>
+                                <input type="range" id="box-border-width" min="0" max="10" value="0" step="1" onchange="updateBoxBorder()">
+                                <span class="range-value">0px</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Fonts</h3>
+                        <div class="font-selector">
+                            <label for="font-family">Font:</label>
+                            <select id="font-family" onchange="updateFont()">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="'Open Sans'">Open Sans</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="'Source Sans Pro'">Source Sans Pro</option>
+                                <option value="'SF Pro Text'">SF Pro</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="'Segoe UI'">Segoe UI</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Profile</h3>
+                        <div class="profile-visibility-control">
+                            <label class="switch-label" for="profile-visibility-toggle">Show Profile Picture</label>
+                            <label class="switch">
+                                <input type="checkbox" id="profile-visibility-toggle" onchange="authManager.toggleProfileVisibility()" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Progress Bar</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="progress-bar">Show Progress Bar</label>
+                            <label class="switch">
+                                <input type="checkbox" id="progress-bar" onchange="toggleProgressBar()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="progress-bar-settings" class="dropdown-content">
+                            <div>
+                                <label for="progress-bar-color">Bar Color:</label>
+                                <input type="color" id="progress-bar-color" value="#000000" onchange="updateProgressBarStyle()">
+                            </div>
+                            <div>
+                                <label for="progress-bar-opacity">Opacity:</label>
+                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
+                                <span class="range-value">20%</span>
+                                <p class="opacity-helper">Recommended: 15% for gradients, 30% for images</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="schedule-panel">
+                    <div class="settings-group">
+                        <h3>Schedule Management</h3>
+                        <div>
+                            <h3>Select Schedule:</h3>
+                            <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
+                                <option value="normal">Normal Schedule</option>
+                                <option value="chapel">Chapel Bell Schedule</option>
+                                <option value="latePepRally">Late Pep Rally Schedule</option>
+                                <option value="earlyPepRally">Early Pep Rally Schedule</option>
+                            </select>
+                        </div>
+                        <div id="rename-periods">
+                            <h3 id="rename-periods-toggle" class="dropdown-toggle">
+                                Rename Periods <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="rename-periods-content" class="dropdown-content">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div id="custom-schedule">
+                            <h3 id="custom-schedule-toggle" class="dropdown-toggle">
+                                Custom Schedule <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="custom-schedule-content" class="dropdown-content">
+                                <label for="schedule-name">Schedule Name:</label>
+                                <input type="text" id="schedule-name" placeholder="Enter schedule name" />
+                                <label for="num-periods">Number of Periods:</label>
+                                <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
+                                <div id="period-inputs"></div>
+                                <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="timer-panel">
+                    <div class="settings-group">
+                        <h3>Countdown Settings</h3>
+                        <div>
+                            <label for="countdown-color">Timer Color:</label>
+                            <input type="color" id="countdown-color" name="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+                        </div>
+                        <div>
+                            <label for="font-color">Header Color:</label>
+                            <input type="color" id="font-color" name="font-color" value="#ffffff">
+                        </div>
+                        <div class="switch-container">
+                            <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                            <label class="switch">
+                                <input type="checkbox" id="timer-shadow" onchange="toggleShadowSettings(); updateTimerShadow();">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="shadow-settings-content" class="dropdown-content">
+                            <div id="shadow-preview">12:34</div>
+                            <div>
+                                <label for="shadow-color">Shadow Color:</label>
+                                <input type="color" id="shadow-color" value="#000000" onchange="updateTimerShadow()">
+                            </div>
+                            <div>
+                                <label for="shadow-opacity">Shadow Opacity:</label>
+                                <input type="range" id="shadow-opacity" min="0" max="100" value="50" onchange="updateTimerShadow()">
+                                <span class="range-value">50%</span>
+                            </div>
+                            <div>
+                                <label for="shadow-blur">Shadow Blur:</label>
+                                <input type="range" id="shadow-blur" min="0" max="20" value="4" onchange="updateTimerShadow()">
+                                <span class="range-value">4px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-distance">Shadow Distance:</label>
+                                <input type="range" id="shadow-distance" min="0" max="20" value="2" onchange="updateTimerShadow()">
+                                <span class="range-value">2px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-angle">Shadow Angle:</label>
+                                <input type="range" id="shadow-angle" min="0" max="360" value="45" onchange="updateTimerShadow()">
+                                <span class="range-value">45°</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-panel" id="about-panel">
+                    <div class="settings-group">
+                        <h3>About</h3>
+                        <div class="about-content">
+                            <h2>Shiloh Christian Bell Schedule</h2>
+                            <p>Welcome to the Shiloh Christian Bell Schedule website – your go-to tool for keeping track of class periods throughout the school day. This website provides a real-time countdown for each period, ensuring that students and staff always know how much time remains before the next transition.</p>
+                            
+                            <h4>Features:</h4>
+                            <ul class="feature-list">
+                                <li><i class="fas fa-check"></i> Live Countdown Timer – Displays the remaining time in the current period and updates dynamically.</li>
+                                <li><i class="fas fa-check"></i> Daily Schedule Overview – Shows a clear breakdown of the class periods, including start and end times.</li>
+                                <li><i class="fas fa-check"></i> Automatic Adjustments – The schedule adapts to the current day, ensuring accuracy.</li>
+                                <li><i class="fas fa-check"></i> User-Friendly Interface – A simple, clean design optimized for quick access on both desktop and mobile devices.</li>
+                            </ul>
+                            
+                            <h4>How It Works:</h4>
+                            <p>The website automatically detects the current time and matches it to the school's bell schedule. The active period is highlighted, and a countdown timer updates in real-time. Once a period ends, the timer seamlessly transitions to the next period. Users can quickly glance at the full schedule to plan their day efficiently.</p>
+                            
+                            <p>This tool is designed to help students manage their time effectively and stay informed about their class schedule without the hassle of checking the clock constantly. Whether you're in class, passing between periods, or waiting for lunch, this site keeps you on track.</p>
+                            
+                            <div class="contact-info">
+                                <p>For any questions or suggestions, feel free to reach out to us at ShilohSchedule@outlook.com!</p>
+                                <p class="version-info">Version 1.8</p>
+                                <p class="creator-info">Created by Brady Blackwell</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="legal-panel">
+                    <div class="settings-group">
+                        <h3>Legal</h3>
+                        <div class="legal-links">
+                            <p>
+                                <a href="terms.html" target="_blank">Terms of Service</a>
+                            </p>
+                            <p>
+                                <a href="privacy.html" target="_blank">Privacy Policy</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="test-panel">
+                    <div class="settings-group">
+                        <h3>Extension Gradient Settings</h3>
+                        <p>Customize the gradient used in the application. Adjust the colors and direction to update the background gradient.</p>
+                        <div class="controls" style="margin: 20px 0;">
+                            <div class="color-controls">
+                                <label for="startColor">Start Color:</label>
+                                <input type="color" id="startColor" value="#e66465" onchange="updateExtensionPreview()">
+                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="endColor" value="#9198e5" onchange="updateExtensionPreview()">
+                            </div>
+                            <div class="direction-controls" style="margin-top: 15px;">
+                                <label for="gradientDirection">Direction:</label>
+                                <select id="gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right</option>
+                                    <option value="0">To Top</option>
+                                    <option value="180">To Bottom</option>
+                                    <option value="45">To Top Right</option>
+                                    <option value="135">To Bottom Right</option>
+                                </select>
+                            </div>
+                            <button id="saveExtensionButton" style="margin-top: 15px;" onclick="saveExtensionGradient()">Save Gradient</button>
+                        </div>
+                        <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
+                        <script>
+                            // Load saved settings on init
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const savedSettings = localStorage.getItem('extensionGradientSettings');
+                                if (savedSettings) {
+                                    const settings = JSON.parse(savedSettings);
+                                    document.getElementById('startColor').value = settings.startColor;
+                                    document.getElementById('endColor').value = settings.endColor;
+                                    document.getElementById('gradientDirection').value = settings.angle;
+                                }
+                                updateExtensionPreview();
+                            });
+
+                            function updateExtensionPreview() {
+                                const start = document.getElementById('startColor').value;
+                                const end = document.getElementById('endColor').value;
+                                const angle = document.getElementById('gradientDirection').value;
+                                const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
+                                document.getElementById('extensionPreview').style.background = gradient;
+                                
+                                // Save settings to localStorage
+                                const settings = {
+                                    startColor: start,
+                                    endColor: end,
+                                    angle: angle
+                                };
+                                localStorage.setItem('extensionGradientSettings', JSON.stringify(settings));
+                            }
+                            
+                            function saveExtensionGradient() {
+                                const start = document.getElementById('startColor').value;
+                                const end = document.getElementById('endColor').value;
+                                const angle = document.getElementById('gradientDirection').value;
+                                
+                                const EXTENSION_ID = 'oemfbiadnodoedigdccmifdljakjmcph';
+                                
+                                if (window.chrome && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
+                                    chrome.runtime.sendMessage(EXTENSION_ID, { 
+                                        type: 'UPDATE_GRADIENT', 
+                                        settings: { 
+                                            angle: parseInt(angle),
+                                            stops: [
+                                                { color: start, position: 0 }, 
+                                                { color: end, position: 100 }
+                                            ] 
+                                        }
+                                    }, response => {
+                                        if (chrome.runtime.lastError) {
+                                            console.error('Extension error:', chrome.runtime.lastError);
+                                            alert('Failed to update gradient. Make sure the extension is installed.');
+                                        } else {
+                                            alert('Gradient updated!');
+                                        }
+                                    });
+                                } else {
+                                    alert('Extension not available. Please install the Gradient Grabber extension.');
+                                }
+                            }
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="login-modal" class="login-modal">
+        <div class="login-container">
+            <h2>Sign In</h2>
+            <div class="login-content">
+                <p>Sign in with your Google account to continue</p>
+                <div id="google-signin"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
