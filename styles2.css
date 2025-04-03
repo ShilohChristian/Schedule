@@ -266,6 +266,25 @@
 
 /* ...existing code... */
 
+#popup-gradient-preview {
+    width: 350px;
+    height: 350px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#popup-gradient-settings {
+    margin-top: 15px;
+}
+
+#popup-gradient-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 15px 0;
+}
+
 /* Add or update auth button styles */
 .auth-button {
     position: absolute !important;
