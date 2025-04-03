@@ -97,8 +97,9 @@
                 <button class="nav-item" data-target="schedule">Schedule</button>
                 <button class="nav-item" data-target="timer">Timer</button>
                 <button class="nav-item" data-target="about">About</button>
-                <!-- Add new nav item -->
                 <button class="nav-item" data-target="legal">Legal</button>
+                <!-- Temporarily hide the Extension tab -->
+                <!-- <button class="nav-item" data-target="test">Extension</button> -->
                 <div class="nav-spacer"></div>
             </div>
             
@@ -141,8 +142,18 @@
                         </div>
                         <div id="gradient-settings">
                             <div id="gradient-preview"></div>
+                            <div class="gradient-direction">
+                                <label for="gradient-direction">Direction:</label>
+                                <select id="gradient-direction" onchange="gradientManager.updateDirection(this.value)">
+                                    <option value="90">To Right</option>
+                                    <option value="0">To Top</option>
+                                    <option value="180">To Bottom</option>
+                                    <option value="45">To Top Right</option>
+                                    <option value="135">To Bottom Right</option>
+                                </select>
+                            </div>
                             <div>
-                                <label for="gradient-angle">Angle:</label>
+                                <label for="gradient-angle">Custom Angle:</label>
                                 <input type="range" id="gradient-angle" min="0" max="360" value="90">
                                 <span class="range-value">90°</span>
                             </div>
@@ -165,6 +176,18 @@
                         <div>
                             <label for="white-box-text-color">Text Color:</label>
                             <input type="color" id="white-box-text-color" name="white-box-text-color" value="#000035" onchange="updateWhiteBoxTextColor()">
+                        </div>
+                        <div class="border-controls">
+                            <h4>Box Border</h4>
+                            <div>
+                                <label for="box-border-color">Border Color:</label>
+                                <input type="color" id="box-border-color" value="#000035" onchange="updateBoxBorder()">
+                            </div>
+                            <div>
+                                <label for="box-border-width">Border Width:</label>
+                                <input type="range" id="box-border-width" min="0" max="10" value="0" step="1" onchange="updateBoxBorder()">
+                                <span class="range-value">0px</span>
+                            </div>
                         </div>
                     </div>
 
@@ -333,7 +356,6 @@
                         </div>
                     </div>
                 </div>
-                <!-- New legal panel -->
                 <div class="settings-panel" id="legal-panel">
                     <div class="settings-group">
                         <h3>Legal</h3>
@@ -345,6 +367,91 @@
                                 <a href="privacy.html" target="_blank">Privacy Policy</a>
                             </p>
                         </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="test-panel">
+                    <div class="settings-group">
+                        <h3>Extension Gradient Settings</h3>
+                        <p>Customize the gradient used in the application. Adjust the colors and direction to update the background gradient.</p>
+                        <div class="controls" style="margin: 20px 0;">
+                            <div class="color-controls">
+                                <label for="startColor">Start Color:</label>
+                                <input type="color" id="startColor" value="#e66465" onchange="updateExtensionPreview()">
+                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="endColor" value="#9198e5" onchange="updateExtensionPreview()">
+                            </div>
+                            <div class="direction-controls" style="margin-top: 15px;">
+                                <label for="gradientDirection">Direction:</label>
+                                <select id="gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right</option>
+                                    <option value="0">To Top</option>
+                                    <option value="180">To Bottom</option>
+                                    <option value="45">To Top Right</option>
+                                    <option value="135">To Bottom Right</option>
+                                </select>
+                            </div>
+                            <button id="saveExtensionButton" style="margin-top: 15px;" onclick="saveExtensionGradient()">Save Gradient</button>
+                        </div>
+                        <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
+                        <script>
+                            // Load saved settings on init
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const savedSettings = localStorage.getItem('extensionGradientSettings');
+                                if (savedSettings) {
+                                    const settings = JSON.parse(savedSettings);
+                                    document.getElementById('startColor').value = settings.startColor;
+                                    document.getElementById('endColor').value = settings.endColor;
+                                    document.getElementById('gradientDirection').value = settings.angle;
+                                }
+                                updateExtensionPreview();
+                            });
+
+                            function updateExtensionPreview() {
+                                const start = document.getElementById('startColor').value;
+                                const end = document.getElementById('endColor').value;
+                                const angle = document.getElementById('gradientDirection').value;
+                                const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
+                                document.getElementById('extensionPreview').style.background = gradient;
+                                
+                                // Save settings to localStorage
+                                const settings = {
+                                    startColor: start,
+                                    endColor: end,
+                                    angle: angle
+                                };
+                                localStorage.setItem('extensionGradientSettings', JSON.stringify(settings));
+                            }
+                            
+                            function saveExtensionGradient() {
+                                const start = document.getElementById('startColor').value;
+                                const end = document.getElementById('endColor').value;
+                                const angle = document.getElementById('gradientDirection').value;
+                                
+                                const EXTENSION_ID = 'oemfbiadnodoedigdccmifdljakjmcph';
+                                
+                                if (window.chrome && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
+                                    chrome.runtime.sendMessage(EXTENSION_ID, { 
+                                        type: 'UPDATE_GRADIENT', 
+                                        settings: { 
+                                            angle: parseInt(angle),
+                                            stops: [
+                                                { color: start, position: 0 }, 
+                                                { color: end, position: 100 }
+                                            ] 
+                                        }
+                                    }, response => {
+                                        if (chrome.runtime.lastError) {
+                                            console.error('Extension error:', chrome.runtime.lastError);
+                                            alert('Failed to update gradient. Make sure the extension is installed.');
+                                        } else {
+                                            alert('Gradient updated!');
+                                        }
+                                    });
+                                } else {
+                                    alert('Extension not available. Please install the Gradient Grabber extension.');
+                                }
+                            }
+                        </script>
                     </div>
                 </div>
             </div>
