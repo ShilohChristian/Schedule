@@ -182,6 +182,25 @@ async function loadSettings() {
     if (visibilityToggle) {
         visibilityToggle.checked = !isProfileHidden;
     }
+
+    // Load border settings
+    const borderColor = localStorage.getItem('boxBorderColor') || '#000035';
+    const borderWidth = localStorage.getItem('boxBorderWidth') || '0';
+    
+    document.getElementById('box-border-color').value = borderColor;
+    document.getElementById('box-border-width').value = borderWidth;
+    
+    // Apply border settings
+    const scheduleContainer = document.querySelector('.schedule-container');
+    if (scheduleContainer && borderWidth > 0) {
+        scheduleContainer.style.border = `${borderWidth}px solid ${borderColor}`;
+    }
+    
+    // Update width display
+    const widthDisplay = document.querySelector('#box-border-width + .range-value');
+    if (widthDisplay) {
+        widthDisplay.textContent = `${borderWidth}px`;
+    }
 }
 
 function loadWhiteBoxSettings() {
@@ -1637,3 +1656,191 @@ async function saveSettings() {
 }
 
 // ...existing code...
+
+// Add this to your gradient manager's applyGradient method
+function applyGradient() {
+    if (!this.enabled) return;
+    
+    try {
+        // ...existing gradient application code...
+        
+        // Send settings to Chrome extension if it exists
+        if (chrome?.runtime?.sendMessage) {
+            chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+                type: 'UPDATE_GRADIENT',
+                settings: {
+                    angle: this.angle,
+                    stops: this.stops
+                }
+            });
+        }
+    } catch (error) {
+        console.error('Error applying gradient:', error);
+    }
+}
+
+// ...existing code...
+
+// Add these functions after your existing gradient management code
+
+function initializePopupGradientControls() {
+    const container = document.getElementById('popup-gradient-settings');
+    if (!container) return;
+
+    // Load saved settings
+    const savedSettings = localStorage.getItem('popupGradientSettings');
+    let settings = {
+        enabled: true,
+        angle: 90,
+        stops: [
+            { color: '#000035', position: 0 },
+            { color: '#00bfa5', position: 100 }
+        ]
+    };
+
+    if (savedSettings) {
+        try {
+            settings = JSON.parse(savedSettings);
+        } catch (e) {
+            console.warn('Invalid popup gradient settings');
+        }
+    }
+
+    // Set initial state
+    document.getElementById('popup-gradient-enabled').checked = settings.enabled;
+    document.getElementById('popup-gradient-angle').value = settings.angle;
+    
+    // Update stops
+    updatePopupGradientStops(settings.stops);
+    
+    // Apply initial gradient
+    updatePopupGradientPreview(settings);
+    
+    // Send to extension if available
+    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        const extId = chrome.runtime.id; // Ensure an extension ID is provided
+        chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+            type: 'UPDATE_GRADIENT',
+            settings: {
+                angle: settings.angle,
+                stops: settings.stops
+            }
+        });
+    }
+}
+
+function updatePopupGradientStops(stops) {
+    const container = document.getElementById('popup-gradient-stops');
+    if (!container) return;
+
+    container.innerHTML = stops.map((stop, index) => `
+        <div class="gradient-stop">
+            <input type="color" value="${stop.color}" 
+                onchange="updatePopupGradient(${index}, this.value, this.nextElementSibling.value)">
+            <input type="number" min="0" max="100" value="${stop.position}" 
+                onchange="updatePopupGradient(${index}, this.previousElementSibling.value, this.value)">
+            ${stops.length > 2 ? `
+                <button class="remove-stop" onclick="removePopupGradientStop(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            ` : ''}
+        </div>
+    `).join('');
+}
+
+function updatePopupGradient(index, color, position) {
+    const savedSettings = JSON.parse(localStorage.getItem('popupGradientSettings') || '{}');
+    const stops = savedSettings.stops || [
+        { color: '#000035', position: 0 },
+        { color: '#00bfa5', position: 100 }
+    ];
+
+    stops[index] = { color, position: parseInt(position) };
+    stops.sort((a, b) => a.position - b.position);
+
+    const settings = {
+        enabled: document.getElementById('popup-gradient-enabled').checked,
+        angle: parseInt(document.getElementById('popup-gradient-angle').value),
+        stops
+    };
+
+    localStorage.setItem('popupGradientSettings', JSON.stringify(settings));
+    updatePopupGradientPreview(settings);
+
+    // Send message with callback error check:
+    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+        chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+            type: 'UPDATE_GRADIENT',
+            settings: { angle: settings.angle, stops: settings.stops }
+        }, function(response) {
+            if(chrome.runtime.lastError) {
+                console.error("SendMessage error:", chrome.runtime.lastError.message);
+            } else {
+                console.log('Popup gradient update message sent.');
+            }
+        });
+    }
+}
+
+function updatePopupGradientPreview(settings) {
+    const preview = document.getElementById('popup-gradient-preview');
+    if (!preview) return;
+
+    const gradientString = `linear-gradient(${settings.angle}deg, ${
+        settings.stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
+    })`;
+    
+    preview.style.background = gradientString;
+}
+
+// Add this to your existing event listener
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+    
+    // Initialize popup gradient controls
+    initializePopupGradientControls();
+    
+    // Add event listeners for popup gradient controls
+    document.getElementById('popup-gradient-enabled')?.addEventListener('change', () => {
+        updatePopupGradient(0, document.querySelector('#popup-gradient-stops input[type="color"]').value, 0);
+    });
+    
+    document.getElementById('popup-gradient-angle')?.addEventListener('input', (e) => {
+        updatePopupGradient(0, document.querySelector('#popup-gradient-stops input[type="color"]').value, 0);
+        const angleDisplay = document.querySelector('#popup-gradient-angle + .range-value');
+        if (angleDisplay) {
+            angleDisplay.textContent = `${e.target.value}°`;
+        }
+    });
+    
+    document.getElementById('popup-add-stop')?.addEventListener('click', () => {
+        const savedSettings = JSON.parse(localStorage.getItem('popupGradientSettings') || '{}');
+        const stops = savedSettings.stops || [];
+        stops.push({ color: '#ffffff', position: 50 });
+        updatePopupGradientStops(stops);
+        updatePopupGradient(0, stops[0].color, stops[0].position);
+    });
+});
+
+// ...existing code...
+
+function updateBoxBorder() {
+    const color = document.getElementById('box-border-color').value;
+    const width = document.getElementById('box-border-width').value;
+    const scheduleContainer = document.querySelector('.schedule-container');
+    
+    if (scheduleContainer) {
+        scheduleContainer.style.border = width > 0 ? `${width}px solid ${color}` : 'none';
+        
+        // Update width display
+        const widthDisplay = document.querySelector('#box-border-width + .range-value');
+        if (widthDisplay) {
+            widthDisplay.textContent = `${width}px`;
+        }
+        
+        // Save settings
+        localStorage.setItem('boxBorderColor', color);
+        localStorage.setItem('boxBorderWidth', width);
+        saveSettings();
+    }
+}
