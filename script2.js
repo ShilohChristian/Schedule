@@ -692,25 +692,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
         });
-
-        // Handle drop
-        dropArea.addEventListener('drop', function(e) {
-            console.log('File dropped');
-            const file = e.dataTransfer.files[0];
-            if (file) handleBgImageUpload(file);
-        });
-
-        // Handle click upload
-        dropArea.addEventListener('click', function() {
-            console.log('Drop area clicked');
-            bgInput.click();
-        });
-
-        bgInput.addEventListener('change', function(e) {
-            console.log('File input changed');
-            const file = e.target.files[0];
-            if (file) handleBgImageUpload(file);
-        });
     }
 
     loadSettings();
@@ -810,13 +791,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     document.addEventListener('dragover', function(e) {
         e.preventDefault();
-    });
-
-    document.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropOverlay.classList.remove('active');
-        const file = e.dataTransfer.files[0];
-        if (file) handleBgImageUpload(file);
     });
 
     // Ensure drop overlay is only shown when settings are closed
@@ -1232,58 +1206,60 @@ function setupDragAndDrop() {
         document.body.appendChild(dropOverlay);
     }
 
-    // Create settings overlay
-    const settingsOverlay = dropOverlay.cloneNode(true);
-    settingsOverlay.classList.add('settings-overlay');
-    document.querySelector('.settings-sidebar')?.appendChild(settingsOverlay);
-
-    const handleDrag = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const isSettingsSidebarOpen = document.getElementById('settings-sidebar').classList.contains('open');
-        if (isSettingsSidebarOpen) {
-            settingsOverlay.classList.add('active');
-        } else {
-            dropOverlay.classList.add('active');
-        }
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        if (e.target === document.documentElement || e.relatedTarget === null) {
-            dropOverlay.classList.remove('active');
-            settingsOverlay.classList.remove('active');
-        }
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        dropOverlay.classList.remove('active');
-        settingsOverlay.classList.remove('active');
-        
-        const file = e.dataTransfer.files[0];
-        if (file) handleBgImageUpload(file);
-    };
-
-    // Add event listeners
-    ['dragenter', 'dragover'].forEach(event => {
-        document.addEventListener(event, handleDrag);
-    });
-
-    document.addEventListener('dragleave', handleDragLeave);
-    document.addEventListener('drop', handleDrop);
-
-    // Setup the drop area in settings panel
     const dropArea = document.getElementById('bg-image-drop-area');
     const fileInput = document.getElementById('bg-image');
 
     if (dropArea && fileInput) {
-        dropArea.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) handleBgImageUpload(e.target.files[0]);
+        let isProcessing = false;
+        let lastClick = 0;
+        const CLICK_DELAY = 500; // Minimum time between clicks
+
+        // Handle drop area click with debounce
+        dropArea.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const now = Date.now();
+            if (isProcessing || (now - lastClick) < CLICK_DELAY) return;
+            lastClick = now;
+            isProcessing = true;
+            
+            fileInput.click();
         });
-        fileInput.accept = "image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml";
+
+        // Handle file selection
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleBgImageUpload(file);
+                // Reset file input and processing flag after delay
+                setTimeout(() => {
+                    this.value = '';
+                    isProcessing = false;
+                }, 1000);
+            } else {
+                isProcessing = false;
+            }
+        });
+
+        // Handle drag and drop events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (eventName === 'dragenter' || eventName === 'dragover') {
+                    dropArea.classList.add('drag-over');
+                } else {
+                    dropArea.classList.remove('drag-over');
+                }
+
+                if (eventName === 'drop') {
+                    const file = e.dataTransfer.files[0];
+                    if (file) handleBgImageUpload(file);
+                }
+            });
+        });
     }
 }
 
@@ -1317,7 +1293,7 @@ function handleBgImageUpload(file) {
     ];
 
     if (!allowedTypes.includes(file.type)) {
-        alert('Supported formats: JPG, PNG, GIF, WebP, AVIF, BMP, TIFF, SVG');
+        alert('Supported formats: JPG, PNG • Max 5MB');
         return;
     }
 
@@ -1767,17 +1743,12 @@ function updatePopupGradient(index, color, position) {
     localStorage.setItem('popupGradientSettings', JSON.stringify(settings));
     updatePopupGradientPreview(settings);
 
-    // Send message with callback error check:
     if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+        chrome.runtime.sendMessage("obpilefnjfmfekidadobjnfcifeegmpn", {
             type: 'UPDATE_GRADIENT',
             settings: { angle: settings.angle, stops: settings.stops }
         }, function(response) {
-            if(chrome.runtime.lastError) {
-                console.error("SendMessage error:", chrome.runtime.lastError.message);
-            } else {
-                console.log('Popup gradient update message sent.');
-            }
+            // ...existing code...
         });
     }
 }
