@@ -342,7 +342,7 @@ class GradientManager {
     async sendToExtensionWithRetry(message, attempts = 0) {
         const MAX_ATTEMPTS = 5;
         const DELAY = 1000;
-        const EXTENSION_ID = 'oemfbiadnodoedigdccmifdljakjmcph';
+        const EXTENSION_ID = 'opjiajblbdfeibdhkcfglfnlfjloipbk';
 
         try {
             if (!chrome?.runtime?.sendMessage) {
