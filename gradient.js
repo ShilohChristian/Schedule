@@ -1,24 +1,65 @@
 class GradientManager {
     constructor() {
-        // Prevent multiple instances
         if (window.gradientManager) {
             return window.gradientManager;
         }
 
-        // Initialize properties
-        this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ];
-        this.angle = 90;
-        this.enabled = true;
+        // Initialize properties with null values first
+        this.stops = null;
+        this.angle = null;
+        this.enabled = true; // Set enabled to true by default
         this.selectedStop = null;
+        this.initialized = false;
 
-        // Apply default gradient immediately
-        document.body.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
-        
         window.gradientManager = this;
-        this.loadSavedGradient();
+        this.loadSavedGradient();  // Use the previously accepted loading method
+    }
+
+    async init() {
+        try {
+            // First check for extension settings
+            if (chrome?.runtime?.sendMessage) {
+                const response = await new Promise((resolve) => {
+                    chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+                        type: 'GET_GRADIENT'
+                    }, resolve);
+                });
+
+                if (response?.data?.gradientGrabber?.savedGradient) {
+                    const { angle, stops } = response.data.gradientGrabber.savedGradient;
+                    this.stops = stops;
+                    this.angle = angle;
+                    this.enabled = true;
+                    await this.applyGradient();
+                    return;
+                }
+            }
+
+            // If no extension settings or not persistent, try localStorage
+            const saved = localStorage.getItem('gradientSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                if (settings && Array.isArray(settings.stops)) {
+                    this.stops = settings.stops;
+                    this.angle = settings.angle || 90;
+                    this.enabled = settings.enabled !== false;
+                    if (this.enabled) {
+                        await this.applyGradient();
+                    }
+                    return;
+                }
+            }
+
+            // If nothing is saved, use defaults
+            this.initializeDefaultStops();
+            await this.applyGradient();
+            this.saveSettings();
+        } catch (error) {
+            console.error('Error initializing gradient manager:', error);
+            this.initializeDefaultStops();
+            await this.applyGradient();
+            this.saveSettings();
+        }
     }
 
     // Add the missing method
@@ -29,15 +70,6 @@ class GradientManager {
         ];
         this.angle = 90;
         this.enabled = true;
-    }
-
-    init() {
-        // Wait for both DOM and other scripts
-        if (document.readyState !== 'complete') {
-            window.addEventListener('load', () => this.setupManager());
-        } else {
-            this.setupManager();
-        }
     }
 
     setupManager() {
@@ -118,17 +150,11 @@ class GradientManager {
 
     saveSettings() {
         try {
-            const currentStops = Array.from(this.stops.entries()).map(([id, stop]) => ({
-                id,
-                color: stop.color,
-                position: stop.position
-            }));
-
             const settings = {
-                enabled: document.getElementById('gradient-enabled')?.checked || false,
-                stops: currentStops
+                enabled: this.enabled,
+                angle: this.angle,
+                stops: this.stops
             };
-
             localStorage.setItem('gradientSettings', JSON.stringify(settings));
         } catch (error) {
             console.error('Error saving gradient settings:', error);
@@ -303,7 +329,7 @@ class GradientManager {
     }
 
     // Modify applyGradient to use a sorted copy rather than sorting in–place
-    applyGradient() {
+    async applyGradient() {
         if (!this.enabled) return;
         try {
             // Ensure stops is an array (convert if needed)
@@ -327,45 +353,9 @@ class GradientManager {
                 document.body.style.backgroundAttachment = 'fixed';
             }
             
-            // Send updated gradient to extension
-            this.sendToExtensionWithRetry({
-                type: 'UPDATE_GRADIENT',
-                settings: { angle: this.angle, stops: this.stops }
-            });
-            
             this.saveSettings();
         } catch (error) {
             console.error('Error applying gradient:', error);
-        }
-    }
-
-    async sendToExtensionWithRetry(message, attempts = 0) {
-        const MAX_ATTEMPTS = 5;
-        const DELAY = 1000;
-        const EXTENSION_ID = 'opjiajblbdfeibdhkcfglfnlfjloipbk';
-
-        try {
-            if (!chrome?.runtime?.sendMessage) {
-                return;
-            }
-
-            await new Promise((resolve, reject) => {
-                chrome.runtime.sendMessage(EXTENSION_ID, {
-                    type: 'UPDATE_GRADIENT',
-                    settings: message.settings
-                }, response => {
-                    if (chrome.runtime.lastError) {
-                        reject(chrome.runtime.lastError);
-                        return;
-                    }
-                    resolve(response);
-                });
-            });
-        } catch (error) {
-            if (attempts < MAX_ATTEMPTS) {
-                await new Promise(resolve => setTimeout(resolve, DELAY));
-                return this.sendToExtensionWithRetry(message, attempts + 1);
-            }
         }
     }
 
@@ -386,16 +376,10 @@ class GradientManager {
             console.warn('Gradient stops container not found');
             return;
         }
-
-        // Ensure this.stops exists and is an array
-        if (!Array.isArray(this.stops)) {
-            console.warn('Stops array is invalid, resetting to defaults');
-            this.stops = [
-                { color: '#000035', position: 0 },
-                { color: '#00bfa5', position: 100 }
-            ];
+        // Ensure a valid angle value, defaulting to 90 if undefined or null
+        if (this.angle === undefined || this.angle === null) {
+            this.angle = 90;
         }
-
         container.innerHTML = this.stops.map((stop, index) => `
             <div class="gradient-stop">
                 <input type="color" value="${stop.color}" 
@@ -409,12 +393,8 @@ class GradientManager {
                 ` : ''}
             </div>
         `).join('');
-
-        // Update enabled state with null check
         const checkbox = document.getElementById('gradient-enabled');
         if (checkbox) checkbox.checked = this.enabled;
-
-        // Update angle with null check
         const angleInput = document.getElementById('gradient-angle');
         if (angleInput) {
             angleInput.value = this.angle;
