@@ -99,107 +99,35 @@ function loadBackground() {
 
 // Modify your loadSettings function
 async function loadSettings() {
-    await waitForAuth(); // Wait for auth
-    // Try loading settings from Firestore first
-    const firestoreSettings = await loadUserSettings();
-    if (firestoreSettings) {
-        console.log("Applying settings from Firestore");
-        // Use values from firestoreSettings instead of localStorage:
-        const fontColor = firestoreSettings.fontColor || "#ffffff";
-        document.getElementById('font-color').value = fontColor;
-        document.getElementById('countdown-heading').style.color = fontColor;
-        // (Apply other settings similarly as needed)
-    } else {
-        console.log("No Firestore settings found. Falling back to localStorage.");
-        // Fallback: load settings from localStorage
-        const fontColor = localStorage.getItem("fontColor") || "#ffffff";
-        document.getElementById('font-color').value = fontColor;
-        document.getElementById('countdown-heading').style.color = fontColor;
-    }
-    
-    // ...existing loading logic for background, white box, shadow, progress bar, etc.
-    const storedBgImage = localStorage.getItem('bgImage');
-    if (storedBgImage) {
-        document.body.style.backgroundImage = `url('${storedBgImage}')`;
-        document.body.style.backgroundSize = 'cover';
-        document.body.style.backgroundPosition = 'center';
-        document.body.style.backgroundRepeat = 'no-repeat';
-        document.body.style.backgroundAttachment = 'fixed';
+    try {
+        await waitForAuth();
+        const firestoreSettings = await loadUserSettings();
         
-        // Update preview if it exists
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = `url('${storedBgImage}')`;
-            preview.style.backgroundSize = 'cover';
-            preview.style.backgroundPosition = 'center';
+        if (firestoreSettings) {
+            console.log("Applying settings from Firestore");
+            const fontColor = firestoreSettings.fontColor || "#ffffff";
+            const fontColorElement = document.getElementById('font-color');
+            const countdownHeading = document.getElementById('countdown-heading');
+            
+            if (fontColorElement) fontColorElement.value = fontColor;
+            if (countdownHeading) countdownHeading.style.color = fontColor;
+        } else {
+            console.log("No Firestore settings found. Falling back to localStorage.");
+            const fontColor = localStorage.getItem("fontColor") || "#ffffff";
+            const fontColorElement = document.getElementById('font-color');
+            const countdownHeading = document.getElementById('countdown-heading');
+            
+            if (fontColorElement) fontColorElement.value = fontColor;
+            if (countdownHeading) countdownHeading.style.color = fontColor;
         }
         
-        // Ensure gradient is disabled
-        if (window.gradientManager) {
-            window.gradientManager.enabled = false;
-            window.gradientManager.updateUI();
-        }
-    }
-
-    // Load other settings
-    loadWhiteBoxSettings();
-    loadShadowSettings();
-    loadProgressBarSettings(); // Add this line
-
-    // Load saved font
-    const savedFont = localStorage.getItem('fontFamily');
-    if (savedFont) {
-        document.body.style.fontFamily = savedFont;
-        const fontSelect = document.getElementById('font-family');
-        if (fontSelect) {
-            fontSelect.value = savedFont;
-        }
-    }
-
-    // Load background image and update preview
-    const bgImage = localStorage.getItem('bgImage');
-    const preview = document.getElementById('bg-preview');
-    
-    if (bgImage && preview) {
-        preview.style.backgroundImage = `url('${bgImage}')`;
-        preview.style.backgroundSize = 'cover';
-        preview.style.backgroundPosition = 'center';
-    } else if (preview) {
-        preview.style.backgroundImage = 'none';
-        preview.style.background = 'linear-gradient(to bottom, #000035, #00bfa5)';
-    }
-
-    // Load and apply saved font color
-    const savedFontColor = localStorage.getItem('fontColor') || '#ffffff';
-    document.getElementById('font-color').value = savedFontColor;
-    document.getElementById('countdown-heading').style.color = savedFontColor;
-
-    updateAuthButtonText(); // Add this line
-
-    // Load profile visibility state
-    const isProfileHidden = localStorage.getItem('profileHidden') === 'true';
-    const visibilityToggle = document.getElementById('profile-visibility-toggle');
-    if (visibilityToggle) {
-        visibilityToggle.checked = !isProfileHidden;
-    }
-
-    // Load border settings
-    const borderColor = localStorage.getItem('boxBorderColor') || '#000035';
-    const borderWidth = localStorage.getItem('boxBorderWidth') || '0';
-    
-    document.getElementById('box-border-color').value = borderColor;
-    document.getElementById('box-border-width').value = borderWidth;
-    
-    // Apply border settings
-    const scheduleContainer = document.querySelector('.schedule-container');
-    if (scheduleContainer && borderWidth > 0) {
-        scheduleContainer.style.border = `${borderWidth}px solid ${borderColor}`;
-    }
-    
-    // Update width display
-    const widthDisplay = document.querySelector('#box-border-width + .range-value');
-    if (widthDisplay) {
-        widthDisplay.textContent = `${borderWidth}px`;
+        // Load other settings with null checks
+        await loadShadowSettings();
+        loadProgressBarSettings();
+        loadWhiteBoxSettings();
+        
+    } catch (error) {
+        console.error('Error loading settings:', error);
     }
 }
 
@@ -568,51 +496,58 @@ function updateRangeValues(settings) {
 }
 
 function loadShadowSettings() {
-    const savedSettings = JSON.parse(localStorage.getItem("timerShadowSettings")) || {
-        enabled: false,
-        color: "#000000",
-        opacity: 50,
-        blur: 4,
-        distance: 2,
-        angle: 45
-    };
+    try {
+        const savedSettings = JSON.parse(localStorage.getItem("timerShadowSettings") || "null") || {
+            enabled: false,
+            color: "#000000",
+            opacity: 50,
+            blur: 4,
+            distance: 2,
+            angle: 45
+        };
 
-    // Set checkbox state
-    const checkbox = document.getElementById("timer-shadow");
-    const content = document.getElementById("shadow-settings-content");
-    const timerElement = document.getElementById("current-period-time");
-    const previewElement = document.getElementById("shadow-preview");
-    
-    // Set all input values
-    document.getElementById("shadow-color").value = savedSettings.color;
-    document.getElementById("shadow-opacity").value = savedSettings.opacity;
-    document.getElementById("shadow-blur").value = savedSettings.blur;
-    document.getElementById("shadow-distance").value = savedSettings.distance;
-    document.getElementById("shadow-angle").value = savedSettings.angle;
+        // Add null checks for all DOM elements
+        const elements = {
+            checkbox: document.getElementById("timer-shadow"),
+            colorInput: document.getElementById("shadow-color"),
+            opacityInput: document.getElementById("shadow-opacity"),
+            blurInput: document.getElementById("shadow-blur"),
+            distanceInput: document.getElementById("shadow-distance"),
+            angleInput: document.getElementById("shadow-angle")
+        };
 
-    // Update the range value displays
-    document.querySelector('[for="shadow-opacity"] + input + .range-value').textContent = savedSettings.opacity + '%';
-    document.querySelector('[for="shadow-blur"] + input + .range-value').textContent = savedSettings.blur + 'px';
-    document.querySelector('[for="shadow-distance"] + input + .range-value').textContent = savedSettings.distance + 'px';
-    document.querySelector('[for="shadow-angle"] + input + .range-value').textContent = savedSettings.angle + '°';
+        // Apply settings only if elements exist
+        Object.entries(elements).forEach(([key, element]) => {
+            if (element) {
+                switch(key) {
+                    case 'checkbox':
+                        element.checked = savedSettings.enabled;
+                        break;
+                    case 'colorInput':
+                        element.value = savedSettings.color;
+                        break;
+                    case 'opacityInput':
+                        element.value = savedSettings.opacity;
+                        break;
+                    case 'blurInput':
+                        element.value = savedSettings.blur;
+                        break;
+                    case 'distanceInput':
+                        element.value = savedSettings.distance;
+                        break;
+                    case 'angleInput':
+                        element.value = savedSettings.angle;
+                        break;
+                }
+            }
+        });
 
-    // Set the checkbox state and show/hide settings
-    checkbox.checked = savedSettings.enabled;
-    if (savedSettings.enabled) {
-        content.classList.add("show");
-        // Calculate and apply the shadow
-        const angleRad = (savedSettings.angle * Math.PI) / 180;
-        const x = Math.cos(angleRad) * savedSettings.distance;
-        const y = Math.sin(angleRad) * savedSettings.distance;
-        const rgba = `rgba(${hexToRgb(savedSettings.color)}, ${savedSettings.opacity / 100})`;
-        const shadowValue = `${x}px ${y}px ${savedSettings.blur}px ${rgba}`;
-        
-        timerElement.style.textShadow = shadowValue;
-        previewElement.style.textShadow = shadowValue;
-    } else {
-        content.classList.remove("show");
-        timerElement.style.textShadow = 'none';
-        previewElement.style.textShadow = 'none';
+        // Update shadow if enabled
+        if (savedSettings.enabled) {
+            updateTimerShadow();
+        }
+    } catch (error) {
+        console.error('Error loading shadow settings:', error);
     }
 }
 
@@ -946,8 +881,16 @@ function createProgressBar() {
     progressBar.className = 'progress-overlay';
     document.body.insertBefore(progressBar, document.body.firstChild);
     
-    const color = document.getElementById('progress-bar-color')?.value || '#00bfa5';
-    const opacity = document.getElementById('progress-bar-opacity')?.value || '20';
+    // Get saved values or use defaults
+    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
+    const opacity = localStorage.getItem('progressBarOpacity') || '20';
+    
+    // Update input elements with saved values
+    const colorInput = document.getElementById('progress-bar-color');
+    const opacityInput = document.getElementById('progress-bar-opacity');
+    
+    if (colorInput) colorInput.value = color;
+    if (opacityInput) opacityInput.value = opacity;
     
     progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
     
@@ -968,6 +911,10 @@ function updateProgressBarStyle() {
     const color = document.getElementById('progress-bar-color').value;
     const opacity = document.getElementById('progress-bar-opacity').value;
     
+    // Save the values immediately
+    localStorage.setItem('progressBarColor', color);
+    localStorage.setItem('progressBarOpacity', opacity);
+    
     progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
     
     // Update opacity display
@@ -976,9 +923,6 @@ function updateProgressBarStyle() {
         opacityDisplay.textContent = `${opacity}%`;
     }
     
-    // Save settings
-    localStorage.setItem('progressBarColor', color);
-    localStorage.setItem('progressBarOpacity', opacity);
     saveSettings();
 }
 
@@ -1053,7 +997,7 @@ function updateProgressBar() {
 // Add to the loadSettings function
 function loadProgressBarSettings() {
     const enabled = localStorage.getItem('progressBarEnabled') === 'true';
-    const color = localStorage.getItem('progressBarColor') || '#000000'; // Changed default to black
+    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
     const opacity = localStorage.getItem('progressBarOpacity') || '20';
     
     const checkbox = document.getElementById('progress-bar');
@@ -1067,9 +1011,14 @@ function loadProgressBarSettings() {
         opacityInput.value = opacity;
         settings.style.display = enabled ? 'block' : 'none';
         
+        // Update opacity display
+        const opacityDisplay = document.querySelector('#progress-bar-opacity + .range-value');
+        if (opacityDisplay) {
+            opacityDisplay.textContent = `${opacity}%`;
+        }
+        
         if (enabled) {
             createProgressBar();
-            updateProgressBarStyle();
         }
     }
 }
@@ -1642,7 +1591,7 @@ function applyGradient() {
         
         // Send settings to Chrome extension if it exists
         if (chrome?.runtime?.sendMessage) {
-            chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+            chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
                 type: 'UPDATE_GRADIENT',
                 settings: {
                     angle: this.angle,
@@ -1695,7 +1644,7 @@ function initializePopupGradientControls() {
     // Send to extension if available
     if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
         const extId = chrome.runtime.id; // Ensure an extension ID is provided
-        chrome.runtime.sendMessage("flmbedpijflmlkjimmdpnlkklnpdaflk", {
+        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
             type: 'UPDATE_GRADIENT',
             settings: {
                 angle: settings.angle,
@@ -1744,7 +1693,7 @@ function updatePopupGradient(index, color, position) {
     updatePopupGradientPreview(settings);
 
     if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage("obpilefnjfmfekidadobjnfcifeegmpn", {
+        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
             type: 'UPDATE_GRADIENT',
             settings: { angle: settings.angle, stops: settings.stops }
         }, function(response) {
