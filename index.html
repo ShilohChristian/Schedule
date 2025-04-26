@@ -93,33 +93,52 @@
         
         <div class="settings-content">
             <div class="settings-nav">
-                <button class="nav-item active" data-target="appearance">Appearance</button>
-                <button class="nav-item" data-target="schedule">Schedule</button>
-                <button class="nav-item" data-target="timer">Timer</button>
-                <button class="nav-item" data-target="about">About</button>
-                <button class="nav-item" data-target="legal">Legal</button>
-                <!-- Temporarily hide the Extension tab -->
-                <!-- <button class="nav-item" data-target="test">Extension</button> -->
-                <div class="nav-spacer"></div>
+                <button class="nav-item active" data-target="background">
+                    <i class="fas fa-image"></i> Background
+                </button>
+                <button class="nav-item" data-target="schedule">
+                    <i class="fas fa-calendar"></i> Schedule
+                </button>
+                <button class="nav-item" data-target="display">
+                    <i class="fas fa-desktop"></i> Display
+                </button>
+                <button class="nav-item" data-target="timer">
+                    <i class="fas fa-clock"></i> Timer
+                </button>
+                <button class="nav-item" data-target="customize">
+                    <i class="fas fa-paint-brush"></i> Colors & Fonts
+                </button>
+                <!-- Extension button temporarily hidden
+                <button class="nav-item" data-target="extension">
+                    <i class="fas fa-puzzle-piece"></i> Extension
+                </button>
+                -->
+                <button class="nav-item" data-target="about">
+                    <i class="fas fa-info-circle"></i> About
+                </button>
+                <button class="nav-item" data-target="legal">
+                    <i class="fas fa-gavel"></i> Legal
+                </button>
             </div>
             
             <div class="settings-panels">
-                <div class="settings-panel active" id="appearance-panel">
+                <!-- Background Panel -->
+                <div class="settings-panel active" id="background-panel">
                     <div class="settings-group">
-                        <h3>Background Image</h3>
+                        <h3><i class="fas fa-image"></i> Background Image</h3>
                         <div class="background-controls">
                             <div class="image-upload-container">
-                                <input type="file" id="bg-image" accept="image/jpeg,image/png,image/gif,image/webp,image/avif,image/bmp,image/tiff,image/svg+xml">
+                                <input type="file" id="bg-image" accept="image/*">
                                 <div id="bg-image-drop-area">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <div class="upload-text">
                                         <p class="main-text">Drop image here or click to upload</p>
-                                        <p class="sub-text">Supports JPG, PNG, GIF, WebP, AVIF & more • Max 5MB</p>
+                                        <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="background-actions">
-                                <button id="remove-bg-button" onclick="removeBackground()" class="action-button">
+                                <button id="remove-bg-button" onclick="removeBackground()">
                                     <i class="fas fa-trash-alt"></i>
                                     <span>Remove Background</span>
                                 </button>
@@ -130,9 +149,8 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="settings-group">
-                        <h3>Gradient Background</h3>
+                        <h3><i class="fas fa-gradient"></i> Gradient</h3>
                         <div class="switch-container">
                             <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
                             <label class="switch">
@@ -142,18 +160,8 @@
                         </div>
                         <div id="gradient-settings">
                             <div id="gradient-preview"></div>
-                            <div class="gradient-direction">
-                                <label for="gradient-direction">Direction:</label>
-                                <select id="gradient-direction" onchange="gradientManager.updateDirection(this.value)">
-                                    <option value="90">To Right</option>
-                                    <option value="0">To Top</option>
-                                    <option value="180">To Bottom</option>
-                                    <option value="45">To Top Right</option>
-                                    <option value="135">To Bottom Right</option>
-                                </select>
-                            </div>
                             <div>
-                                <label for="gradient-angle">Custom Angle:</label>
+                                <label for="gradient-angle">Angle:</label>
                                 <input type="range" id="gradient-angle" min="0" max="360" value="90">
                                 <span class="range-value">90°</span>
                             </div>
@@ -161,92 +169,12 @@
                             <button id="add-stop">Add Color Stop</button>
                         </div>
                     </div>
-
-                    <div class="settings-group">
-                        <h3>Colors</h3>
-                        <div>
-                            <label for="white-box-color">Background Color:</label>
-                            <input type="color" id="white-box-color" name="white-box-color" value="#ffffff" onchange="updateWhiteBoxColor()">
-                        </div>
-                        <div>
-                            <label for="white-box-opacity">Opacity:</label>
-                            <input type="range" id="white-box-opacity" min="0" max="100" value="90" step="5" onchange="updateWhiteBoxColor()">
-                            <span class="range-value">90%</span>
-                        </div>
-                        <div>
-                            <label for="white-box-text-color">Text Color:</label>
-                            <input type="color" id="white-box-text-color" name="white-box-text-color" value="#000035" onchange="updateWhiteBoxTextColor()">
-                        </div>
-                        <div class="border-controls">
-                            <h4>Box Border</h4>
-                            <div>
-                                <label for="box-border-color">Border Color:</label>
-                                <input type="color" id="box-border-color" value="#000035" onchange="updateBoxBorder()">
-                            </div>
-                            <div>
-                                <label for="box-border-width">Border Width:</label>
-                                <input type="range" id="box-border-width" min="0" max="10" value="0" step="1" onchange="updateBoxBorder()">
-                                <span class="range-value">0px</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h3>Fonts</h3>
-                        <div class="font-selector">
-                            <label for="font-family">Font:</label>
-                            <select id="font-family" onchange="updateFont()">
-                                <option value="Arial">Arial</option>
-                                <option value="Helvetica">Helvetica</option>
-                                <option value="'Open Sans'">Open Sans</option>
-                                <option value="Roboto">Roboto</option>
-                                <option value="'Source Sans Pro'">Source Sans Pro</option>
-                                <option value="'SF Pro Text'">SF Pro</option>
-                                <option value="Inter">Inter</option>
-                                <option value="Montserrat">Montserrat</option>
-                                <option value="'Segoe UI'">Segoe UI</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h3>Profile</h3>
-                        <div class="profile-visibility-control">
-                            <label class="switch-label" for="profile-visibility-toggle">Show Profile Picture</label>
-                            <label class="switch">
-                                <input type="checkbox" id="profile-visibility-toggle" onchange="authManager.toggleProfileVisibility()" checked>
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="settings-group">
-                        <h3>Progress Bar</h3>
-                        <div class="switch-container">
-                            <label class="switch-label" for="progress-bar">Show Progress Bar</label>
-                            <label class="switch">
-                                <input type="checkbox" id="progress-bar" onchange="toggleProgressBar()">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                        <div id="progress-bar-settings" class="dropdown-content">
-                            <div>
-                                <label for="progress-bar-color">Bar Color:</label>
-                                <input type="color" id="progress-bar-color" value="#000000" onchange="updateProgressBarStyle()">
-                            </div>
-                            <div>
-                                <label for="progress-bar-opacity">Opacity:</label>
-                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
-                                <span class="range-value">20%</span>
-                                <p class="opacity-helper">Recommended: 15% for gradients, 30% for images</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-                
+
+                <!-- Schedule Panel -->
                 <div class="settings-panel" id="schedule-panel">
                     <div class="settings-group">
-                        <h3>Schedule Management</h3>
+                        <h3><i class="fas fa-calendar-alt"></i> Schedule Selection</h3>
                         <div>
                             <h3>Select Schedule:</h3>
                             <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
@@ -256,6 +184,9 @@
                                 <option value="earlyPepRally">Early Pep Rally Schedule</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-edit"></i> Customize Periods</h3>
                         <div id="rename-periods">
                             <h3 id="rename-periods-toggle" class="dropdown-toggle">
                                 Rename Periods <span class="triangle">&#9662;</span>
@@ -264,6 +195,9 @@
                                 <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-plus-circle"></i> Custom Schedule</h3>
                         <div id="custom-schedule">
                             <h3 id="custom-schedule-toggle" class="dropdown-toggle">
                                 Custom Schedule <span class="triangle">&#9662;</span>
@@ -279,26 +213,67 @@
                         </div>
                     </div>
                 </div>
-                
-                <div class="settings-panel" id="timer-panel">
+
+                <!-- Display Panel -->
+                <div class="settings-panel" id="display-panel">
                     <div class="settings-group">
-                        <h3>Countdown Settings</h3>
+                        <h3><i class="fas fa-box"></i> Schedule Box</h3>
                         <div>
-                            <label for="countdown-color">Timer Color:</label>
-                            <input type="color" id="countdown-color" name="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+                            <label for="white-box-color">Background Color:</label>
+                            <input type="color" id="white-box-color" onchange="updateWhiteBoxColor()">
+                            <div>
+                                <label for="white-box-opacity">Opacity:</label>
+                                <input type="range" id="white-box-opacity" min="0" max="100" value="90" onchange="updateWhiteBoxColor()">
+                                <span class="range-value">90%</span>
+                            </div>
+                            <div>
+                                <label for="white-box-text-color">Text Color:</label>
+                                <input type="color" id="white-box-text-color" onchange="updateWhiteBoxTextColor()">
+                            </div>
                         </div>
-                        <div>
-                            <label for="font-color">Header Color:</label>
-                            <input type="color" id="font-color" name="font-color" value="#ffffff">
-                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-arrows-alt"></i> Progress Bar</h3>
                         <div class="switch-container">
-                            <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                            <label class="switch-label" for="progress-bar">Show Progress Bar</label>
                             <label class="switch">
-                                <input type="checkbox" id="timer-shadow" onchange="toggleShadowSettings(); updateTimerShadow();">
+                                <input type="checkbox" id="progress-bar" onchange="toggleProgressBar()">
                                 <span class="slider"></span>
                             </label>
                         </div>
-                        <div id="shadow-settings-content" class="dropdown-content">
+                        <div id="progress-bar-settings">
+                            <div>
+                                <label for="progress-bar-color">Bar Color:</label>
+                                <input type="color" id="progress-bar-color" value="#00bfa5" onchange="updateProgressBarStyle()">
+                            </div>
+                            <div>
+                                <label for="progress-bar-opacity">Opacity:</label>
+                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
+                                <span class="range-value">20%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Panel -->
+                <div class="settings-panel" id="timer-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-clock"></i> Timer Display</h3>
+                        <div>
+                            <label for="countdown-color">Timer Color:</label>
+                            <input type="color" id="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-font"></i> Text Effects</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                            <label class="switch">
+                                <input type="checkbox" id="timer-shadow" onchange="updateTimerShadow()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="shadow-settings-content">
                             <div id="shadow-preview">12:34</div>
                             <div>
                                 <label for="shadow-color">Shadow Color:</label>
@@ -327,31 +302,62 @@
                         </div>
                     </div>
                 </div>
-                
+
+                <!-- Colors & Fonts Panel -->
+                <div class="settings-panel" id="customize-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-palette"></i> Colors</h3>
+                        <div>
+                            <label for="font-color">Timer Header Color:</label>
+                            <input type="color" id="font-color" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-font"></i> Typography</h3>
+                        <div class="font-selector">
+                            <label for="font-family">Font:</label>
+                            <select id="font-family" onchange="updateFont()">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="'Open Sans'">Open Sans</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="'Source Sans Pro'">Source Sans Pro</option>
+                                <option value="'SF Pro Text'">SF Pro</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="'Segoe UI'">Segoe UI</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="settings-panel" id="about-panel">
                     <div class="settings-group">
                         <h3>About</h3>
                         <div class="about-content">
-                            <h2>Shiloh Christian Bell Schedule</h2>
-                            <p>Welcome to the Shiloh Christian Bell Schedule website – your go-to tool for keeping track of class periods throughout the school day. This website provides a real-time countdown for each period, ensuring that students and staff always know how much time remains before the next transition.</p>
+                            <!-- Updated About Content -->
+                            <h2>About Shiloh Christian Bell Schedule</h2>
+                            <p>The Shiloh Christian Bell Schedule is a modern, web-based application designed to help students, teachers, and staff stay on track during the school day. With real-time countdown timers and customizable settings, it adapts to different scheduling needs—whether it’s the standard daily schedule or special event times.</p>
                             
-                            <h4>Features:</h4>
+                            <h4>Features and Functionality:</h4>
                             <ul class="feature-list">
-                                <li><i class="fas fa-check"></i> Live Countdown Timer – Displays the remaining time in the current period and updates dynamically.</li>
-                                <li><i class="fas fa-check"></i> Daily Schedule Overview – Shows a clear breakdown of the class periods, including start and end times.</li>
-                                <li><i class="fas fa-check"></i> Automatic Adjustments – The schedule adapts to the current day, ensuring accuracy.</li>
-                                <li><i class="fas fa-check"></i> User-Friendly Interface – A simple, clean design optimized for quick access on both desktop and mobile devices.</li>
+                                <li><strong>Live Countdown Timer:</strong> Always displays the remaining time of the current period, ensuring timely transitions between classes and activities.</li>
+                                <li><strong>Customizable Schedule Management:</strong> Choose from multiple preloaded schedules or create custom ones to fit your unique class arrangements.</li>
+                                <li><strong>Visual Customization:</strong> Personalize the look with options for background images, gradients, colors, and text effects to match your style.</li>
+                                <li><strong>Responsive Design:</strong> Accessible from both desktops and mobile devices, providing a smooth experience on any screen.</li>
+                                <li><strong>Secure Integration:</strong> Utilizes Firebase for authentication and data storage so that your settings and preferences are safely preserved.</li>
                             </ul>
                             
                             <h4>How It Works:</h4>
-                            <p>The website automatically detects the current time and matches it to the school's bell schedule. The active period is highlighted, and a countdown timer updates in real-time. Once a period ends, the timer seamlessly transitions to the next period. Users can quickly glance at the full schedule to plan their day efficiently.</p>
+                            <p>The application automatically detects the current time and maps it to the correct school period based on the chosen schedule. It highlights the active period, updates the countdown timer in real time, and lets you personalize visual elements through an intuitive settings panel. Customizations are saved using both local storage and secure Firebase integration.</p>
                             
-                            <p>This tool is designed to help students manage their time effectively and stay informed about their class schedule without the hassle of checking the clock constantly. Whether you're in class, passing between periods, or waiting for lunch, this site keeps you on track.</p>
+                            <h4>Why Choose Shiloh Schedule?</h4>
+                            <p>Shiloh Schedule streamlines daily time management for the school community, offering flexibility with customizable schedules and visual themes. Its modern design, robust features, and secure data handling make it an essential tool for staying on schedule.</p>
                             
                             <div class="contact-info">
-                                <p>For any questions or suggestions, feel free to reach out to us at ShilohSchedule@outlook.com!</p>
-                                <p class="version-info">Version 1.8</p>
-                                <p class="creator-info">Created by Brady Blackwell</p>
+                                <p>For support or inquiries, please email us at <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
+                                <p class="version-info">Version 2.0</p>
+                                <p class="creator-info">Developed by Brady Blackwell</p>
                             </div>
                         </div>
                     </div>
@@ -361,10 +367,14 @@
                         <h3>Legal</h3>
                         <div class="legal-links">
                             <p>
-                                <a href="terms.html" target="_blank">Terms of Service</a>
+                                <a href="terms.html" target="_blank">
+                                    <i class="fas fa-file-contract"></i> Terms of Service
+                                </a>
                             </p>
                             <p>
-                                <a href="privacy.html" target="_blank">Privacy Policy</a>
+                                <a href="privacy.html" target="_blank">
+                                    <i class="fas fa-user-secret"></i> Privacy Policy
+                                </a>
                             </p>
                         </div>
                     </div>
@@ -398,10 +408,14 @@
                             document.addEventListener('DOMContentLoaded', () => {
                                 const savedSettings = localStorage.getItem('extensionGradientSettings');
                                 if (savedSettings) {
-                                    const settings = JSON.parse(savedSettings);
-                                    document.getElementById('startColor').value = settings.startColor;
-                                    document.getElementById('endColor').value = settings.endColor;
-                                    document.getElementById('gradientDirection').value = settings.angle;
+                                    try {
+                                        const settings = JSON.parse(savedSettings);
+                                        document.getElementById('startColor').value = settings.startColor;
+                                        document.getElementById('endColor').value = settings.endColor;
+                                        document.getElementById('gradientDirection').value = settings.angle;
+                                    } catch (error) {
+                                        console.error('Error loading saved settings:', error);
+                                    }
                                 }
                                 updateExtensionPreview();
                             });
@@ -413,7 +427,6 @@
                                 const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
                                 document.getElementById('extensionPreview').style.background = gradient;
                                 
-                                // Save settings to localStorage
                                 const settings = {
                                     startColor: start,
                                     endColor: end,
@@ -427,31 +440,76 @@
                                 const end = document.getElementById('endColor').value;
                                 const angle = document.getElementById('gradientDirection').value;
                                 
-                                const EXTENSION_ID = 'obpilefnjfmfekidadobjnfcifeegmpn';
+                                const EXTENSION_ID = 'jloifnaccjamlflmemenepkmgklmfnmc';
                                 
-                                if (window.chrome && chrome.runtime && typeof chrome.runtime.sendMessage === 'function') {
-                                    chrome.runtime.sendMessage(EXTENSION_ID, { 
-                                        type: 'UPDATE_GRADIENT', 
-                                        settings: { 
-                                            angle: parseInt(angle),
-                                            stops: [
-                                                { color: start, position: 0 }, 
-                                                { color: end, position: 100 }
-                                            ] 
-                                        }
-                                    }, response => {
-                                        if (chrome.runtime.lastError) {
-                                            console.error('Extension error:', chrome.runtime.lastError);
-                                            alert('Failed to update gradient. Make sure the extension is installed.');
-                                        } else {
-                                            alert('Gradient updated!');
-                                        }
-                                    });
+                                if (chrome?.runtime?.sendMessage) {
+                                    try {
+                                        chrome.runtime.sendMessage(EXTENSION_ID, { 
+                                            type: 'UPDATE_GRADIENT', 
+                                            settings: { 
+                                                angle: parseInt(angle),
+                                                stops: [
+                                                    { color: start, position: 0 }, 
+                                                    { color: end, position: 100 }
+                                                ] 
+                                            }
+                                        }, response => {
+                                            if (chrome.runtime.lastError) {
+                                                console.error('Extension communication error:', chrome.runtime.lastError);
+                                                alert('Unable to communicate with the extension. Please make sure it is installed and enabled.');
+                                            } else if (response?.error) {
+                                                console.error('Extension response error:', response.error);
+                                                alert('Error updating gradient: ' + response.error);
+                                            } else {
+                                                console.log('Gradient updated successfully:', response);
+                                                alert('Gradient updated successfully!');
+                                            }
+                                        });
+                                    } catch (error) {
+                                        console.error('Error sending message to extension:', error);
+                                        alert('Error communicating with extension: ' + error.message);
+                                    }
                                 } else {
-                                    alert('Extension not available. Please install the Gradient Grabber extension.');
+                                    console.error('Chrome extension API not available');
+                                    alert('Extension API not available. Please make sure the Gradient Grabber extension is installed.');
                                 }
                             }
                         </script>
+                    </div>
+                </div>
+
+                <!-- Extension Panel -->
+                <div class="settings-panel" id="extension-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-puzzle-piece"></i> Extension Settings</h3>
+                        <p>Customize the gradient used in the Chrome extension. Adjust the colors and direction to update the background gradient.</p>
+                        
+                        <div class="controls">
+                            <div class="color-controls">
+                                <label for="startColor">Start Color:</label>
+                                <input type="color" id="startColor" value="#000035" onchange="updateExtensionPreview()">
+                                
+                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="endColor" value="#00bfa5" onchange="updateExtensionPreview()">
+                            </div>
+                            
+                            <div class="direction-controls">
+                                <label for="gradientDirection">Direction:</label>
+                                <select id="gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right</option>
+                                    <option value="0">To Top</option>
+                                    <option value="180">To Bottom</option>
+                                    <option value="45">To Top Right</option>
+                                    <option value="135">To Bottom Right</option>
+                                </select>
+                            </div>
+                            
+                            <button id="saveExtensionButton" onclick="saveExtensionGradient()">
+                                <i class="fas fa-save"></i> Save to Extension
+                            </button>
+                        </div>
+                        
+                        <div id="extensionPreview" class="gradient-preview"></div>
                     </div>
                 </div>
             </div>
