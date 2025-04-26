@@ -131,30 +131,45 @@ if (window.countdownInterval) {
 }
 
 function initializeApp() {
-    initializeSavedSchedules();
-    
-    // Handle Tuesday chapel and Wednesday normal schedule
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    
-    if (dayOfWeek === 2) { // 2 represents Tuesday
-        switchSchedule('chapel');
-        console.log('Tuesday detected - switched to chapel schedule');
-    } else if (dayOfWeek === 3) { // 3 represents Wednesday
-        switchSchedule('normal');
-        console.log('Wednesday detected - switched to normal schedule');
+    // Ensure DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeAppLogic();
+        });
     } else {
-        // Load saved schedule for other days
-        const savedScheduleName = localStorage.getItem('currentScheduleName');
-        if (savedScheduleName) {
-            switchSchedule(savedScheduleName);
-        } else {
-            switchSchedule('normal');
-        }
+        initializeAppLogic();
     }
+}
 
-    updateScheduleDisplay();
-    window.countdownInterval = startCountdown();
+function initializeAppLogic() {
+    try {
+        initializeSavedSchedules();
+        
+        // Handle Tuesday chapel and Wednesday normal schedule
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        
+        if (dayOfWeek === 2) { // 2 represents Tuesday
+            switchSchedule('chapel');
+            console.log('Tuesday detected - switched to chapel schedule');
+        } else if (dayOfWeek === 3) { // 3 represents Wednesday
+            switchSchedule('normal');
+            console.log('Wednesday detected - switched to normal schedule');
+        } else {
+            // Load saved schedule for other days
+            const savedScheduleName = localStorage.getItem('currentScheduleName');
+            if (savedScheduleName) {
+                switchSchedule(savedScheduleName);
+            } else {
+                switchSchedule('normal');
+            }
+        }
+
+        updateScheduleDisplay();
+        window.countdownInterval = startCountdown();
+    } catch (error) {
+        console.error('Error initializing app:', error);
+    }
 }
 
 // Schedule management functions
@@ -226,21 +241,32 @@ function switchSchedule(scheduleName) {
 function updateCountdowns() {
     const now = new Date();
     const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    const fontColor = document.getElementById("font-color").value;
+    
+    // Add null check for font color
+    const fontColor = document.getElementById("font-color")?.value || "#ffffff";
 
     let currentPeriod = currentSchedule.find(period => 
         currentTimeInSeconds >= getTimeInSeconds(period.start) && 
         currentTimeInSeconds < getTimeInSeconds(period.end)
     );
 
+    // Add null checks for DOM elements
+    const periodTimeElement = document.getElementById("current-period-time");
+    const countdownHeadingElement = document.getElementById("countdown-heading");
+
+    if (!periodTimeElement || !countdownHeadingElement) {
+        console.warn('Required DOM elements not found');
+        return;
+    }
+
     if (currentPeriod) {
         const countdown = getTimeInSeconds(currentPeriod.end) - currentTimeInSeconds;
         const timeRemaining = formatCountdown(countdown);
-        document.getElementById("current-period-time").innerText = timeRemaining;
+        periodTimeElement.innerText = timeRemaining;
         
         const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
         const headerText = `${scheduleName} Schedule ▸ ${currentPeriod.name}`;
-        document.getElementById("countdown-heading").innerText = headerText;
+        countdownHeadingElement.innerText = headerText;
         
         // Update page title
         document.title = `${currentPeriod.name} | ${timeRemaining}`;
@@ -253,10 +279,10 @@ function updateCountdowns() {
             nextPeriod = currentSchedule[0];
             const countdown = getTimeInSeconds(nextPeriod.start) + (24 * 3600 - currentTimeInSeconds);
             const timeRemaining = formatCountdownHHMMSS(countdown);
-            document.getElementById("current-period-time").innerText = timeRemaining;
+            periodTimeElement.innerText = timeRemaining;
             
             const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
-            document.getElementById("countdown-heading").innerText = 
+            countdownHeadingElement.innerText = 
                 `${scheduleName} Schedule ▸ Free`;
             
             // Update page title
@@ -264,7 +290,7 @@ function updateCountdowns() {
         } else {
             const countdown = getTimeInSeconds(nextPeriod.start) - currentTimeInSeconds;
             const timeRemaining = formatCountdown(countdown);
-            document.getElementById("current-period-time").innerText = timeRemaining;
+            periodTimeElement.innerText = timeRemaining;
             
             const previousPeriod = currentSchedule.find(period => 
                 getTimeInSeconds(period.end) <= currentTimeInSeconds
@@ -272,12 +298,12 @@ function updateCountdowns() {
             
             const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
             if (previousPeriod && (currentTimeInSeconds - getTimeInSeconds(previousPeriod.end)) < 360) {
-                document.getElementById("countdown-heading").innerText = 
+                countdownHeadingElement.innerText = 
                     `${scheduleName} Schedule ▸ Passing to ${nextPeriod.name}`;
                 // Update page title
                 document.title = `Passing | ${timeRemaining}`;
             } else {
-                document.getElementById("countdown-heading").innerText = 
+                countdownHeadingElement.innerText = 
                     `${scheduleName} Schedule ▸ Free until ${nextPeriod.name}`;
                 // Update page title
                 document.title = `Free | ${timeRemaining}`;
@@ -285,7 +311,7 @@ function updateCountdowns() {
         }
     }
     
-    document.getElementById("countdown-heading").style.color = fontColor;
+    countdownHeadingElement.style.color = fontColor;
     localStorage.setItem("fontColor", fontColor);
 }
 
@@ -662,3 +688,13 @@ document.addEventListener("DOMContentLoaded", () => {
     // ...existing code...
     initializeSettingsPanels();
 });
+
+// Add extension interaction code
+if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+    chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+        type: 'UPDATE_GRADIENT',
+        settings: { angle: settings.angle, stops: settings.stops }
+    }, function(response) {
+        // Handle response if needed
+    });
+}
