@@ -320,6 +320,16 @@
     padding-bottom: 80px !important;
 }
 
+/* Move the settings nav bar up to be flush with the header */
+.settings-nav {
+    margin-top: -93px !important;
+    padding-top: 0;
+}
+
+.settings-nav button:first-child {
+    margin-top: 20px;
+}
+
 /* ...existing code... */
 
 #sign-in-button {
@@ -1206,3 +1216,27 @@ button.profile-button {
 }
 
 /* ...existing code... */
+
+/* Update About page styling */
+.about-content {
+    color: #444;  /* Paragraph text: dark grey instead of white */
+}
+.about-content h2 {
+    color: #00bfa5;  /* Main header in theme blue */
+    border-bottom: 2px solid #00bfa5;
+    padding-bottom: 8px;
+}
+.about-content h3,
+.about-content h4 {
+    color: #0077a3;  /* Subheaders in a complementary blue */
+}
+.about-content p {
+    color: #ffffff;
+}
+.about-content a {
+    color: #0066cc;  /* Links in a matching blue */
+}
+.about-content ul.feature-list,
+.about-content ul.feature-list li {
+    color: #ffffff;
+}
