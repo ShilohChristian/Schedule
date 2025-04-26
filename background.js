@@ -1,12 +1,10 @@
 // Combined message handler for both internal and external messages
 function handleGradientUpdate(message, sender, sendResponse) {
     try {
-        // Validate gradient data structure
         if (!message.settings || !Array.isArray(message.settings.stops) || message.settings.angle === undefined) {
             throw new Error('Invalid gradient data structure');
         }
-
-        // Store gradient settings
+        // Use previous gradient save logic without persistent flag
         const gradientData = {
             gradientGrabber: {
                 savedGradient: {
@@ -14,29 +12,19 @@ function handleGradientUpdate(message, sender, sendResponse) {
                     stops: message.settings.stops.map(stop => ({
                         color: stop.color,
                         position: stop.position
-                    }))
-                },
-                timestamp: Date.now()
+                    })),
+                    timestamp: Date.now()
+                }
             }
         };
-
         chrome.storage.sync.set(gradientData, () => {
             if (chrome.runtime.lastError) {
                 sendResponse({ error: chrome.runtime.lastError.message });
             } else {
-                // Notify popup about the update
-                try {
-                    chrome.runtime.sendMessage({
-                        type: 'GRADIENT_UPDATED',
-                        gradient: gradientData.gradientGrabber.savedGradient
-                    });
-                } catch (e) {
-                    console.log('Popup not available for update');
-                }
                 sendResponse({ success: true });
             }
         });
-        return true; // Keep channel open for async response
+        return true;
     } catch (error) {
         console.error('Error saving gradient:', error);
         sendResponse({ error: error.message });
@@ -89,6 +77,29 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
     }
     return true;
 });
+
+// Add persistent storage check on extension startup
+chrome.runtime.onStartup.addListener(() => {
+    chrome.storage.sync.get(['gradientGrabber'], result => {
+        if (!result?.gradientGrabber?.savedGradient) {
+            // Set default gradient if none exists
+            chrome.storage.sync.set({
+                gradientGrabber: {
+                    savedGradient: {
+                        angle: 90,
+                        stops: [
+                            { color: '#000035', position: 0 },
+                            { color: '#00bfa5', position: 100 }
+                        ]
+                    },
+                    timestamp: Date.now()
+                }
+            });
+        }
+    });
+});
+
+// Remove recently added onInstalled and onStartup default initialization
 
 function isValidGradientData(settings) {
     return settings 
