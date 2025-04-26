@@ -376,23 +376,25 @@ class GradientManager {
             console.warn('Gradient stops container not found');
             return;
         }
-        // Ensure a valid angle value, defaulting to 90 if undefined or null
-        if (this.angle === undefined || this.angle === null) {
-            this.angle = 90;
-        }
-        container.innerHTML = this.stops.map((stop, index) => `
+        // Ensure stops is an array; if not, convert if it's a Map or fallback to an empty array.
+        const stopsArray = Array.isArray(this.stops)
+            ? this.stops
+            : (this.stops instanceof Map ? Array.from(this.stops.values()) : []);
+        
+        container.innerHTML = stopsArray.map((stop, index) => `
             <div class="gradient-stop">
                 <input type="color" value="${stop.color}" 
                     onchange="gradientManager.updateStop(${index}, this.value, this.nextElementSibling.value)">
                 <input type="number" min="0" max="100" value="${stop.position}" 
                     onchange="gradientManager.updateStop(${index}, this.previousElementSibling.value, this.value)">
-                ${this.stops.length > 2 ? `
+                ${stopsArray.length > 2 ? `
                     <button class="remove-stop" onclick="gradientManager.removeStop(${index})">
                         <i class="fas fa-times"></i>
                     </button>
                 ` : ''}
             </div>
         `).join('');
+        
         const checkbox = document.getElementById('gradient-enabled');
         if (checkbox) checkbox.checked = this.enabled;
         const angleInput = document.getElementById('gradient-angle');
