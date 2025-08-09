@@ -93,26 +93,12 @@
         
         <div class="settings-content">
             <div class="settings-nav">
-                <button class="nav-item active" data-target="background">
-                    <i class="fas fa-image"></i> Background
+                <button class="nav-item active" data-target="appearance">
+                    <i class="fas fa-paint-brush"></i> Appearance
                 </button>
                 <button class="nav-item" data-target="schedule">
                     <i class="fas fa-calendar"></i> Schedule
                 </button>
-                <button class="nav-item" data-target="display">
-                    <i class="fas fa-desktop"></i> Display
-                </button>
-                <button class="nav-item" data-target="timer">
-                    <i class="fas fa-clock"></i> Timer
-                </button>
-                <button class="nav-item" data-target="customize">
-                    <i class="fas fa-paint-brush"></i> Colors & Fonts
-                </button>
-                <!-- Extension button temporarily hidden
-                <button class="nav-item" data-target="extension">
-                    <i class="fas fa-puzzle-piece"></i> Extension
-                </button>
-                -->
                 <button class="nav-item" data-target="about">
                     <i class="fas fa-info-circle"></i> About
                 </button>
@@ -122,8 +108,9 @@
             </div>
             
             <div class="settings-panels">
-                <!-- Background Panel -->
-                <div class="settings-panel active" id="background-panel">
+                <!-- Appearance Panel (merged) -->
+                <div class="settings-panel active" id="appearance-panel">
+                    <!-- Background Panel Content -->
                     <div class="settings-group">
                         <h3><i class="fas fa-image"></i> Background Image</h3>
                         <div class="background-controls">
@@ -133,7 +120,7 @@
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <div class="upload-text">
                                         <p class="main-text">Drop image here or click to upload</p>
-                                        <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
+                                        <p class="sub-text">Supports JPG, PNG, GIF • Max 5MB</p>
                                     </div>
                                 </div>
                             </div>
@@ -165,57 +152,21 @@
                                 <input type="range" id="gradient-angle" min="0" max="360" value="90">
                                 <span class="range-value">90°</span>
                             </div>
-                            <div id="gradient-stops"></div>
-                            <button id="add-stop">Add Color Stop</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Schedule Panel -->
-                <div class="settings-panel" id="schedule-panel">
-                    <div class="settings-group">
-                        <h3><i class="fas fa-calendar-alt"></i> Schedule Selection</h3>
-                        <div>
-                            <h3>Select Schedule:</h3>
-                            <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
-                                <option value="normal">Normal Schedule</option>
-                                <option value="chapel">Chapel Bell Schedule</option>
-                                <option value="latePepRally">Late Pep Rally Schedule</option>
-                                <option value="earlyPepRally">Early Pep Rally Schedule</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="settings-group">
-                        <h3><i class="fas fa-edit"></i> Customize Periods</h3>
-                        <div id="rename-periods">
-                            <h3 id="rename-periods-toggle" class="dropdown-toggle">
-                                Rename Periods <span class="triangle">&#9662;</span>
-                            </h3>
-                            <div id="rename-periods-content" class="dropdown-content">
-                                <!-- Will be populated by JavaScript -->
+                            <div class="gradient-main-colors" style="display: flex; gap: 16px; margin-bottom: 12px;">
+                                <div class="gradient-stop">
+                                    <label for="gradient-start-color">Start Color</label>
+                                    <input type="color" id="gradient-start-color">
+                                    <span>0%</span>
+                                </div>
+                                <div class="gradient-stop">
+                                    <label for="gradient-end-color">End Color</label>
+                                    <input type="color" id="gradient-end-color">
+                                    <span>100%</span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="settings-group">
-                        <h3><i class="fas fa-plus-circle"></i> Custom Schedule</h3>
-                        <div id="custom-schedule">
-                            <h3 id="custom-schedule-toggle" class="dropdown-toggle">
-                                Custom Schedule <span class="triangle">&#9662;</span>
-                            </h3>
-                            <div id="custom-schedule-content" class="dropdown-content">
-                                <label for="schedule-name">Schedule Name:</label>
-                                <input type="text" id="schedule-name" placeholder="Enter schedule name" />
-                                <label for="num-periods">Number of Periods:</label>
-                                <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
-                                <div id="period-inputs"></div>
-                                <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Display Panel -->
-                <div class="settings-panel" id="display-panel">
+                    <!-- Display Panel Content -->
                     <div class="settings-group">
                         <h3><i class="fas fa-box"></i> Schedule Box</h3>
                         <div>
@@ -253,10 +204,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Timer Panel -->
-                <div class="settings-panel" id="timer-panel">
+                    <!-- Timer Panel Content -->
                     <div class="settings-group">
                         <h3><i class="fas fa-clock"></i> Timer Display</h3>
                         <div>
@@ -301,10 +249,7 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Colors & Fonts Panel -->
-                <div class="settings-panel" id="customize-panel">
+                    <!-- Colors & Fonts Panel Content -->
                     <div class="settings-group">
                         <h3><i class="fas fa-palette"></i> Colors</h3>
                         <div>
@@ -327,6 +272,55 @@
                                 <option value="Montserrat">Montserrat</option>
                                 <option value="'Segoe UI'">Segoe UI</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Schedule Panel -->
+                <div class="settings-panel" id="schedule-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-user-graduate"></i> Grade Level</h3>
+                        <select id="grade-level-dropdown">
+                            <option value="highSchool">High School</option>
+                            <option value="middleSchool">Middle School</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-calendar-alt"></i> Schedule Selection</h3>
+                        <div>
+                            <h3>Select Schedule:</h3>
+                            <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
+                                <option value="normal">Normal Schedule</option>
+                                <option value="chapel">Chapel Bell Schedule</option>
+                                <option value="latePepRally">Late Pep Rally Schedule</option>
+                                <option value="earlyPepRally">Early Pep Rally Schedule</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-edit"></i> Customize Periods</h3>
+                        <div id="rename-periods">
+                            <h3 id="rename-periods-toggle" class="dropdown-toggle">
+                                Rename Periods <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="rename-periods-content" class="dropdown-content">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-group" style="display:none">
+                        <h3><i class="fas fa-plus-circle"></i> Custom Schedule</h3>
+                        <div id="custom-schedule">
+                            <h3 id="custom-schedule-toggle" class="dropdown-toggle">
+                                Custom Schedule <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="custom-schedule-content" class="dropdown-content">
+                                <label for="schedule-name">Schedule Name:</label>
+                                <input type="text" id="schedule-name" placeholder="Enter schedule name" />
+                                <label for="num-periods">Number of Periods:</label>
+                                <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
+                                <div id="period-inputs"></div>
+                                <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -514,6 +508,24 @@
                 </div>
             </div>
         </div>
+    </div>
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="login-modal" class="login-modal">
+        <div class="login-container">
+            <h2>Sign In</h2>
+            <div class="login-content">
+                <p>Sign in with your Google account to continue</p>
+                <div id="google-signin"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
+</body>
+</html>
     </div>
     <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
         <i class="fas fa-cog"></i>
