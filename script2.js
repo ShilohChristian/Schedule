@@ -31,7 +31,7 @@ function getAuthManager() {
 }
 
 // Settings Management
-function toggleSettingsSidebar() {
+function toggleSettingsSidebar() {  
     const sidebar = document.getElementById("settings-sidebar");
     sidebar.classList.toggle("open");
     
@@ -183,6 +183,23 @@ function handleBgImageUpload(file) {
         return;
     }
 
+    // Updated file type check
+    const allowedTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/avif',
+        'image/bmp',
+        'image/tiff',
+        'image/svg+xml'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+        alert('Supported formats: JPG, PNG • Max 5MB');
+        return;
+    }
+
     // Disable gradient if enabled
     if (window.gradientManager) {
         const checkbox = document.getElementById('gradient-enabled');
@@ -192,29 +209,33 @@ function handleBgImageUpload(file) {
         }
     }
 
-    // Show processing overlay
-    showProcessingOverlay();
+    // Show loading state
+    const dropArea = document.getElementById('bg-image-drop-area');
+    if (dropArea) {
+        dropArea.style.opacity = '0.5';
+        dropArea.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    }
 
     // Process the image
     const reader = new FileReader();
     reader.onload = function(e) {
-        processUploadedImage(e.target.result, file.type);
+        processUploadedImage(e.target.result, dropArea, file.type);
     };
-    reader.onerror = function() {
-        hideProcessingOverlay();
+    reader.onerror = function(error) {
+        console.error('FileReader error:', error);
         alert('Error reading file');
     };
 
     try {
         reader.readAsDataURL(file);
     } catch (error) {
-        hideProcessingOverlay();
+        console.error('Error starting file read:', error);
         alert('Error reading file');
     }
 }
 
 // Modified processUploadedImage function to call applyAndSaveImage instead of applyUploadedImage
-function processUploadedImage(dataUrl, fileType) {
+function processUploadedImage(dataUrl, dropArea, fileType) {
     const img = new Image();
     
     img.onload = function() {
@@ -269,6 +290,9 @@ function applyAndSaveImage(imageData) {
         
         // Save to localStorage
         localStorage.setItem('bgImage', imageData);
+        saveSettings();
+        // Also update Firestore settings as when closing settings
+        updateFirestoreSettings();
         
         // Show success message
         showSuccessMessage();
@@ -379,17 +403,36 @@ function removeBackground() {
     // Clear the background
     document.body.style.backgroundImage = '';
     localStorage.removeItem('bgImage');
-    
+
+    // Remove background from Firestore using the dedicated delete function
+    if (window.authManager?.currentUser && typeof window.authManager.deleteUserBackground === 'function') {
+        window.authManager.deleteUserBackground(window.authManager.currentUser.uid, 'bgImage')
+            .then(() => {
+                console.log('Firestore bgImage deleted successfully');
+            })
+            .catch((err) => {
+                console.error('Error deleting bgImage from Firestore:', err);
+            });
+    }
+
     // Enable gradient with a small delay to ensure proper state update
     setTimeout(() => {
         if (window.gradientManager) {
             window.gradientManager.enabled = true;
             const checkbox = document.getElementById('gradient-enabled');
             if (checkbox) checkbox.checked = true;
-            
-            window.gradientManager.updateUI();
-            window.gradientManager.applyGradient();
-            window.gradientManager.saveSettings();
+
+            // Ensure gradientManager.stops is a valid array before applying gradient
+            if (!Array.isArray(window.gradientManager.stops) || window.gradientManager.stops.length === 0) {
+                window.gradientManager.stops = [
+                    { color: '#000035', position: 0 },
+                    { color: '#00bfa5', position: 100 }
+                ];
+            }
+
+            window.gradientManager.updateUI?.();
+            window.gradientManager.applyGradient?.();
+            window.gradientManager.saveSettings?.();
         }
         
         // Update preview
@@ -709,7 +752,8 @@ document.addEventListener("DOMContentLoaded", function() {
     `;
     document.body.appendChild(dropOverlay);
 
-    // Handle drag and drop for the entire document
+    // Disable document-level drag and drop for now
+    /*
     document.addEventListener('dragenter', function(e) {
         e.preventDefault();
         if (dropOverlay && !document.getElementById('settings-sidebar').classList.contains('open')) {
@@ -727,6 +771,20 @@ document.addEventListener("DOMContentLoaded", function() {
     document.addEventListener('dragover', function(e) {
         e.preventDefault();
     });
+
+    document.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropOverlay?.classList.remove('active');
+        // Only handle if file(s) present and settings sidebar is not open
+        if (
+            e.dataTransfer?.files?.length &&
+            !document.getElementById('settings-sidebar').classList.contains('open')
+        ) {
+            const file = e.dataTransfer.files[0];
+            if (file) handleBgImageUpload(file);
+        }
+    });
+    */
 
     // Ensure drop overlay is only shown when settings are closed
     const settingsSidebar = document.getElementById('settings-sidebar');
@@ -839,21 +897,7 @@ function renamePeriod(index, newName) {
     }
 }
 
-// Add new gradient functionality
-
-// Remove all gradient-related functions
-/* Remove these functions:
-- updateGradient()
-- setDefaultGradient()
-- initGradientEditor()
-- toggleGradientControls()
-- toggleGradientEditor()
-- showGradientConfirmDialog()
-- handleGradientConfirm()
-- initGradientControls()
-- applyGradientToggle()
-- GradientControls class
-*/
+// New gradient functionality
 
 // Progress Bar Functions
 function toggleProgressBar() {
@@ -882,8 +926,16 @@ function createProgressBar() {
     document.body.insertBefore(progressBar, document.body.firstChild);
     
     // Get saved values or use defaults
-    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
-    const opacity = localStorage.getItem('progressBarOpacity') || '20';
+    let color = localStorage.getItem('progressBarColor');
+    let opacity = localStorage.getItem('progressBarOpacity');
+    if (!color) {
+        color = '#000000';
+        localStorage.setItem('progressBarColor', color);
+    }
+    if (!opacity) {
+        opacity = '20';
+        localStorage.setItem('progressBarOpacity', opacity);
+    }
     
     // Update input elements with saved values
     const colorInput = document.getElementById('progress-bar-color');
@@ -996,10 +1048,27 @@ function updateProgressBar() {
 
 // Add to the loadSettings function
 function loadProgressBarSettings() {
-    const enabled = localStorage.getItem('progressBarEnabled') === 'true';
-    const color = localStorage.getItem('progressBarColor') || '#00bfa5';
-    const opacity = localStorage.getItem('progressBarOpacity') || '20';
-    
+    // Set defaults: enabled true, color black, opacity 20
+    let enabled = localStorage.getItem('progressBarEnabled');
+    let color = localStorage.getItem('progressBarColor');
+    let opacity = localStorage.getItem('progressBarOpacity');
+
+    // If not set, use defaults and save them
+    if (enabled === null) {
+        enabled = true;
+        localStorage.setItem('progressBarEnabled', 'true');
+    } else {
+        enabled = enabled === 'true';
+    }
+    if (!color) {
+        color = '#000000';
+        localStorage.setItem('progressBarColor', color);
+    }
+    if (!opacity) {
+        opacity = '10';
+        localStorage.setItem('progressBarOpacity', opacity);
+    }
+
     const checkbox = document.getElementById('progress-bar');
     const colorInput = document.getElementById('progress-bar-color');
     const opacityInput = document.getElementById('progress-bar-opacity');
@@ -1023,6 +1092,44 @@ function loadProgressBarSettings() {
     }
 }
 
+function createProgressBar() {
+    removeProgressBar(); // Remove any existing progress bar first
+    
+    const progressBar = document.createElement('div');
+    progressBar.className = 'progress-overlay';
+    document.body.insertBefore(progressBar, document.body.firstChild);
+    
+    // Get saved values or use defaults
+    let color = localStorage.getItem('progressBarColor');
+    let opacity = localStorage.getItem('progressBarOpacity');
+    if (!color) {
+        color = '#000000';
+        localStorage.setItem('progressBarColor', color);
+    }
+    if (!opacity) {
+        opacity = '20';
+        localStorage.setItem('progressBarOpacity', opacity);
+    }
+    
+    // Update input elements with saved values
+    const colorInput = document.getElementById('progress-bar-color');
+    const opacityInput = document.getElementById('progress-bar-opacity');
+    
+    if (colorInput) colorInput.value = color;
+    if (opacityInput) opacityInput.value = opacity;
+    
+    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
+    
+    // Start the update loop
+    updateProgressBar();
+    
+    // Update progress bar when switching periods
+    if (window.progressInterval) {
+        clearInterval(window.progressInterval);
+    }
+    window.progressInterval = setInterval(updateProgressBar, 1000);
+}
+
 // Modify the existing startCountdown function to include progress bar updates
 function startCountdown() {
     updateCountdowns();
@@ -1039,10 +1146,6 @@ function updateFont() {
     localStorage.setItem('fontFamily', fontFamily);
     saveSettings();
 }
-
-// ...existing code...
-
-// ...existing code...
 
 function toggleTheme() {
     const sidebar = document.getElementById('settings-sidebar');
@@ -1449,20 +1552,24 @@ window.addEventListener('beforeunload', function (e) {
     localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
 });
 
-// ...existing code...
-
 // Simplified gradient management
 function updateGradient(save = true) {
     const enabled = document.getElementById('gradient-enabled')?.checked || false;
-    const startColor = document.getElementById('gradient-start')?.value || '#000035';
-    const endColor = document.getElementById('gradient-end')?.value || '#00bfa5';
+    // Use the correct color picker IDs
+    const startColor = document.getElementById('gradient-start-color')?.value || '#000035';
+    const endColor = document.getElementById('gradient-end-color')?.value || '#00bfa5';
     const angle = document.getElementById('gradient-angle')?.value || '90';
 
     if (enabled) {
         // Clear any background image
         document.body.style.backgroundImage = '';
         localStorage.removeItem('bgImage');
-        
+
+        // Remove background from Firestore using the dedicated delete function
+        if (window.authManager?.currentUser && typeof window.authManager.deleteUserBackground === 'function') {
+            window.authManager.deleteUserBackground(window.authManager.currentUser.uid);
+        }
+
         // Apply gradient
         const gradientString = `linear-gradient(${angle}deg, ${startColor}, ${endColor})`;
         document.body.style.background = gradientString;
@@ -1489,15 +1596,17 @@ function updateGradient(save = true) {
 function loadGradientSettings() {
     const savedSettings = JSON.parse(localStorage.getItem('gradientSettings')) || {
         enabled: true,
-        startColor: '#000035',
-        endColor: '#00bfa5',
-        angle: '90'
+        angle: 90,
+        stops: [
+            { color: '#000035', position: 0 },
+            { color: '#00bfa5', position: 100 }
+        ]
     };
 
     // Set the controls
     const gradientEnabled = document.getElementById('gradient-enabled');
-    const gradientStart = document.getElementById('gradient-start');
-    const gradientEnd = document.getElementById('gradient-end');
+    const gradientStart = document.getElementById('gradient-start-color');
+    const gradientEnd = document.getElementById('gradient-end-color');
     const gradientAngle = document.getElementById('gradient-angle');
     const gradientControls = document.querySelector('.gradient-controls');
 
@@ -1518,11 +1627,10 @@ function loadGradientSettings() {
 // Add this to your DOMContentLoaded event listener
 document.addEventListener('DOMContentLoaded', () => {
     loadGradientSettings();
-    
     // Set up gradient control listeners
     document.getElementById('gradient-enabled')?.addEventListener('change', () => updateGradient(true));
-    document.getElementById('gradient-start')?.addEventListener('input', () => updateGradient(true));
-    document.getElementById('gradient-end')?.addEventListener('input', () => updateGradient(true));
+    document.getElementById('gradient-start-color')?.addEventListener('input', () => updateGradient(true));
+    document.getElementById('gradient-end-color')?.addEventListener('input', () => updateGradient(true));
     document.getElementById('gradient-angle')?.addEventListener('input', (e) => {
         updateGradient(true);
         const angleDisplay = document.querySelector('#gradient-angle + .range-value');
@@ -1562,8 +1670,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAuthButtonText();
 });
 
-// ...existing code...
-
 // New function: Update Firestore settings on settings close
 async function updateFirestoreSettings() {
     if (window.authManager && window.authManager.currentUser) {
@@ -1574,8 +1680,11 @@ async function updateFirestoreSettings() {
 
 // Add this function to handle saving settings
 async function saveSettings() {
-    // Only save to Firestore if user is authenticated
+    // Always ensure the latest bgImage is in Firestore settings
     if (window.authManager?.currentUser) {
+        if (window.authManager.userSettings) {
+            window.authManager.userSettings.bgImage = localStorage.getItem('bgImage') || null;
+        }
         await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
     }
 }
@@ -1742,8 +1851,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// ...existing code...
-
+// Update box border
 function updateBoxBorder() {
     const color = document.getElementById('box-border-color').value;
     const width = document.getElementById('box-border-width').value;
