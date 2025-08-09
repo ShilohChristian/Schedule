@@ -203,11 +203,9 @@
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-#gradient-stops {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 15px 0;
+#gradient-stops,
+#add-stop {
+    display: none !important;
 }
 
 .gradient-stop {
