@@ -2,15 +2,15 @@
 body {
     margin: 0;
     font-family: 'Roboto', Arial, sans-serif;
-    background-color: #000035; /* Replace gradient with solid color */
+    background: linear-gradient(90deg, #000035 0%, #00bfa5 100%);
     color: #ffffff;
     height: 100vh;
     overflow: hidden;
     background-size: cover;
     position: relative;
     z-index: 0;
-    /* Add fallback background color */
-    background-color: #000000;
+    /* Remove fallback solid color, or keep as fallback only */
+    background-color: #000035;
 }
 
 /* Add global transitions */
@@ -611,275 +611,6 @@ close-settings-sidebar:hover {
     }
 }
 
-/* ...existing code... */
-
-#bg-image-drop-area {
-    border: 2px dashed #00bfa5;
-    border-radius: 8px;
-    padding: 5px; /* Reduced padding */
-    text-align: center;
-    cursor: pointer;
-    margin: 10px 0;
-    transition: all 0.3s ease;
-    background-color: rgba(0, 191, 165, 0.1);
-    min-height: 30px; /* Reduced min-height */
-    width: 150px; /* Set a fixed width */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    border: 2px dashed currentColor;
-    background-color: transparent;
-    color: inherit;
-}
-
-#bg-image-drop-area:hover {
-    background-color: rgba(0, 191, 165, 0.2);
-    border-color: #ffffff;
-}
-
-#bg-image-drop-area.drag-over {
-    background-color: rgba(0, 191, 165, 0.3);
-    border-color: #ffffff;
-    transform: scale(1.02);
-}
-
-#bg-image-drop-area p {
-    margin: 2px 0; /* Reduced margin */
-    color: #ffffff;
-    font-size: 10px; /* Reduced font size */
-    color: inherit;
-    opacity: 0.8;
-}
-
-#bg-image {
-    display: none; /* Hide the file input */
-}
-
-#save-schedule-button {
-    margin-top: 15px;
-    padding: 8px 16px; /* Existing padding */
-    background-color: #00bfa5;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    width: auto; /* Change from 100% to auto for dynamic width */
-    display: block !important; /* Force display */
-    margin-left: 10px; /* Add left margin for spacing */
-    margin-right: 10px; /* Add right margin for spacing */
-}
-
-#save-schedule-button:hover {
-    background-color: #00796b;
-}
-
-#custom-schedule-content {
-    padding: 15px;
-    display: none;
-}
-
-#custom-schedule-content.show {
-    display: block;
-}
-
-/* ...existing code... */
-
-.settings-group {
-    border: 1px solid rgba(0, 173, 181, 0.2);
-    border-radius: 8px;
-    padding: 20px;
-    margin: 0 auto 20px auto;
-    background: #393E46;
-    max-width: 800px;
-    width: calc(100% - 40px);
-}
-
-.settings-group h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
-    color: #00ADB5;
-    font-size: 1.1em;
-    font-weight: bold;
-}
-
-/* Improved Dropdown Styling */
-.dropdown-toggle {
-    width: 100%;
-    padding: 15px;
-    background: rgba(34, 34, 34, 0.3);
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.2s ease;
-    margin-bottom: 5px;
-}
-
-.dropdown-toggle:hover {
-    background: rgba(34, 34, 34, 0.5);
-}
-
-.dropdown-toggle.active {
-    background: rgba(34, 34, 34, 0.6);
-    border-radius: 8px 8px 0 0;
-    margin-bottom: 0;
-}
-
-.dropdown-content {
-    display: none;
-    padding: 20px;
-    background: rgba(34, 34, 34, 0.3);
-    border-radius: 0 0 8px 8px;
-    opacity: 0;
-    transform: translateY(-10px);
-    transition: opacity 0.3s ease, transform 0.3s ease;
-    margin-bottom: 15px;
-}
-
-.dropdown-content.show {
-    display: block;
-    opacity: 1;
-    transform: translateY(0);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-/* Light theme modifications */
-.settings-sidebar.light-mode {
-    background: #ffffff;
-    color: #1a1a1a;
-}
-
-.settings-sidebar.light-mode .settings-nav {
-    background: #f5f5f5;
-    border-right-color: #e0e0e0;
-}
-
-.settings-sidebar.light-mode .settings-group {
-    background: #f5f5f5;
-}
-
-.settings-sidebar.light-mode .nav-item {
-    color: #1a1a1a;
-}
-
-.settings-sidebar.light-mode .nav-item:hover {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-.settings-sidebar.light-mode .nav-item.active {
-    background: #00bfa5;
-    color: #ffffff;
-}
-
-.dropdown-toggle:hover {
-    background: rgba(0, 173, 181, 0.2);
-    transform: translateY(-1px);
-}
-
-.settings-sidebar button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
-}
-
-.close-settings-sidebar {
-    background: rgba(0, 173, 181, 0.1);
-    border: 1px solid rgba(0, 173, 181, 0.2);
-    color: #EEEEEE;
-}
-
-close-settings-sidebar:hover {
-    background: rgba(0, 173, 181, 0.2);
-}
-
-.dropdown-content {
-    padding: 10px 20px;  /* Add some padding for better visibility */
-    background-color: rgba(255, 255, 255, 0.1); /* Light background for contrast */
-    border-radius: 8px;  /* Rounded corners for a smoother look */
-    display: none;       /* Hide by default */
-    transition: max-height 0.3s ease;
-    overflow: hidden;    /* Hide overflow content */
-    padding: 15px;
-    margin: 10px 0;
-}
-
-/* When the dropdown is toggled to show */
-.dropdown-content.show {
-    display: block;      /* Show the dropdown */
-    max-height: none;    /* Allow the content to expand to its full size */
-}
-
-/* Double Spaced Text Elements */
-.settings-sidebar div {
-    margin-bottom: 20px;
-}
-
-.settings-sidebar button {
-    background-color: #00ADB5;
-    color: #EEEEEE;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.settings-sidebar button:hover {
-    background-color: #009aa1;
-    transform: translateY(-2px);
-}
-
-.settings-sidebar button:active {
-    background-color: #004d40;
-    transform: translateY(1px);
-}
-
-@media (max-width: 600px) {
-    .schedule-container {
-        width: 80%;
-        max-width: none; 
-        margin: 0 auto;
-        position: static;
-    }
-
-    .current-period {
-        position: relative;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        text-align: center;
-    }
-}
-/* Media query for smaller screens */
-@media (max-width: 600px) {
-    .schedule-container {
-        width: 90%; /* Adjust the width to 90% of the viewport */
-        max-width: none; /* Remove the max-width constraint */
-        margin: 10px auto; /* Center the container */
-        padding: 10px; /* Adjust padding for better spacing */
-    }
-
-    .current-period {
-        position: relative; /* Change position to allow for proper alignment */
-        bottom: 0;
-        left: 0;
-        width: 100%; /* Ensure it takes full width */
-        text-align: center; /* Center the text */
-    }
-}
-
-/* ...existing code... */
-
 #bg-image-drop-area {
     border: 2px dashed #00bfa5;
     border-radius: 8px;
@@ -1172,8 +903,6 @@ close-settings-sidebar:hover {
 
 /* ...existing code... */
 
-/* ...existing code... */
-
 .timer-shadow {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
@@ -1200,8 +929,6 @@ close-settings-sidebar:hover {
     background-color: #ffffff; /* White background for options */
     color: #000035; /* Dark text color for options */
 }
-
-/* ...existing code... */
 
 /* ...existing code... */
 
@@ -2003,4 +1730,359 @@ input, select {
     background: #00a593;
 }
 
+/* Welcome popup styles */
+#grade-level-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.grade-level-modal-box {
+    background: #fff;
+    color: #222;
+    border-radius: 18px;
+    padding: 40px 36px 32px 36px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    text-align: center;
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    border: 2.5px solid #00bfa5;
+    transition: box-shadow 0.2s;
+}
+
+.grade-level-modal-box h2 {
+    margin-bottom: 18px;
+    color: #00bfa5;
+    font-size: 2.1em;
+    font-weight: 700;
+}
+
+.grade-level-modal-box p {
+    margin-bottom: 8px;
+    font-size: 1.18em;
+    font-weight: 500;
+}
+
+.grade-level-modal-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.grade-level-modal-btn {
+    min-width: 160px;
+    padding: 18px 0;
+    background: linear-gradient(90deg, #00bfa5 60%, #00796b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.18em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,191,165,0.10);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+    border: 2px solid transparent;
+    letter-spacing: 0.02em;
+}
+
+.grade-level-modal-btn:last-child {
+    background: linear-gradient(90deg, #00796b 60%, #00bfa5 100%);
+}
+
+.grade-level-modal-btn:hover,
+.grade-level-modal-btn:focus {
+    background: linear-gradient(90deg, #00bfa5 80%, #00796b 100%);
+    box-shadow: 0 6px 24px rgba(0,191,165,0.18);
+    transform: translateY(-2px) scale(1.06);
+    border: 2px solid #00bfa5;
+}
+
+.grade-level-modal-info {
+    margin-top: 18px;
+    color: #888;
+    font-size: 0.98em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.grade-level-modal-info i {
+    color: #00bfa5;
+}
+    background: #333;
+}
+
+.nav-item.active {
+    background: #00bfa5;
+    color: #fff;
+    position: relative;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #fff;
+}
+
+.settings-group h3 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.settings-group h3 i {
+    margin-right: 10px;
+    color: #00bfa5;
+}
+
 /* ...existing code... */
+
+/* Extension Panel Styles */
+.color-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.direction-controls {
+    margin-bottom: 20px;
+}
+
+#saveExtensionButton {
+    background: #00bfa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+#saveExtensionButton:hover {
+    background: #00a392;
+}
+
+#extensionPreview {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* ...existing code... */
+
+/* Progress Bar Styles */
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100vh; /* Changed from 4px to 100vh */
+    background: rgba(0, 191, 165, 0.2);
+    transition: width 0.5s linear;
+    z-index: 1;
+    pointer-events: none; /* Ensure clicks pass through */
+}
+
+#progress-bar-settings {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(34, 34, 34, 0.5);
+    border-radius: 8px;
+}
+
+/* ...existing code... */
+
+/* Schedule Section Dropdowns */
+#rename-periods, #custom-schedule {
+    margin: 10px 0;
+}
+
+.dropdown-toggle {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-toggle.active {
+    border-radius: 8px 8px 0 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-content {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 15px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dropdown-content.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content input:focus {
+    outline: none;
+    border-color: #00bfa5;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.rename-period {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#save-schedule-button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #00bfa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#save-schedule-button:hover {
+    background: #00a593;
+}
+
+/* Welcome popup styles */
+#grade-level-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.grade-level-modal-box {
+    background: #fff;
+    color: #222;
+    border-radius: 18px;
+    padding: 40px 36px 32px 36px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    text-align: center;
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    border: 2.5px solid #00bfa5;
+    transition: box-shadow 0.2s;
+}
+
+.grade-level-modal-box h2 {
+    margin-bottom: 18px;
+    color: #00bfa5;
+    font-size: 2.1em;
+    font-weight: 700;
+}
+
+.grade-level-modal-box p {
+    margin-bottom: 8px;
+    font-size: 1.18em;
+    font-weight: 500;
+}
+
+.grade-level-modal-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.grade-level-modal-btn {
+    min-width: 160px;
+    padding: 18px 0;
+    background: linear-gradient(90deg, #00bfa5 60%, #00796b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.18em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,191,165,0.10);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+    border: 2px solid transparent;
+    letter-spacing: 0.02em;
+}
+
+.grade-level-modal-btn:last-child {
+    background: linear-gradient(90deg, #00796b 60%, #00bfa5 100%);
+}
+
+.grade-level-modal-btn:hover,
+.grade-level-modal-btn:focus {
+    background: linear-gradient(90deg, #00bfa5 80%, #00796b 100%);
+    box-shadow: 0 6px 24px rgba(0,191,165,0.18);
+    transform: translateY(-2px) scale(1.06);
+    border: 2px solid #00bfa5;
+}
+
+.grade-level-modal-info {
+    margin-top: 18px;
+    color: #888;
+    font-size: 0.98em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.grade-level-modal-info i {
+    color: #00bfa5;
+}
