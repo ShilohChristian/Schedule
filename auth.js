@@ -165,14 +165,18 @@ class AuthManager {
                     document.body.style.backgroundImage = '';
                     localStorage.removeItem('bgImage');
                     
-                    // Apply settings in correct order
-                    // First apply gradient if it exists and is enabled
+                    // Apply gradient if it exists and is enabled
                     if (settings.gradientSettings) {
                         const gradientSettings = JSON.parse(settings.gradientSettings);
-                        if (window.gradientManager && gradientSettings.enabled) {
-                            window.gradientManager.enabled = true;
-                            window.gradientManager.stops = gradientSettings.stops;
-                            window.gradientManager.angle = gradientSettings.angle;
+                        if (window.gradientManager) {
+                            window.gradientManager.enabled = !!gradientSettings.enabled;
+                            window.gradientManager.angle = gradientSettings.angle ?? 90;
+                            window.gradientManager.stops = Array.isArray(gradientSettings.stops)
+                                ? gradientSettings.stops
+                                : [
+                                    { color: gradientSettings.startColor || '#000035', position: 0 },
+                                    { color: gradientSettings.endColor || '#00bfa5', position: 100 }
+                                ];
                             window.gradientManager.updateUI();
                             window.gradientManager.applyGradient();
                         }
