@@ -15,58 +15,82 @@ async function initializeAuth() {
 // Declare schedules first
 const schedules = {
     normal: [
-        { name: "Period 1", start: "08:15", end: "09:00" },
-        { name: "Passing", start: "09:00", end: "09:06" },
-        { name: "Period 2", start: "09:06", end: "09:51" },
-        { name: "Passing", start: "09:51", end: "09:57" },
-        { name: "Period 3", start: "09:57", end: "10:42" },
-        { name: "Passing", start: "10:42", end: "10:48" },
-        { name: "Period 4", start: "10:48", end: "11:33" },
-        { name: "Passing", start: "11:33", end: "11:39" },
-        { name: "Period 5", start: "11:39", end: "12:25" },
-        { name: "Lunch", start: "12:25", end: "13:07" },
-        { name: "Passing", start: "13:07", end: "13:13" },
-        { name: "Period 6", start: "13:13", end: "13:58" },
-        { name: "Passing", start: "13:58", end: "14:04" },
-        { name: "Period 7", start: "14:04", end: "14:49" },
-        { name: "Passing", start: "14:49", end: "14:55" },
-        { name: "Period 8", start: "14:55", end: "15:40" },
+        { name: "Period 1", start: "08:15", end: "09:01" },
+        { name: "Passing", start: "09:01", end: "09:07" },
+        { name: "Period 2", start: "09:07", end: "09:53" },
+        { name: "Passing", start: "09:53", end: "09:59" },
+        { name: "Period 3", start: "09:59", end: "10:45" },
+        { name: "Passing", start: "10:45", end: "10:51" },
+        { name: "Period 4", start: "10:51", end: "11:37" },
+        { name: "Passing", start: "11:37", end: "11:43" },
+        { name: "Period 5", start: "11:43", end: "12:29" },
+        { name: "Lunch", start: "12:29", end: "13:04" },
+        { name: "Passing", start: "13:04", end: "13:10" },
+        { name: "Period 6", start: "13:10", end: "13:56" },
+        { name: "Passing", start: "13:56", end: "14:02" },
+        { name: "Period 7", start: "14:02", end: "14:48" },
+        { name: "Passing", start: "14:48", end: "14:54" },
+        { name: "Period 8", start: "14:54", end: "15:40" },
     ],
     chapel: [
-        { name: "Period 1", start: "08:15", end: "08:53" },
-        { name: "Period 2", start: "08:59", end: "09:38" },
-        { name: "Period 3", start: "09:44", end: "10:23" },
-        { name: "Chapel", start: "10:29", end: "11:14" },
-        { name: "Period 4", start: "11:20", end: "12:00" },
-        { name: "Period 5", start: "12:06", end: "12:46" },
-        { name: "Lunch", start: "12:46", end: "13:28" },
-        { name: "Period 6", start: "13:34", end: "14:12" },
-        { name: "Period 7", start: "14:18", end: "14:56" },
-        { name: "Period 8", start: "15:02", end: "15:40" },
+        { name: "Period 1", start: "08:15", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:01" }, // +1 min
+        { name: "Period 2", start: "09:01", end: "09:40" }, // +1 min
+        { name: "Passing", start: "09:40", end: "09:45" },  // +1 min (added)
+        { name: "Chapel", start: "09:45", end: "10:30" },   // moved after Period 2
+        { name: "Passing", start: "10:30", end: "10:36" },  // +1 min (added)
+        { name: "Period 3", start: "10:36", end: "11:17" }, // +1 min
+        { name: "Passing", start: "11:17", end: "11:23" },  // +1 min (added)
+        { name: "Period 4", start: "11:23", end: "12:03" },
+        { name: "Lunch", start: "12:03", end: "12:39" },  // +1 min
+        { name: "Passing", start: "12:39", end: "12:45" },  // +1 min (added)
+        { name: "Period 5", start: "12:45", end: "13:24" }, // +1 min
+        { name: "Passing", start: "13:24", end: "13:30" },  // +1 min (added) // +1 min (added)
+        { name: "Period 6", start: "13:30", end: "14:10" }, // +1 min
+        { name: "Passing", start: "14:10", end: "14:16" },  // +1 min (added)
+        { name: "Period 7", start: "14:16", end: "14:55" }, // +1 min
+        { name: "Passing", start: "14:55", end: "15:01" },  // +1 min (added)
+        { name: "Period 8", start: "15:01", end: "15:40" }  // +1 min
     ],
     latePepRally: [
-        { name: "Period 1", start: "08:15", end: "08:53" },
-        { name: "Period 2", start: "08:59", end: "09:37" },
-        { name: "Period 3", start: "09:43", end: "10:21" },
-        { name: "Period 4", start: "10:27", end: "11:05" },
-        { name: "Period 5", start: "11:11", end: "11:49" },
-        { name: "Period 6", start: "11:55", end: "12:33" },
-        { name: "Lunch", start: "12:33", end: "13:10" },
-        { name: "Period 7", start: "13:16", end: "13:54" },
-        { name: "Period 8", start: "14:00", end: "14:38" },
-        { name: "Pep Rally", start: "14:45", end: "15:40" },
+        { name: "Period 1", start: "08:15", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:01" },
+        { name: "Period 2", start: "09:01", end: "09:41" },
+        { name: "Passing", start: "09:41", end: "09:47" },
+        { name: "Period 3", start: "09:47", end: "10:27" },
+        { name: "Passing", start: "10:27", end: "10:33" },
+        { name: "Period 4", start: "10:33", end: "11:13" },
+        { name: "Passing", start: "11:13", end: "11:19" },
+        { name: "Period 5", start: "11:19", end: "11:59" },
+        { name: "Lunch", start: "11:59", end: "12:34" },
+        { name: "Passing", start: "12:34", end: "12:40" },
+        { name: "Period 6", start: "12:40", end: "13:21" },
+        { name: "Passing", start: "13:21", end: "13:27" },
+        { name: "Period 7", start: "13:27", end: "14:07" },
+        { name: "Passing", start: "14:07", end: "14:13" },
+        { name: "Period 8", start: "14:13", end: "14:52" },
+        { name: "Passing", start: "14:52", end: "14:58" },
+        { name: "Pep Rally", start: "14:58", end: "15:40" }
     ],
     earlyPepRally: [
-        { name: "Period 1", start: "08:15", end: "08:55" },
-        { name: "Period 2", start: "09:01", end: "09:41" },
-        { name: "Period 3", start: "09:47", end: "10:27" },
-        { name: "Period 4", start: "10:33", end: "11:13" },
-        { name: "Period 5", start: "11:19", end: "11:59" },
-        { name: "Pep Rally", start: "12:05", end: "12:30" },
-        { name: "Lunch", start: "12:30", end: "13:13" },
-        { name: "Period 6", start: "13:19", end: "14:02" },
-        { name: "Period 7", start: "14:08", end: "14:51" },
-        { name: "Period 8", start: "14:57", end: "15:40" },
+        { name: "Period 1", start: "08:15", end: "08:58" },
+        { name: "Passing", start: "08:58", end: "09:04" },
+        { name: "Period 2", start: "09:04", end: "09:47" },
+        { name: "Passing", start: "09:47", end: "09:53" },
+        { name: "Period 3", start: "09:53", end: "10:36" },
+        { name: "Passing", start: "10:36", end: "10:42" },
+        { name: "Period 4", start: "10:42", end: "11:24" },
+        { name: "Passing", start: "11:24", end: "11:30" },
+        { name: "Period 5", start: "11:30", end: "12:12" },
+        { name: "Passing", start: "12:12", end: "12:18" },
+        { name: "Pep Rally", start: "12:18", end: "12:43" },
+        { name: "Lunch", start: "12:43", end: "13:19" },
+        { name: "Passing", start: "13:19", end: "13:25" },
+        { name: "Period 6", start: "13:25", end: "14:06" },
+        { name: "Passing", start: "14:06", end: "14:12" },
+        { name: "Period 7", start: "14:12", end: "14:53" },
+        { name: "Passing", start: "14:53", end: "14:59" },
+        { name: "Period 8", start: "14:59", end: "15:40" }
     ]
 };
 
@@ -82,8 +106,63 @@ const scheduleDisplayNames = {
 let currentSchedule = schedules.normal;
 let currentScheduleName = 'normal';
 
+// Add grade level and middle school schedules
+let gradeLevel = localStorage.getItem('gradeLevel') || 'highSchool'; // 'highSchool' or 'middleSchool'
+
+const middleSchoolSchedules = {
+    normal: [
+        { name: "Homeroom", start: "08:10", end: "08:15" },
+        { name: "Passing", start: "08:15", end: "08:18" },
+        { name: "Period 1", start: "08:18", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 2", start: "09:00", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Period 3", start: "09:45", end: "10:25" },
+        { name: "Passing", start: "10:25", end: "10:30" },
+        { name: "SAINTS Advisory Time", start: "10:30", end: "11:10" },
+        { name: "Passing", start: "11:10", end: "11:13" },
+        { name: "Lunch", start: "11:13", end: "11:43" },
+        { name: "Passing", start: "11:43", end: "11:47" },
+        { name: "Period 4", start: "11:47", end: "12:27" },
+        { name: "Passing", start: "12:27", end: "12:31" },
+        { name: "Period 5", start: "12:31", end: "13:11" },
+        { name: "Passing", start: "13:11", end: "13:15" },
+        { name: "Period 6", start: "13:15", end: "13:55" },
+        { name: "Passing", start: "13:55", end: "13:59" },
+        { name: "Period 7", start: "13:59", end: "14:39" },
+        { name: "Passing", start: "14:39", end: "14:43" },
+        { name: "Period 8", start: "14:43", end: "15:30" }
+    ],
+    chapel: [
+        { name: "Homeroom", start: "08:10", end: "08:15" },
+        { name: "Passing", start: "08:15", end: "08:18" },
+        { name: "Period 1", start: "08:18", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 2", start: "09:00", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Period 3", start: "09:45", end: "10:25" },
+        { name: "Passing", start: "10:25", end: "10:30" },
+        { name: "Chapel", start: "10:30", end: "11:10" },
+        { name: "Passing", start: "11:10", end: "11:13" },
+        { name: "Lunch", start: "11:13", end: "11:43" },
+        { name: "Passing", start: "11:43", end: "11:47" },
+        { name: "Chapel Debrief", start: "11:47", end: "12:07" },
+        { name: "Passing", start: "12:07", end: "12:10" },
+        { name: "Period 4", start: "12:10", end: "12:45" },
+        { name: "Passing", start: "12:45", end: "12:49" },
+        { name: "Period 5", start: "12:49", end: "13:27" },
+        { name: "Passing", start: "13:27", end: "13:31" },
+        { name: "Period 6", start: "13:31", end: "14:07" },
+        { name: "Passing", start: "14:07", end: "14:11" },
+        { name: "Period 7", start: "14:11", end: "14:49" },
+        { name: "Passing", start: "14:49", end: "14:53" },
+        { name: "Period 8", start: "14:53", end: "15:30" }
+    ]
+};
+
 // Modify your DOMContentLoaded handler
 document.addEventListener("DOMContentLoaded", async function() {
+    promptForGradeLevelIfFirstTime();
     await initializeAuth();
     // Remove the auth check that was showing the modal
     initializeApp();
@@ -121,6 +200,33 @@ document.addEventListener("DOMContentLoaded", async function() {
     } else {
         console.error('Required functions not loaded yet');
     }
+
+    // Grade level dropdown initialization and handler
+    let gradeDropdown = document.getElementById('grade-level-dropdown');
+    if (!gradeDropdown) {
+        // Create dropdown if it doesn't exist
+        gradeDropdown = document.createElement('select');
+        gradeDropdown.id = 'grade-level-dropdown';
+        const highSchoolOption = document.createElement('option');
+        highSchoolOption.value = 'highSchool';
+        highSchoolOption.textContent = 'High School';
+        const middleSchoolOption = document.createElement('option');
+        middleSchoolOption.value = 'middleSchool';
+        middleSchoolOption.textContent = 'Middle School';
+        gradeDropdown.appendChild(highSchoolOption);
+        gradeDropdown.appendChild(middleSchoolOption);
+        document.getElementById('app').prepend(gradeDropdown);
+    }
+    gradeDropdown.value = gradeLevel;
+    gradeDropdown.addEventListener('change', function() {
+        gradeLevel = this.value;
+        localStorage.setItem('gradeLevel', gradeLevel); // Save selection
+        updateScheduleDropdown();
+        // Switch to the first schedule for the new grade
+        const activeSchedules = getActiveSchedules();
+        const firstSchedule = Object.keys(activeSchedules)[0];
+        switchSchedule(firstSchedule);
+    });
 
     initializeSettingsPanels();
 });
@@ -173,13 +279,26 @@ function initializeAppLogic() {
 }
 
 // Schedule management functions
+function getActiveSchedules() {
+    return gradeLevel === 'middleSchool' ? middleSchoolSchedules : schedules;
+}
+
+function getGlobalPeriodNames() {
+    return JSON.parse(localStorage.getItem('globalPeriodNames') || '{}');
+}
+
+function setGlobalPeriodName(index, newName) {
+    const names = getGlobalPeriodNames();
+    names[index] = newName;
+    localStorage.setItem('globalPeriodNames', JSON.stringify(names));
+}
+
+// Update switchSchedule to apply global period names
 function switchSchedule(scheduleName) {
     if (!scheduleName) return;
     
     try {
         let schedule;
-        
-        // Check if it's a custom schedule
         if (scheduleName.startsWith('customSchedule_')) {
             const savedSchedule = localStorage.getItem(scheduleName);
             if (savedSchedule) {
@@ -189,32 +308,29 @@ function switchSchedule(scheduleName) {
                 return;
             }
         } else {
-            // Handle built-in schedules
-            const savedSchedule = localStorage.getItem('savedSchedule_' + scheduleName);
-            if (savedSchedule) {
-                try {
-                    schedule = JSON.parse(savedSchedule);
-                } catch (e) {
-                    // If parsing fails, use the default schedule
-                    schedule = schedules[scheduleName];
-                    // Save it properly stringified
-                    localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
-                }
-            } else if (schedules[scheduleName]) {
-                schedule = JSON.parse(JSON.stringify(schedules[scheduleName]));
-                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
+            const activeSchedules = getActiveSchedules();
+            if (activeSchedules[scheduleName]) {
+                schedule = JSON.parse(JSON.stringify(activeSchedules[scheduleName]));
             } else {
                 console.error(`Schedule ${scheduleName} not found`);
                 return;
             }
         }
 
-        // Update current schedule
+        // Apply global period names for all "Period X"
+        const globalNames = getGlobalPeriodNames();
+        schedule.forEach((period, idx) => {
+            if (period.name.startsWith("Period ")) {
+                if (globalNames[idx]) {
+                    period.name = globalNames[idx];
+                }
+            }
+        });
+
         currentSchedule = schedule;
         currentScheduleName = scheduleName;
         localStorage.setItem('currentScheduleName', scheduleName);
-        
-        // Update display name
+
         const displayName = scheduleName.startsWith('customSchedule_') 
             ? scheduleName.replace('customSchedule_', '')
             : scheduleDisplayNames[scheduleName] || scheduleName;
@@ -222,7 +338,6 @@ function switchSchedule(scheduleName) {
         const headingText = `${displayName} Schedule ▸ ${schedule[0].name}`;
         document.getElementById("countdown-heading").innerText = headingText;
         
-        // Update dropdown if it exists
         const dropdown = document.getElementById("schedule-dropdown");
         if (dropdown) dropdown.value = scheduleName;
         
@@ -232,9 +347,106 @@ function switchSchedule(scheduleName) {
         console.log(`Switched to schedule: ${scheduleName}`);
     } catch (error) {
         console.error('Error switching schedule:', error);
-        // Fallback to default schedule
         currentSchedule = schedules[scheduleName] || schedules.normal;
     }
+}
+
+// Update renamePeriod to set global name and apply to all schedules
+function renamePeriod(index, newName) {
+    if (!newName.trim()) return;
+
+    // Only allow renaming for main period indices
+    const mainIndices = getMainPeriodIndices(currentSchedule);
+    if (!mainIndices.includes(index)) return;
+
+    try {
+        setGlobalPeriodName(index, newName);
+
+        // Update all schedules (high school, middle school, custom)
+        [schedules, middleSchoolSchedules].forEach(schedObj => {
+            Object.values(schedObj).forEach(schedule => {
+                if (schedule[index] && !schedule[index].name.includes("Passing") && !schedule[index].name.includes("Lunch") && !schedule[index].name.includes("Chapel") && !schedule[index].name.includes("Pep Rally") && !schedule[index].name.includes("Homeroom") && !schedule[index].name.includes("SAINTS Advisory Time") && !schedule[index].name.includes("Chapel Debrief")) {
+                    schedule[index].name = newName;
+                }
+            });
+        });
+        // Update custom schedules in localStorage
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('customSchedule_')) {
+                const customSchedule = JSON.parse(localStorage.getItem(key));
+                if (customSchedule[index] && !customSchedule[index].name.includes("Passing") && !customSchedule[index].name.includes("Lunch") && !customSchedule[index].name.includes("Chapel") && !customSchedule[index].name.includes("Pep Rally") && !customSchedule[index].name.includes("Homeroom") && !customSchedule[index].name.includes("SAINTS Advisory Time") && !customSchedule[index].name.includes("Chapel Debrief")) {
+                    customSchedule[index].name = newName;
+                    localStorage.setItem(key, JSON.stringify(customSchedule));
+                }
+            }
+        });
+
+        // Update current schedule
+        currentSchedule[index].name = newName;
+        updateScheduleDisplay();
+        updateCountdowns();
+        populateRenamePeriods();
+
+        // Force refresh the schedule display
+        const scheduleContainer = document.getElementById("schedule");
+        if (scheduleContainer) {
+            scheduleContainer.innerHTML = '';
+            currentSchedule.forEach(period => {
+                if (period.name !== "Passing") {
+                    const periodDiv = document.createElement("div");
+                    periodDiv.className = "period";
+                    periodDiv.innerHTML = `<label>${period.name}</label><span id="Period_Timer"></span>`;
+                    scheduleContainer.appendChild(periodDiv);
+                }
+            });
+        }
+
+        console.log(`Successfully renamed period at index ${index} to ${newName}`);
+    } catch (error) {
+        console.error('Error renaming period:', error);
+    }
+}
+
+// Helper: get indices of main periods for current schedule
+function getMainPeriodIndices(schedule) {
+    // For high school: indices 0,2,4,6,8,12,14,16 (Period 1-8)
+    // For middle school: find all indices where name starts with "Period" or was renamed
+    const indices = [];
+    schedule.forEach((period, idx) => {
+        // If original or renamed period (not Passing/Lunch/etc)
+        if (
+            period.name.startsWith("Period ") ||
+            (getGlobalPeriodNames()[idx] && !period.name.includes("Passing") && !period.name.includes("Lunch") && !period.name.includes("Chapel") && !period.name.includes("Pep Rally") && !period.name.includes("Homeroom") && !period.name.includes("SAINTS Advisory Time") && !period.name.includes("Chapel Debrief"))
+        ) {
+            indices.push(idx);
+        }
+    });
+    return indices;
+}
+
+// Update populateRenamePeriods to always show inputs for main period indices
+function populateRenamePeriods() {
+    const content = document.getElementById("rename-periods-content");
+    if (!content) return;
+    
+    content.innerHTML = '';
+    const mainIndices = getMainPeriodIndices(currentSchedule);
+    mainIndices.forEach(index => {
+        const period = currentSchedule[index];
+        const div = document.createElement('div');
+        div.className = 'rename-period';
+        const label = document.createElement('label');
+        label.htmlFor = `period-${index}`;
+        label.textContent = `Period ${index + 1}:`;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = `period-${index}`;
+        input.value = period.name;
+        input.onchange = (e) => renamePeriod(index, e.target.value);
+        div.appendChild(label);
+        div.appendChild(input);
+        content.appendChild(div);
+    });
 }
 
 // Countdown functions
@@ -411,15 +623,16 @@ function saveCustomSchedule() {
 
 function updateScheduleDropdown() {
     const dropdown = document.getElementById("schedule-dropdown");
+    if (!dropdown) return;
     dropdown.innerHTML = "";
 
-    for (let key in schedules) {
+    const activeSchedules = getActiveSchedules();
+    for (let key in activeSchedules) {
         const option = document.createElement("option");
         option.value = key;
         option.textContent = scheduleDisplayNames[key] || key.charAt(0).toUpperCase() + key.slice(1);
         dropdown.appendChild(option);
     }
-
     for (let key in localStorage) {
         if (key.startsWith("customSchedule_")) {
             const option = document.createElement("option");
@@ -454,57 +667,69 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Add this function to initialize saved schedules
 function initializeSavedSchedules() {
-    try {
-        // First load any existing saved schedules
-        const savedSchedules = {};
-        Object.keys(schedules).forEach(scheduleName => {
-            try {
-                const saved = localStorage.getItem('savedSchedule_' + scheduleName);
-                if (saved) {
-                    savedSchedules[scheduleName] = JSON.parse(saved);
-                } else {
-                    // Only save default if no saved version exists
-                    savedSchedules[scheduleName] = JSON.parse(JSON.stringify(schedules[scheduleName]));
-                    localStorage.setItem('savedSchedule_' + scheduleName, 
-                        JSON.stringify(schedules[scheduleName])
-                    );
-                }
-            } catch (e) {
-                console.warn(`Error loading schedule ${scheduleName}:`, e);
-                savedSchedules[scheduleName] = schedules[scheduleName];
-                localStorage.setItem('savedSchedule_' + scheduleName, 
-                    JSON.stringify(schedules[scheduleName])
-                );
-            }
-        });
-        
-        // Update the global schedules object with saved versions
-        Object.assign(schedules, savedSchedules);
-    } catch (error) {
-        console.error('Error initializing saved schedules:', error);
+    // No-op: do not load or save built-in schedules from localStorage anymore
+}
+
+// Add this function near the top (after variable declarations)
+function promptForGradeLevelIfFirstTime() {
+    if (!localStorage.getItem('gradeLevel')) {
+        localStorage.clear();
+
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.id = 'grade-level-modal';
+
+        // Modal content (improved design, now uses CSS classes)
+        modal.innerHTML = `
+            <div class="grade-level-modal-box">
+                <h2>Welcome!</h2>
+                <p>What school level are you in?</p>
+                <div class="grade-level-modal-buttons">
+                    <button id="choose-highschool" class="grade-level-modal-btn">High School</button>
+                    <button id="choose-middleschool" class="grade-level-modal-btn">Middle School</button>
+                </div>
+                <div class="grade-level-modal-info">
+                    <i class="fas fa-info-circle"></i>
+                    You can change your school level anytime in Settings.
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        document.getElementById('choose-highschool').onclick = () => {
+            localStorage.setItem('gradeLevel', 'highSchool');
+            gradeLevel = 'highSchool';
+            modal.remove();
+            updateScheduleDropdown();
+            switchSchedule('normal');
+        };
+        document.getElementById('choose-middleschool').onclick = () => {
+            localStorage.setItem('gradeLevel', 'middleSchool');
+            gradeLevel = 'middleSchool';
+            modal.remove();
+            updateScheduleDropdown();
+            switchSchedule('normal');
+        };
     }
 }
 
 // Add this helper function
 function updateAllSchedules(oldName, newName) {
-    // Update all default schedules
+    // Update all default schedules in memory only
     Object.keys(schedules).forEach(scheduleName => {
-        const savedSchedule = JSON.parse(localStorage.getItem('savedSchedule_' + scheduleName));
-        if (savedSchedule) {
-            let modified = false;
-            savedSchedule.forEach(period => {
-                if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
-                    period.name = newName;
-                    modified = true;
-                }
-            });
-            if (modified) {
-                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(savedSchedule));
+        const schedule = schedules[scheduleName];
+        let modified = false;
+        schedule.forEach(period => {
+            if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
+                period.name = newName;
+                modified = true;
             }
-        }
+        });
+        // No localStorage save for built-in schedules
     });
 
-    // Update custom schedules
+    // Update custom schedules in localStorage
     Object.keys(localStorage).forEach(key => {
         if (key.startsWith('customSchedule_')) {
             const customSchedule = JSON.parse(localStorage.getItem(key));
@@ -525,38 +750,35 @@ function updateAllSchedules(oldName, newName) {
 // Update the renamePeriod function
 function renamePeriod(index, newName) {
     if (!newName.trim()) return;
-    
-    const oldName = currentSchedule[index].name;
-    
-    // Don't rename special periods
-    if (oldName.includes("Passing") || oldName.includes("Lunch") || 
-        oldName.includes("Chapel") || oldName.includes("Pep Rally")) {
-        return;
-    }
+
+    // Only allow renaming for main period indices
+    const mainIndices = getMainPeriodIndices(currentSchedule);
+    if (!mainIndices.includes(index)) return;
 
     try {
-        // Update all schedules both in memory and localStorage
-        Object.keys(schedules).forEach(scheduleName => {
-            const schedule = schedules[scheduleName];
-            let modified = false;
-            
-            schedule.forEach(period => {
-                if (period.name === oldName) {
-                    period.name = newName;
-                    modified = true;
+        setGlobalPeriodName(index, newName);
+
+        // Update all schedules (high school, middle school, custom)
+        [schedules, middleSchoolSchedules].forEach(schedObj => {
+            Object.values(schedObj).forEach(schedule => {
+                if (schedule[index] && !schedule[index].name.includes("Passing") && !schedule[index].name.includes("Lunch") && !schedule[index].name.includes("Chapel") && !schedule[index].name.includes("Pep Rally") && !schedule[index].name.includes("Homeroom") && !schedule[index].name.includes("SAINTS Advisory Time") && !schedule[index].name.includes("Chapel Debrief")) {
+                    schedule[index].name = newName;
                 }
             });
-            
-            if (modified) {
-                localStorage.setItem('savedSchedule_' + scheduleName, JSON.stringify(schedule));
-                console.log(`Updated schedule: ${scheduleName}`);
+        });
+        // Update custom schedules in localStorage
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('customSchedule_')) {
+                const customSchedule = JSON.parse(localStorage.getItem(key));
+                if (customSchedule[index] && !customSchedule[index].name.includes("Passing") && !customSchedule[index].name.includes("Lunch") && !customSchedule[index].name.includes("Chapel") && !customSchedule[index].name.includes("Pep Rally") && !customSchedule[index].name.includes("Homeroom") && !customSchedule[index].name.includes("SAINTS Advisory Time") && !customSchedule[index].name.includes("Chapel Debrief")) {
+                    customSchedule[index].name = newName;
+                    localStorage.setItem(key, JSON.stringify(customSchedule));
+                }
             }
         });
 
         // Update current schedule
-        currentSchedule = JSON.parse(localStorage.getItem('savedSchedule_' + currentScheduleName));
-
-        // Update all displays
+        currentSchedule[index].name = newName;
         updateScheduleDisplay();
         updateCountdowns();
         populateRenamePeriods();
@@ -575,7 +797,7 @@ function renamePeriod(index, newName) {
             });
         }
 
-        console.log(`Successfully renamed ${oldName} to ${newName}`);
+        console.log(`Successfully renamed period at index ${index} to ${newName}`);
     } catch (error) {
         console.error('Error renaming period:', error);
     }
@@ -588,9 +810,17 @@ function populateRenamePeriods() {
     
     content.innerHTML = ''; // Clear existing content
     
-    // Get all periods except Passing and Lunch
+    // Get all periods except Passing, Lunch, Chapel, Pep Rally, Homeroom, SAINTS Advisory Time, Chapel Debrief
     currentSchedule.forEach((period, index) => {
-        if (!period.name.includes("Passing") && !period.name.includes("Lunch")) {
+        if (
+            !period.name.includes("Passing") &&
+            !period.name.includes("Lunch") &&
+            !period.name.includes("Chapel") &&
+            !period.name.includes("Pep Rally") &&
+            !period.name.includes("Homeroom") &&
+            !period.name.includes("SAINTS Advisory Time") &&
+            !period.name.includes("Chapel Debrief")
+        ) {
             const div = document.createElement('div');
             div.className = 'rename-period';
             
@@ -599,7 +829,7 @@ function populateRenamePeriods() {
             if (period.name.includes("Period")) {
                 periodNumber = period.name.split(" ")[1]; // Get the number after "Period"
             } else {
-                // If it's been renamed, find the corresponding period in the original schedule
+                // If it's been renam ed, find the corresponding period in the original schedule
                 const originalPeriod = schedules[currentScheduleName].find((p, i) => i === index);
                 if (originalPeriod && originalPeriod.name.includes("Period")) {
                     periodNumber = originalPeriod.name.split(" ")[1];
@@ -676,7 +906,7 @@ function initializeSettingsPanels() {
             // Show the corresponding panel based on data-target attribute
             const target = item.getAttribute("data-target");
             const panel = document.getElementById(`${target}-panel`);
-            if (panel) {
+                        if (panel) {
                 panel.classList.add('active');
             }
         });
@@ -689,12 +919,13 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeSettingsPanels();
 });
 
-// Add extension interaction code
-if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-    chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-        type: 'UPDATE_GRADIENT',
-        settings: { angle: settings.angle, stops: settings.stops }
-    }, function(response) {
-        // Handle response if needed
-    });
-}
+// Remove any block like this:
+//
+// if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+//     chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+//         type: 'UPDATE_GRADIENT',
+//         settings: { angle: settings.angle, stops: settings.stops }
+//     }, function(response) {
+//         // Handle response if needed
+//     });
+// }
