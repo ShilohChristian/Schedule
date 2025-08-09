@@ -1,18 +1,29 @@
 class GradientManager {
     constructor() {
-        if (window.gradientManager) {
-            return window.gradientManager;
-        }
+        if (window.gradientManager) return window.gradientManager;
 
-        // Initialize properties with null values first
-        this.stops = null;
-        this.angle = null;
-        this.enabled = true; // Set enabled to true by default
-        this.selectedStop = null;
+        // Only two stops: start and end
+        this.stops = [
+            { color: '#000035', position: 0 },
+            { color: '#00bfa5', position: 100 }
+        ];
+        this.angle = 90;
+        this.enabled = true;
         this.initialized = false;
 
+        // Set color pickers to default immediately
+        const startColorInput = document.getElementById('gradient-start-color');
+        if (startColorInput) startColorInput.value = '#000035';
+        const endColorInput = document.getElementById('gradient-end-color');
+        if (endColorInput) endColorInput.value = '#00bfa5';
+
+        // Apply default gradient immediately if no background image
+        if (!localStorage.getItem('bgImage')) {
+            document.body.style.background = 'linear-gradient(90deg, #000035 0%, #00bfa5 100%)';
+        }
+
         window.gradientManager = this;
-        this.loadSavedGradient();  // Use the previously accepted loading method
+        this.loadSavedGradient();
     }
 
     async init() {
@@ -35,12 +46,15 @@ class GradientManager {
                 }
             }
 
-            // If no extension settings or not persistent, try localStorage
+            // Only load start/end colors and angle
             const saved = localStorage.getItem('gradientSettings');
             if (saved) {
                 const settings = JSON.parse(saved);
-                if (settings && Array.isArray(settings.stops)) {
-                    this.stops = settings.stops;
+                if (settings && settings.startColor && settings.endColor) {
+                    this.stops = [
+                        { color: settings.startColor, position: 0 },
+                        { color: settings.endColor, position: 100 }
+                    ];
                     this.angle = settings.angle || 90;
                     this.enabled = settings.enabled !== false;
                     if (this.enabled) {
@@ -49,27 +63,26 @@ class GradientManager {
                     return;
                 }
             }
-
-            // If nothing is saved, use defaults
-            this.initializeDefaultStops();
+            // Defaults
+            this.stops = [
+                { color: '#000035', position: 0 },
+                { color: '#00bfa5', position: 100 }
+            ];
+            this.angle = 90;
+            this.enabled = true;
             await this.applyGradient();
             this.saveSettings();
         } catch (error) {
             console.error('Error initializing gradient manager:', error);
-            this.initializeDefaultStops();
+            this.stops = [
+                { color: '#000035', position: 0 },
+                { color: '#00bfa5', position: 100 }
+            ];
+            this.angle = 90;
+            this.enabled = true;
             await this.applyGradient();
             this.saveSettings();
         }
-    }
-
-    // Add the missing method
-    initializeDefaultStops() {
-        this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ];
-        this.angle = 90;
-        this.enabled = true;
     }
 
     setupManager() {
@@ -89,7 +102,6 @@ class GradientManager {
             return;
         }
 
-        // Load settings first before any other initialization
         this.loadSettings();
 
         // Check for background image after settings are loaded
@@ -111,7 +123,26 @@ class GradientManager {
     initializeEventListeners() {
         document.getElementById('gradient-enabled')?.addEventListener('change', () => this.toggleGradient());
         document.getElementById('gradient-angle')?.addEventListener('input', (e) => this.updateAngle(e.target.value));
-        document.getElementById('add-stop')?.addEventListener('click', () => this.addStop());
+
+        // Use the correct color picker IDs
+        const startColorInput = document.getElementById('gradient-start-color');
+        if (startColorInput) {
+            startColorInput.addEventListener('input', (e) => {
+                this.stops[0].color = e.target.value;
+                this.applyGradient();
+                this.saveSettings();
+                this.updateUI();
+            });
+        }
+        const endColorInput = document.getElementById('gradient-end-color');
+        if (endColorInput) {
+            endColorInput.addEventListener('input', (e) => {
+                this.stops[1].color = e.target.value;
+                this.applyGradient();
+                this.saveSettings();
+                this.updateUI();
+            });
+        }
     }
 
     loadSettings() {
@@ -119,23 +150,15 @@ class GradientManager {
         if (stored) {
             try {
                 const settings = JSON.parse(stored);
-                if (settings) {
-                    // Always load stops and angle, even if gradient is disabled
-                    if (Array.isArray(settings.stops)) {
-                        this.stops = settings.stops;
-                        this.angle = settings.angle || 90;
-                        this.stops.sort((a, b) => a.position - b.position);
-                    }
-                    
-                    // Check if background image exists - if so, don't enable gradient
-                    const hasBackgroundImage = localStorage.getItem('bgImage');
-                    this.enabled = hasBackgroundImage ? false : settings.enabled;
-                    
-                    // Update UI with loaded settings
+                if (settings && settings.startColor && settings.endColor) {
+                    this.stops = [
+                        { color: settings.startColor, position: 0 },
+                        { color: settings.endColor, position: 100 }
+                    ];
+                    this.angle = settings.angle || 90;
+                    this.enabled = settings.enabled !== false;
                     this.updateUI();
-                    
-                    // Apply gradient only if enabled and no background image
-                    if (this.enabled && !hasBackgroundImage) {
+                    if (this.enabled) {
                         requestAnimationFrame(() => this.applyGradient());
                     }
                 }
@@ -144,18 +167,17 @@ class GradientManager {
             }
         }
         
-        // Always show/hide gradient settings based on enabled state
         this.updateGradientSettingsVisibility();
     }
 
     saveSettings() {
         try {
-            const settings = {
+            localStorage.setItem('gradientSettings', JSON.stringify({
                 enabled: this.enabled,
                 angle: this.angle,
-                stops: this.stops
-            };
-            localStorage.setItem('gradientSettings', JSON.stringify(settings));
+                startColor: this.stops[0].color,
+                endColor: this.stops[1].color
+            }));
         } catch (error) {
             console.error('Error saving gradient settings:', error);
         }
@@ -199,11 +221,11 @@ class GradientManager {
                         document.body.style.backgroundImage = '';
                         localStorage.removeItem('bgImage');
                         this.enabled = true;
-                        // Load saved gradient settings before applying
                         const savedSettings = localStorage.getItem('gradientSettings');
                         if (savedSettings) {
                             const settings = JSON.parse(savedSettings);
-                            if (settings.stops) this.stops = settings.stops;
+                            if (settings.startColor) this.stops[0].color = settings.startColor;
+                            if (settings.endColor) this.stops[1].color = settings.endColor;
                             if (settings.angle) this.angle = settings.angle;
                         }
                         this.applyGradient();
@@ -217,15 +239,14 @@ class GradientManager {
                 return;
             }
         }
-        
         this.enabled = checkbox.checked;
         if (this.enabled) {
             document.body.style.backgroundImage = '';
-            // Load saved settings when enabling
             const savedSettings = localStorage.getItem('gradientSettings');
             if (savedSettings) {
                 const settings = JSON.parse(savedSettings);
-                if (settings.stops) this.stops = settings.stops;
+                if (settings.startColor) this.stops[0].color = settings.startColor;
+                if (settings.endColor) this.stops[1].color = settings.endColor;
                 if (settings.angle) this.angle = settings.angle;
             }
             this.applyGradient();
@@ -234,15 +255,6 @@ class GradientManager {
         }
         this.updateGradientSettingsVisibility();
         this.saveSettings();
-    }
-
-    // Optional helper extracted for clarity
-    loadSavedGradientSettings() {
-        const savedSettings = JSON.parse(localStorage.getItem('gradientSettings'));
-        if (savedSettings && Array.isArray(savedSettings.stops)) {
-            this.stops = savedSettings.stops;
-            this.angle = savedSettings.angle || 90;
-        }
     }
 
     updateAngle(value) {
@@ -257,10 +269,8 @@ class GradientManager {
             this.angle = newAngle;
             document.querySelector('#gradient-angle + .range-value').textContent = `${newAngle}°`;
         
-            if (this.enabled && Array.isArray(this.stops) && this.stops.length >= 2) {
-                // Use a sorted copy without mutating the stored stops
-                const sortedStops = this.stops.slice().sort((a, b) => a.position - b.position);
-                const gradientString = `linear-gradient(${this.angle}deg, ${sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')})`;
+            if (this.enabled) {
+                const gradientString = `linear-gradient(${this.angle}deg, ${this.stops[0].color} 0%, ${this.stops[1].color} 100%)`;
                 document.body.style.backgroundImage = gradientString;
                 document.body.style.backgroundSize = 'cover';
                 document.body.style.backgroundAttachment = 'fixed';
@@ -274,85 +284,19 @@ class GradientManager {
         }, 50); // 50ms debounce delay
     }
 
-    updateDirection(value) {
-        const angle = parseInt(value);
-        if (!isNaN(angle)) {
-            this.angle = angle;
-            document.getElementById('gradient-angle').value = angle;
-            document.querySelector('#gradient-angle + .range-value').textContent = `${angle}°`;
-            this.applyGradient();
-            this.saveSettings();
-        }
-    }
-
-    addStop() {
-        // Add a new stop with a default color
-        this.stops.push({ color: '#ffffff', position: 0 });
-        // Recalculate positions evenly across all stops
-        const totalStops = this.stops.length;
-        this.stops = this.stops.map((stop, index) => ({
-            ...stop,
-            position: Math.round((index / (totalStops - 1)) * 100)
-        }));
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    removeStop(index) {
-        if (this.stops.length > 2) {
-            this.stops.splice(index, 1);
-            this.updateUI();
-            this.applyGradient();
-            this.saveSettings();
-        }
-    }
-
-    updateStop(index, color, position) {
-        let pos = parseInt(position);
-        // Ensure the new stop's position has at least a 1% gap from its neighbors
-        if (index > 0 && pos <= this.stops[index - 1].position) {
-            pos = this.stops[index - 1].position + 1;
-        }
-        if (index < this.stops.length - 1 && pos >= this.stops[index + 1].position) {
-            pos = this.stops[index + 1].position - 1;
-        }
-        this.stops[index].color = color;
-        this.stops[index].position = pos;
-
-        // Immediately sort the stored stops array
-        this.stops.sort((a, b) => a.position - b.position);
-        
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    // Modify applyGradient to use a sorted copy rather than sorting in–place
     async applyGradient() {
         if (!this.enabled) return;
         try {
-            // Ensure stops is an array (convert if needed)
-            if (!Array.isArray(this.stops)) {
-                this.stops = Array.isArray(this.stops.values)
-                    ? Array.from(this.stops.values())
-                    : Array.from(this.stops);
-            }
-            if (!Array.isArray(this.stops) || this.stops.length < 2) {
-                throw new Error('Invalid gradient stops');
-            }
-            // Use a sorted copy without mutating the stored stops
-            const sortedStops = this.stops.slice().sort((a, b) => a.position - b.position);
-            const gradientString = `linear-gradient(${this.angle}deg, ${sortedStops.map(stop => `${stop.color} ${stop.position}%`).join(', ')})`;
-            
+            // Build gradient string from current stops and angle
+            const gradientString = `linear-gradient(${this.angle}deg, ${
+                this.stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
+            })`;
+            document.body.style.background = gradientString;
+            // Update preview if it exists
             const preview = document.getElementById('gradient-preview');
-            if (preview) { preview.style.background = gradientString; }
-            if (this.enabled) {
-                document.body.style.backgroundImage = gradientString;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundAttachment = 'fixed';
+            if (preview) {
+                preview.style.background = gradientString;
             }
-            
             this.saveSettings();
         } catch (error) {
             console.error('Error applying gradient:', error);
@@ -371,30 +315,28 @@ class GradientManager {
     }
 
     updateUI() {
-        const container = document.getElementById('gradient-stops');
-        if (!container) {
-            console.warn('Gradient stops container not found');
-            return;
+        // Safely set color pickers to current stop colors, or default if missing
+        const startColorInput = document.getElementById('gradient-start-color');
+        const endColorInput = document.getElementById('gradient-end-color');
+        let startColor = '#000035';
+        let endColor = '#00bfa5';
+
+        if (Array.isArray(this.stops) && this.stops.length >= 2) {
+            startColor = this.stops[0]?.color || startColor;
+            endColor = this.stops[1]?.color || endColor;
         }
-        // Ensure stops is an array; if not, convert if it's a Map or fallback to an empty array.
-        const stopsArray = Array.isArray(this.stops)
-            ? this.stops
-            : (this.stops instanceof Map ? Array.from(this.stops.values()) : []);
-        
-        container.innerHTML = stopsArray.map((stop, index) => `
-            <div class="gradient-stop">
-                <input type="color" value="${stop.color}" 
-                    onchange="gradientManager.updateStop(${index}, this.value, this.nextElementSibling.value)">
-                <input type="number" min="0" max="100" value="${stop.position}" 
-                    onchange="gradientManager.updateStop(${index}, this.previousElementSibling.value, this.value)">
-                ${stopsArray.length > 2 ? `
-                    <button class="remove-stop" onclick="gradientManager.removeStop(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                ` : ''}
-            </div>
-        `).join('');
-        
+
+        if (startColorInput) startColorInput.value = startColor;
+        if (endColorInput) endColorInput.value = endColor;
+
+        // Hide gradient stops UI if present
+        const stopsContainer = document.getElementById('gradient-stops');
+        if (stopsContainer) stopsContainer.style.display = 'none';
+
+        // Hide add-stop button if present
+        const addStopBtn = document.getElementById('add-stop');
+        if (addStopBtn) addStopBtn.style.display = 'none';
+
         const checkbox = document.getElementById('gradient-enabled');
         if (checkbox) checkbox.checked = this.enabled;
         const angleInput = document.getElementById('gradient-angle');
@@ -410,38 +352,69 @@ class GradientManager {
         if (settings) {
             settings.style.display = this.enabled ? 'block' : 'none';
         }
+        // Hide stops container always
+        const stopsContainer = document.getElementById('gradient-stops');
+        if (stopsContainer) stopsContainer.style.display = 'none';
+        // Hide add-stop button if present
+        const addStopBtn = document.getElementById('add-stop');
+        if (addStopBtn) addStopBtn.style.display = 'none';
     }
 
     loadSavedGradient() {
         try {
             const saved = localStorage.getItem('gradientSettings');
-            if (!saved) return;
-
             let settings;
-            try {
-                settings = JSON.parse(saved);
-            } catch (e) {
-                console.warn('Invalid gradient settings, resetting to defaults');
-                this.initializeDefaultStops();
-                return;
-            }
-
-            if (settings && settings.stops) {
-                // Ensure stops is an array
-                if (Array.isArray(settings.stops)) {
-                    this.stops = new Map(settings.stops.map(s => [
-                        s.id || `stop_${Date.now()}_${Math.random()}`,
-                        { color: s.color, position: s.position, element: null }
-                    ]));
-                } else {
-                    this.initializeDefaultStops();
+            if (saved) {
+                try {
+                    settings = JSON.parse(saved);
+                } catch (e) {
+                    settings = null;
                 }
             }
-
-            // ...rest of the function...
+            // Only use saved settings if valid and not black
+            if (
+                settings &&
+                settings.startColor &&
+                settings.endColor &&
+                settings.startColor !== '#000000' &&
+                settings.endColor !== '#000000'
+            ) {
+                this.stops = [
+                    { color: settings.startColor, position: 0 },
+                    { color: settings.endColor, position: 100 }
+                ];
+                this.angle = settings.angle || 90;
+                this.enabled = settings.enabled !== false;
+            } else {
+                // Always use defaults if missing or black
+                this.stops = [
+                    { color: '#000035', position: 0 },
+                    { color: '#00bfa5', position: 100 }
+                ];
+                this.angle = 90;
+                this.enabled = true;
+                // Overwrite any bad settings in localStorage
+                localStorage.setItem('gradientSettings', JSON.stringify({
+                    enabled: true,
+                    angle: 90,
+                    startColor: '#000035',
+                    endColor: '#00bfa5'
+                }));
+            }
         } catch (error) {
-            console.error('Error loading gradient:', error);
-            this.initializeDefaultStops();
+            // Always use defaults on error
+            this.stops = [
+                { color: '#000035', position: 0 },
+                { color: '#00bfa5', position: 100 }
+            ];
+            this.angle = 90;
+            this.enabled = true;
+            localStorage.setItem('gradientSettings', JSON.stringify({
+                enabled: true,
+                angle: 90,
+                startColor: '#000035',
+                endColor: '#00bfa5'
+            }));
         }
     }
 }
@@ -486,4 +459,15 @@ function removeBackground() {
         preview.style.backgroundImage = 'none';
         preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
     }
+}
+
+// Guard clause added to applyGradient to prevent errors when settings or settings.values is undefined
+GradientManager.applyGradient = function(settings) {
+    if (!settings || !settings.values) {
+        console.error("GradientManager.applyGradient: settings or settings.values is undefined. Using default gradient.");
+        document.body.style.background = "linear-gradient(135deg, #00bfa5 0%, #00796b 100%)";
+        return;
+    }
+    // ...existing code...
+    // (rest of applyGradient logic)
 }
