@@ -350,7 +350,7 @@
                             
                             <div class="contact-info">
                                 <p>For support or inquiries, please email us at <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
-                                <p class="version-info">Version 2.6</p>
+                                <p class="version-info">Version 2.0</p>
                                 <p class="creator-info">Developed by Brady Blackwell</p>
                             </div>
                         </div>
@@ -522,21 +522,21 @@
         </div>
     </div>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile visibility switch logic
+            const profileSwitch = document.getElementById('profile-visibility-toggle');
+            if (profileSwitch) {
+                // Set initial state from localStorage
+                profileSwitch.checked = localStorage.getItem('profileHidden') !== 'true';
+                profileSwitch.addEventListener('change', function() {
+                    window.authManager.toggleProfileVisibility();
+                });
+            }
+        });
+    </script>
 </body>
 </html>
-</body>
-</html>
-    </div>
-    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
-        <i class="fas fa-cog"></i>
-    </button>
-    <div id="login-modal" class="login-modal">
-        <div class="login-container">
-            <h2>Sign In</h2>
-            <div class="login-content">
-                <p>Sign in with your Google account to continue</p>
-                <div id="google-signin"></div>
-            </div>
         </div>
     </div>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
