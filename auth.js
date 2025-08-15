@@ -298,7 +298,7 @@ class AuthManager {
                     <button class="logout-button" ${isHidden ? 'disabled aria-hidden="true" tabindex="-1"' : ''}>
                         Sign Out
                     </button>
-                    <button class="hide-profile-button" onclick="window.authManager.toggleProfileVisibility()">
+                    <button class="hide-profile-button" onclick="window.authManager.toggleProfileVisibility(event)">
                         ${isHidden ? 'Show Profile' : 'Hide Profile'}
                     </button>
                 </div>
@@ -318,6 +318,7 @@ class AuthManager {
                     this.handleAuthButton();
                 };
             }
+            // The hide-profile-button now only toggles visibility, not sign out
         } else {
             headerButton.style.display = 'block';
             headerButton.innerHTML = `
