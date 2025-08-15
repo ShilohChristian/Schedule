@@ -54,14 +54,20 @@
 .background-preview {
     margin-top: 20px;
     width: 100%;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
 }
 
 #bg-preview {
     width: 100%;
     height: 120px;
     border-radius: 8px;
-    background-size: cover;
-    background-position: center;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -579,14 +585,14 @@ button.profile-button {
 .profile-container:hover .hide-profile-button {
     opacity: 1;
     pointer-events: auto;
-    transform: translateX(0) translateY(-50%);
+    transform: translateY(-50%) translateX(-10px);
 }
 
 /* Button hover effects */
 .logout-button:hover,
 .hide-profile-button:hover {
     background: rgba(0, 0, 0, 0.95);
-    transform: translateX(0) scale(1.05) !important;
+    transform: translateY(-50%) translateX(-10px) scale(1.05) !important;
 }
 
 /* ...existing code... */
@@ -674,7 +680,7 @@ button.profile-button {
 /* Active state for buttons */
 .logout-button:active,
 .hide-profile-button:active {
-    transform: translateX(-10px) scale(0.98) !important;
+    transform: translateY(-50%) translateX(-10px) scale(0.98) !important;
 }
 
 /* ...existing code... */
@@ -1237,4 +1243,11 @@ button.profile-button {
 .about-content ul.feature-list,
 .about-content ul.feature-list li {
     color: #ffffff;
+}
+
+.profile-visibility-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
 }
