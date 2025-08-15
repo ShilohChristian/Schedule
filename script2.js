@@ -82,6 +82,7 @@ function loadBackground() {
             document.body.style.backgroundSize = 'cover';
             document.body.style.backgroundPosition = 'center';
             document.body.style.backgroundRepeat = 'no-repeat';
+            document.body.style.backgroundAttachment = 'fixed';
         };
         img.onerror = function() {
             console.error('Failed to load background image');
@@ -281,20 +282,20 @@ function applyAndSaveImage(imageData) {
             preview.style.backgroundImage = `url('${imageData}')`;
             preview.style.backgroundSize = 'cover';
             preview.style.backgroundPosition = 'center';
+            preview.style.backgroundRepeat = 'no-repeat';
         }
         
-        // Apply to body
+        // Apply to body with correct CSS
         document.body.style.backgroundImage = `url('${imageData}')`;
         document.body.style.backgroundSize = 'cover';
         document.body.style.backgroundPosition = 'center';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundAttachment = 'fixed';
         
         // Save to localStorage
         localStorage.setItem('bgImage', imageData);
         saveSettings();
-        // Also update Firestore settings as when closing settings
         updateFirestoreSettings();
-        
-        // Show success message
         showSuccessMessage();
     } catch (error) {
         console.error('Error applying image:', error);
@@ -346,7 +347,7 @@ function showSuccessMessage() {
 function applyImageBackground(imageUrl) {
     if (!imageUrl) return;
     
-    // Set background properties
+    // Set background properties to prevent repeat and always cover
     document.body.style.backgroundImage = `url('${imageUrl}')`;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
@@ -362,6 +363,7 @@ function applyImageBackground(imageUrl) {
         preview.style.backgroundImage = `url('${imageUrl}')`;
         preview.style.backgroundSize = 'cover';
         preview.style.backgroundPosition = 'center';
+        preview.style.backgroundRepeat = 'no-repeat';
     }
 
     // Disable gradient if it's enabled
