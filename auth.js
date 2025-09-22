@@ -95,7 +95,7 @@ class AuthManager {
             // Save user settings to Firestore if this is the first login
             await this._maybeSaveUserSettings();
             
-            console.log('Auth success - user data:', {
+            console.info('Auth success - user data:', {
                 name: this.currentUser.displayName,
                 email: this.currentUser.email,
                 photo: this.currentUser.photoURL
@@ -133,14 +133,55 @@ class AuthManager {
                 currentScheduleName: localStorage.getItem("currentScheduleName")
             };
 
+            // Include period renames and global period names (as JSON)
+            try {
+                const renames = localStorage.getItem('periodRenames');
+                if (renames) settings.periodRenames = JSON.parse(renames);
+            } catch (e) {
+                // if parsing fails, store raw string
+                settings.periodRenames = localStorage.getItem('periodRenames');
+            }
+            try {
+                let globalNames = localStorage.getItem('globalPeriodNames');
+                if (globalNames) {
+                    if (globalNames === '[object Object]') {
+                        settings.globalPeriodNames = {};
+                    } else {
+                        try {
+                            settings.globalPeriodNames = JSON.parse(globalNames);
+                        } catch (e) {
+                            // keep raw string if parsing fails
+                            settings.globalPeriodNames = globalNames;
+                        }
+                    }
+                }
+            } catch (e) {
+                settings.globalPeriodNames = localStorage.getItem('globalPeriodNames');
+            }
+
+            // Collect any custom schedules saved in localStorage (keys starting with customSchedule_)
+            const customSchedules = {};
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('customSchedule_')) {
+                    try {
+                        customSchedules[k] = JSON.parse(localStorage.getItem(k));
+                    } catch (e) {
+                        customSchedules[k] = localStorage.getItem(k);
+                    }
+                }
+            });
+            if (Object.keys(customSchedules).length) {
+                settings.customSchedules = customSchedules;
+            }
+
             // Remove any null or undefined values
             Object.keys(settings).forEach(key => 
-                settings[key] === null && delete settings[key]
+                (settings[key] === null || typeof settings[key] === 'undefined') && delete settings[key]
             );
 
             // Save to Firestore
             await userDocRef.set({ settings }, { merge: true });
-            console.log("✅ All settings saved to Firestore");
+            console.info("✅ All settings saved to Firestore");
             
             return true;
         } catch (error) {
@@ -157,17 +198,19 @@ class AuthManager {
             const doc = await userDocRef.get();
             
             if (doc.exists) {
-                console.log("User settings found in Firestore, loading them.");
-                const settings = await loadUserSettings(); // Get the loaded settings
-                
+                console.info("User settings found in Firestore, loading them.");
+                // Use loadUserSettings() helper to fetch and merge into localStorage
+                const settings = await loadUserSettings(); // Get the loaded settings (and mirror into localStorage)
                 if (settings) {
-                    // Clear any existing background first
+                    // Apply visual settings without overwriting other local preferences
                     document.body.style.backgroundImage = '';
                     localStorage.removeItem('bgImage');
-                    
-                    // Apply gradient if it exists and is enabled
+
+                    // Gradient handling
                     if (settings.gradientSettings) {
-                        const gradientSettings = JSON.parse(settings.gradientSettings);
+                        const gradientSettings = (typeof settings.gradientSettings === 'string')
+                            ? JSON.parse(settings.gradientSettings)
+                            : settings.gradientSettings;
                         if (window.gradientManager) {
                             window.gradientManager.enabled = !!gradientSettings.enabled;
                             window.gradientManager.angle = gradientSettings.angle ?? 90;
@@ -181,31 +224,32 @@ class AuthManager {
                             window.gradientManager.applyGradient();
                         }
                     }
-                    
-                    // Then apply background image if it exists (will override gradient if present)
+
+                    // Background image
                     if (settings.bgImage) {
                         document.body.style.backgroundImage = `url('${settings.bgImage}')`;
-                        // Disable gradient if background image is applied
                         if (window.gradientManager) {
                             window.gradientManager.enabled = false;
                             window.gradientManager.updateUI();
                         }
                     }
-                    
-                    // Apply other settings
-                    if (settings.fontColor) document.getElementById('countdown-heading').style.color = settings.fontColor;
+
+                    // Visual settings
+                    if (settings.fontColor) {
+                        const heading = document.getElementById('countdown-heading');
+                        if (heading) heading.style.color = settings.fontColor;
+                    }
                     if (settings.fontFamily) document.body.style.fontFamily = settings.fontFamily;
-                    // ...rest of settings application
-                    
-                    // Update UI elements
+
+                    // Load settings into UI
                     if (typeof loadSettings === 'function') {
                         loadSettings();
                     }
-                    
-                    console.log("✅ Settings applied successfully");
+
+                    console.info("✅ Settings applied successfully");
                 }
             } else {
-                console.log("No settings found in Firestore, saving current local settings.");
+                console.info("No settings found in Firestore, saving current local settings.");
                 await this.saveAllUserSettings(this.currentUser.uid);
             }
         } catch (e) {
@@ -401,7 +445,9 @@ class AuthManager {
     async forceLogout() {
         try {
             // Clear auth state first
-            localStorage.clear();
+            // Remove only auth/session related keys to avoid wiping user customizations
+            localStorage.removeItem('authToken');
+            // Keep user's local preferences like periodRenames, custom schedules, gradients, etc.
             this.isAuthenticated = false;
             this.currentUser = null;
             
@@ -499,7 +545,7 @@ function saveUserSettings(userId, settings) {
     const db = firebase.firestore();
     db.collection("users").doc(userId).set(settings, { merge: true })
     .then(() => {
-        console.log("✅ User settings saved successfully!");
+    console.info("✅ User settings saved successfully!");
     })
     .catch((error) => {
         console.error("❌ Error saving settings: ", error);
@@ -511,9 +557,9 @@ function getUserSettings(userId) {
     db.collection("users").doc(userId).get()
     .then((doc) => {
         if (doc.exists) {
-            console.log("✅ Retrieved settings:", doc.data());
+            console.info("✅ Retrieved settings:", doc.data());
         } else {
-            console.log("⚠️ No settings found for this user.");
+            console.info("⚠️ No settings found for this user.");
         }
     })
     .catch((error) => {
@@ -536,15 +582,40 @@ async function loadUserSettings() {
         const userDoc = await db.collection("users").doc(window.authManager.currentUser.uid).get();
         if (userDoc.exists) {
             const settings = userDoc.data().settings;
-            console.log("✅ Loaded settings from Firestore:", settings);
-            // Update localStorage to mirror Firestore settings
+            console.info("✅ Loaded settings from Firestore:", settings);
+            // Update localStorage to mirror Firestore settings (merge safely)
             Object.keys(settings).forEach(key => {
-                if (settings[key] !== null) {
-                    if (key === 'gradientSettings' && typeof settings[key] === 'object') {
-                        localStorage.setItem(key, JSON.stringify(settings[key]));
+                const val = settings[key];
+                if (val === null || typeof val === 'undefined') return;
+
+                try {
+                    if (key === 'gradientSettings' && typeof val === 'object') {
+                        localStorage.setItem(key, JSON.stringify(val));
+                    } else if (key === 'periodRenames' || key === 'globalPeriodNames') {
+                        // Ensure JSON string storage
+                        if (typeof val === 'object') {
+                            localStorage.setItem(key, JSON.stringify(val));
+                        } else {
+                            // Could be string: try to parse or store raw
+                            try { JSON.parse(val); localStorage.setItem(key, val); }
+                            catch (e) { localStorage.setItem(key, JSON.stringify(val)); }
+                        }
+                    } else if (key === 'customSchedules' && typeof val === 'object') {
+                        // customSchedules is an object mapping keys to schedule arrays
+                        Object.keys(val).forEach(k => {
+                            try {
+                                localStorage.setItem(k, JSON.stringify(val[k]));
+                            } catch (e) {
+                                localStorage.setItem(k, String(val[k]));
+                            }
+                        });
                     } else {
-                        localStorage.setItem(key, settings[key]);
+                        // Default: store primitive or stringify object
+                        if (typeof val === 'object') localStorage.setItem(key, JSON.stringify(val));
+                        else localStorage.setItem(key, String(val));
                     }
+                } catch (e) {
+                    console.warn('Could not mirror setting', key, e);
                 }
             });
             return settings;
