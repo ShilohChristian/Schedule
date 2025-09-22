@@ -229,6 +229,10 @@ document.addEventListener("DOMContentLoaded", async function() {
     initializeSettingsPanels();
     // Bind inline handlers safely (keeps existing onclick attributes but also ensures listeners exist)
     if (typeof bindInlineHandlers === 'function') bindInlineHandlers();
+    // Show one-time update notice for returning users (not shown on first visit)
+    if (typeof showUpdateNoticeOnce === 'function') {
+        try { showUpdateNoticeOnce(); } catch(e) { console.warn('showUpdateNoticeOnce failed', e); }
+    }
 });
 
 // Migration: fix legacy '[object Object]' saved values for globalPeriodNames
@@ -1252,6 +1256,75 @@ function promptForGradeLevelIfFirstTime() {
         });
     }
 }
+
+// One-time update notice: explains that period names may be wrong after a recent update
+function showUpdateNoticeOnce() {
+    try {
+        // Don't show on first visit (when gradeLevel is not set)
+        if (!localStorage.getItem('gradeLevel')) return;
+        // If user already saw the notice, skip
+        if (localStorage.getItem('sawUpdateNotice') === 'true') return;
+
+        // Create modal elements
+        const backdrop = document.createElement('div');
+        backdrop.id = 'update-notice-backdrop';
+        backdrop.className = 'update-notice-backdrop';
+
+        const dialog = document.createElement('div');
+        dialog.id = 'update-notice-dialog';
+        dialog.className = 'update-notice-dialog';
+        dialog.setAttribute('role', 'dialog');
+        dialog.setAttribute('aria-modal', 'true');
+        dialog.setAttribute('aria-labelledby', 'update-notice-title');
+
+        dialog.innerHTML = `
+            <button class="update-notice-close" aria-label="Close">×</button>
+            <h2 id="update-notice-title">Heads up — small update</h2>
+            <p>Due to a recent update, some period names may appear incorrect. All you need to do is rename the affected periods to restore the correct names.</p>
+            <div class="update-notice-actions">
+                <button class="btn btn-primary update-notice-ok">Got it</button>
+            </div>
+        `;
+
+        backdrop.appendChild(dialog);
+        document.body.appendChild(backdrop);
+
+        // Focus management
+    const closeBtn = dialog.querySelector('.update-notice-close');
+    const okBtn = dialog.querySelector('.update-notice-ok');
+
+        function closeAndRemember() {
+            try { localStorage.setItem('sawUpdateNotice', 'true'); } catch (e) {}
+            if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
+        }
+
+        closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAndRemember(); });
+        okBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAndRemember(); });
+        // (Removed "Open Rename Settings" button per request)
+
+        // Close when clicking outside dialog
+        backdrop.addEventListener('click', (ev) => {
+            if (ev.target === backdrop) closeAndRemember();
+        });
+
+        // Close on ESC
+        function escHandler(e) {
+            if (e.key === 'Escape') {
+                closeAndRemember();
+                document.removeEventListener('keydown', escHandler);
+            }
+        }
+        document.addEventListener('keydown', escHandler);
+
+        // Prevent tab trapping issues: ensure dialog is focusable
+        dialog.tabIndex = -1;
+        dialog.focus();
+
+    } catch (e) {
+        console.warn('showUpdateNoticeOnce error', e);
+    }
+}
+
 
 // Add this function at an appropriate location in the file:
 function initializeSettingsPanels() {
