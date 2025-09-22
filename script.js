@@ -33,24 +33,22 @@ const schedules = {
         { name: "Period 8", start: "14:54", end: "15:40" },
     ],
     chapel: [
-        { name: "Period 1", start: "08:15", end: "08:55" },
-        { name: "Passing", start: "08:55", end: "09:01" }, // +1 min
-        { name: "Period 2", start: "09:01", end: "09:40" }, // +1 min
-        { name: "Passing", start: "09:40", end: "09:45" },  // +1 min (added)
-        { name: "Chapel", start: "09:45", end: "10:30" },   // moved after Period 2
-        { name: "Passing", start: "10:30", end: "10:36" },  // +1 min (added)
-        { name: "Period 3", start: "10:36", end: "11:17" }, // +1 min
-        { name: "Passing", start: "11:17", end: "11:23" },  // +1 min (added)
-        { name: "Period 4", start: "11:23", end: "12:03" },
-        { name: "Lunch", start: "12:03", end: "12:39" },  // +1 min
-        { name: "Passing", start: "12:39", end: "12:45" },  // +1 min (added)
-        { name: "Period 5", start: "12:45", end: "13:24" }, // +1 min
-        { name: "Passing", start: "13:24", end: "13:30" },  // +1 min (added) // +1 min (added)
-        { name: "Period 6", start: "13:30", end: "14:10" }, // +1 min
-        { name: "Passing", start: "14:10", end: "14:16" },  // +1 min (added)
-        { name: "Period 7", start: "14:16", end: "14:55" }, // +1 min
-        { name: "Passing", start: "14:55", end: "15:01" },  // +1 min (added)
-        { name: "Period 8", start: "15:01", end: "15:40" }  // +1 min
+        { name: "Period 1", start: "08:15", end: "08:55" }, // 0
+        { name: "Passing", start: "08:55", end: "09:01" }, // 1
+        { name: "Period 2", start: "09:01", end: "09:40" }, // 2
+        { name: "Chapel", start: "09:40", end: "10:30" },   // 3
+        { name: "Passing", start: "10:30", end: "10:36" },  // 4
+        { name: "Period 3", start: "10:36", end: "11:17" }, // 5 (should be index 4)
+        { name: "Period 4", start: "11:23", end: "12:03" }, // 7 (should be index 6)
+        { name: "Lunch", start: "12:03", end: "12:39" },    // 8
+        { name: "Passing", start: "12:39", end: "12:45" },  // 9
+        { name: "Period 5", start: "12:45", end: "13:24" }, // 10 (should be index 8)
+        { name: "Passing", start: "13:24", end: "13:30" },  // 11
+        { name: "Period 6", start: "13:30", end: "14:10" }, // 12 (should be index 10)
+        { name: "Passing", start: "14:10", end: "14:16" },  // 13
+        { name: "Period 7", start: "14:16", end: "14:55" }, // 14 (should be index 12)
+        { name: "Passing", start: "14:55", end: "15:01" },  // 15
+        { name: "Period 8", start: "15:01", end: "15:40" }  // 16 (should be index 14)
     ],
     latePepRally: [
         { name: "Period 1", start: "08:15", end: "08:55" },
@@ -229,11 +227,54 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     initializeSettingsPanels();
+    // Bind inline handlers safely (keeps existing onclick attributes but also ensures listeners exist)
+    if (typeof bindInlineHandlers === 'function') bindInlineHandlers();
 });
 
-// Clean up old interval if it exists when loading new script
-if (window.countdownInterval) {
-    clearInterval(window.countdownInterval);
+// Migration: fix legacy '[object Object]' saved values for globalPeriodNames
+// Run early so subsequent code reads a valid JSON string
+(function migrateGlobalPeriodNames() {
+    try {
+        const raw = localStorage.getItem('globalPeriodNames');
+        if (!raw) return;
+        // If it's the specific broken sentinel string or it's not valid JSON, try to recover
+        if (raw === '[object Object]') {
+            // Try to recover from periodRenames if available
+            try {
+                const pr = JSON.parse(localStorage.getItem('periodRenames') || '{}');
+                localStorage.setItem('globalPeriodNames', JSON.stringify(pr || {}));
+                console.info('Migrated legacy globalPeriodNames from periodRenames');
+                return;
+            } catch (e) {
+                // fallback to empty object
+                localStorage.setItem('globalPeriodNames', JSON.stringify({}));
+                console.info('Replaced legacy globalPeriodNames with empty object');
+                return;
+            }
+        }
+
+        // If not exact sentinel, check if JSON.parse fails; if so, try to coerce
+        try {
+            JSON.parse(raw);
+        } catch (e) {
+            // Attempt to coerce by checking if it looks like an object string (e.g., '[object Object]')
+            if (raw.indexOf('[object') !== -1) {
+                localStorage.setItem('globalPeriodNames', JSON.stringify({}));
+                console.info('Normalized malformed globalPeriodNames to {}');
+            } else {
+                // Last resort: leave it alone — it may be a deliberate string value
+            }
+        }
+    } catch (e) {
+        console.warn('Error migrating globalPeriodNames', e);
+    }
+})();
+
+// Ensure single timer loop via TimerManager
+if (window.TimerManager && window.TimerManager.isRunning && window.TimerManager.isRunning()) {
+    // already running
+} else if (window.TimerManager) {
+    window.TimerManager.start();
 }
 
 function initializeApp() {
@@ -257,10 +298,10 @@ function initializeAppLogic() {
         
         if (dayOfWeek === 2) { // 2 represents Tuesday
             switchSchedule('chapel');
-            console.log('Tuesday detected - switched to chapel schedule');
+            console.debug('Tuesday detected - switched to chapel schedule');
         } else if (dayOfWeek === 3) { // 3 represents Wednesday
             switchSchedule('normal');
-            console.log('Wednesday detected - switched to normal schedule');
+            console.debug('Wednesday detected - switched to normal schedule');
         } else {
             // Load saved schedule for other days
             const savedScheduleName = localStorage.getItem('currentScheduleName');
@@ -271,8 +312,8 @@ function initializeAppLogic() {
             }
         }
 
-        updateScheduleDisplay();
-        window.countdownInterval = startCountdown();
+    updateScheduleDisplay();
+    if (window.TimerManager) window.TimerManager.restart();
     } catch (error) {
         console.error('Error initializing app:', error);
     }
@@ -283,20 +324,112 @@ function getActiveSchedules() {
     return gradeLevel === 'middleSchool' ? middleSchoolSchedules : schedules;
 }
 
+// Helper: convert 'HH:MM' to seconds since midnight
+function getTimeInSeconds(timeStr) {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 3600 + m * 60;
+}
+
+// Helper: get period renames from localStorage
+function getPeriodRenames() {
+    return JSON.parse(localStorage.getItem('periodRenames') || '{}');
+}
+function setPeriodRename(periodNum, newName) {
+    const renames = getPeriodRenames();
+    renames[periodNum] = newName;
+    localStorage.setItem('periodRenames', JSON.stringify(renames));
+}
+
+// Helper: get global period names as an object
 function getGlobalPeriodNames() {
     return JSON.parse(localStorage.getItem('globalPeriodNames') || '{}');
 }
 
-function setGlobalPeriodName(index, newName) {
-    const names = getGlobalPeriodNames();
-    names[index] = newName;
-    localStorage.setItem('globalPeriodNames', JSON.stringify(names));
+// Add periodNum to all periods in all schedules
+function addPeriodNumsToSchedules() {
+    [schedules, middleSchoolSchedules].forEach(schedObj => {
+        Object.values(schedObj).forEach(schedule => {
+            let sequentialCounter = 1;
+            schedule.forEach(period => {
+                // Prefer explicit "Period N" numbers embedded in the name
+                const m = (period && period.name) ? period.name.match(/^Period\s+(\d+)/i) : null;
+                if (m && m[1]) {
+                    period.periodNum = String(m[1]);
+                    // keep sequentialCounter in sync (next unused)
+                    sequentialCounter = Math.max(sequentialCounter, parseInt(m[1], 10) + 1);
+                } else if (period && /^Period\b/i.test(period.name)) {
+                    // fallback: if name starts with "Period" but no number, assign next sequential
+                    period.periodNum = String(sequentialCounter++);
+                } else {
+                    // not a numbered period
+                    period.periodNum = undefined;
+                }
+            });
+        });
+    });
+}
+addPeriodNumsToSchedules();
+
+// Central TimerManager: single main interval that updates countdowns and (optionally) progress bar.
+// This avoids duplicate intervals and race conditions between countdown and progress updates.
+window.TimerManager = (function() {
+    let mainInterval = null;
+    let progressEnabled = (localStorage.getItem('progressBarEnabled') === 'true');
+
+    function tick() {
+        try {
+            if (typeof updateCountdowns === 'function') updateCountdowns();
+        } catch (e) { console.warn('TimerManager: updateCountdowns failed', e); }
+        try {
+            if (progressEnabled && typeof updateProgressBar === 'function') updateProgressBar();
+        } catch (e) { console.warn('TimerManager: updateProgressBar failed', e); }
+    }
+
+    function start() {
+        if (mainInterval) return mainInterval;
+        tick();
+        mainInterval = setInterval(tick, 1000);
+        return mainInterval;
+    }
+
+    function stop() {
+        if (mainInterval) {
+            clearInterval(mainInterval);
+            mainInterval = null;
+        }
+    }
+
+    function restart() {
+        stop();
+        return start();
+    }
+
+    function setProgress(flag) {
+        progressEnabled = !!flag;
+        localStorage.setItem('progressBarEnabled', progressEnabled ? 'true' : 'false');
+        // If enabling progress ensure the main loop is running so progress updates occur
+        if (progressEnabled) start();
+    }
+
+    function isRunning() { return !!mainInterval; }
+    function getIntervalId() { return mainInterval; }
+
+    return { start, stop, restart, setProgress, isRunning, getIntervalId };
+})();
+
+// Apply renames to a schedule
+function applyRenamesToSchedule(schedule) {
+    const renames = getPeriodRenames();
+    schedule.forEach(period => {
+        if (period.periodNum && renames[period.periodNum]) {
+            period.name = renames[period.periodNum];
+        }
+    });
 }
 
-// Update switchSchedule to apply global period names
+// Update switchSchedule to apply renames
 function switchSchedule(scheduleName) {
     if (!scheduleName) return;
-    
     try {
         let schedule;
         if (scheduleName.startsWith('customSchedule_')) {
@@ -316,252 +449,580 @@ function switchSchedule(scheduleName) {
                 return;
             }
         }
-
-        // Apply global period names for all "Period X"
-        const globalNames = getGlobalPeriodNames();
-        schedule.forEach((period, idx) => {
-            if (period.name.startsWith("Period ")) {
-                if (globalNames[idx]) {
-                    period.name = globalNames[idx];
-                }
-            }
-        });
-
+        applyRenamesToSchedule(schedule);
         currentSchedule = schedule;
         currentScheduleName = scheduleName;
         localStorage.setItem('currentScheduleName', scheduleName);
-
         const displayName = scheduleName.startsWith('customSchedule_') 
             ? scheduleName.replace('customSchedule_', '')
             : scheduleDisplayNames[scheduleName] || scheduleName;
-        
         const headingText = `${displayName} Schedule ▸ ${schedule[0].name}`;
         document.getElementById("countdown-heading").innerText = headingText;
-        
         const dropdown = document.getElementById("schedule-dropdown");
         if (dropdown) dropdown.value = scheduleName;
-        
         updateScheduleDisplay();
         updateCountdowns();
-
-        console.log(`Switched to schedule: ${scheduleName}`);
+    console.debug(`Switched to schedule: ${scheduleName}`);
+            if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
     } catch (error) {
         console.error('Error switching schedule:', error);
         currentSchedule = schedules[scheduleName] || schedules.normal;
     }
 }
 
-// Update renamePeriod to set global name and apply to all schedules
-function renamePeriod(index, newName) {
-    if (!newName.trim()) return;
+// Replace duplicate renamePeriod implementations with one authoritative function
+function renamePeriod(periodNumber, newName) {
+    if (!periodNumber) return;
+    const periodNumStr = String(periodNumber);
 
-    // Only allow renaming for main period indices
-    const mainIndices = getMainPeriodIndices(currentSchedule);
-    if (!mainIndices.includes(index)) return;
+    // Do NOT mutate canonical built-in schedules. Keep built-ins unchanged and
+    // rely on rename maps (periodRenames/globalPeriodNames) and applyRenamesToSchedule
+    // when rendering or switching schedules. This avoids side-effects that break
+    // lookups that rely on original names.
 
-    try {
-        setGlobalPeriodName(index, newName);
-
-        // Update all schedules (high school, middle school, custom)
-        [schedules, middleSchoolSchedules].forEach(schedObj => {
-            Object.values(schedObj).forEach(schedule => {
-                if (schedule[index] && !schedule[index].name.includes("Passing") && !schedule[index].name.includes("Lunch") && !schedule[index].name.includes("Chapel") && !schedule[index].name.includes("Pep Rally") && !schedule[index].name.includes("Homeroom") && !schedule[index].name.includes("SAINTS Advisory Time") && !schedule[index].name.includes("Chapel Debrief")) {
-                    schedule[index].name = newName;
-                }
-            });
-        });
-        // Update custom schedules in localStorage
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('customSchedule_')) {
-                const customSchedule = JSON.parse(localStorage.getItem(key));
-                if (customSchedule[index] && !customSchedule[index].name.includes("Passing") && !customSchedule[index].name.includes("Lunch") && !customSchedule[index].name.includes("Chapel") && !customSchedule[index].name.includes("Pep Rally") && !customSchedule[index].name.includes("Homeroom") && !customSchedule[index].name.includes("SAINTS Advisory Time") && !customSchedule[index].name.includes("Chapel Debrief")) {
-                    customSchedule[index].name = newName;
+    // Update custom schedules stored in localStorage
+    Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('customSchedule_')) {
+            try {
+                const customSchedule = JSON.parse(localStorage.getItem(key) || '[]');
+                let modified = false;
+                customSchedule.forEach(period => {
+                    if (String(period.periodNum) === periodNumStr) {
+                        period.name = newName;
+                        modified = true;
+                    }
+                });
+                if (modified) {
                     localStorage.setItem(key, JSON.stringify(customSchedule));
                 }
+            } catch (e) {
+                console.warn('Invalid custom schedule in localStorage for key', key);
             }
-        });
-
-        // Update current schedule
-        currentSchedule[index].name = newName;
-        updateScheduleDisplay();
-        updateCountdowns();
-        populateRenamePeriods();
-
-        // Force refresh the schedule display
-        const scheduleContainer = document.getElementById("schedule");
-        if (scheduleContainer) {
-            scheduleContainer.innerHTML = '';
-            currentSchedule.forEach(period => {
-                if (period.name !== "Passing") {
-                    const periodDiv = document.createElement("div");
-                    periodDiv.className = "period";
-                    periodDiv.innerHTML = `<label>${period.name}</label><span id="Period_Timer"></span>`;
-                    scheduleContainer.appendChild(periodDiv);
-                }
-            });
-        }
-
-        console.log(`Successfully renamed period at index ${index} to ${newName}`);
-    } catch (error) {
-        console.error('Error renaming period:', error);
-    }
-}
-
-// Helper: get indices of main periods for current schedule
-function getMainPeriodIndices(schedule) {
-    // For high school: indices 0,2,4,6,8,12,14,16 (Period 1-8)
-    // For middle school: find all indices where name starts with "Period" or was renamed
-    const indices = [];
-    schedule.forEach((period, idx) => {
-        // If original or renamed period (not Passing/Lunch/etc)
-        if (
-            period.name.startsWith("Period ") ||
-            (getGlobalPeriodNames()[idx] && !period.name.includes("Passing") && !period.name.includes("Lunch") && !period.name.includes("Chapel") && !period.name.includes("Pep Rally") && !period.name.includes("Homeroom") && !period.name.includes("SAINTS Advisory Time") && !period.name.includes("Chapel Debrief"))
-        ) {
-            indices.push(idx);
         }
     });
-    return indices;
-}
 
-// Update populateRenamePeriods to always show inputs for main period indices
+    // Persist rename maps
+    const globalNames = getGlobalPeriodNames();
+    const renames = getPeriodRenames();
+
+    // Use the canonical default name ("Period N") as the baseline for when to remove a mapping.
+    // This avoids comparing against in-memory schedules which may have already been mutated
+    // earlier in this function and would therefore incorrectly equal the newName.
+    const canonicalDefault = `Period ${periodNumber}`;
+
+    if (!newName || !newName.trim() || newName.trim() === canonicalDefault) {
+        delete globalNames[periodNumStr];
+        delete renames[periodNumStr];
+    } else {
+        globalNames[periodNumStr] = newName;
+        renames[periodNumStr] = newName;
+    }
+
+    localStorage.setItem('globalPeriodNames', JSON.stringify(globalNames));
+    localStorage.setItem('periodRenames', JSON.stringify(renames));
+
+    // If the current schedule is one of the built-ins, recreate a fresh copy and apply renames
+    const activeSchedules = getActiveSchedules();
+    if (activeSchedules[currentScheduleName]) {
+        // Copy from canonical source to avoid previous in-memory mutations
+        currentSchedule = JSON.parse(JSON.stringify(activeSchedules[currentScheduleName]));
+        applyRenamesToSchedule(currentSchedule);
+    } else {
+        // If custom schedule is active, reload it from storage (if present)
+        if (currentScheduleName && currentScheduleName.startsWith('customSchedule_')) {
+            const saved = localStorage.getItem(currentScheduleName);
+            if (saved) currentSchedule = JSON.parse(saved);
+        }
+        applyRenamesToSchedule(currentSchedule);
+    }
+
+    // Update inputs/UI if present
+    const inputBox = document.getElementById(`period-${periodNumStr}`);
+    if (inputBox) inputBox.value = newName;
+
+    // Refresh schedule display and countdown
+    updateScheduleDisplay();
+    updateCountdowns();
+
+    // Restart centralized timer loop to ensure visual consistency
+    if (window.TimerManager && typeof window.TimerManager.restart === 'function') {
+        window.TimerManager.restart();
+    } else {
+        // Fallback to legacy startCountdown if TimerManager isn't present
+        if (typeof startCountdown === 'function') {
+            startCountdown();
+        }
+    }
+
+    // Persist the change to settings if applicable
+    if (typeof saveSettings === 'function') saveSettings();
+
+    console.debug(`Renamed period ${periodNumStr} => "${newName}"`);
+    if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
+}
+window.renamePeriod = renamePeriod; // ensure globally accessible
+
+// Replace populateRenamePeriods implementation with one that uses periodNum keys
 function populateRenamePeriods() {
     const content = document.getElementById("rename-periods-content");
     if (!content) return;
-    
     content.innerHTML = '';
-    const mainIndices = getMainPeriodIndices(currentSchedule);
-    mainIndices.forEach(index => {
-        const period = currentSchedule[index];
+
+    const globalNames = getGlobalPeriodNames();
+    const renames = getPeriodRenames();
+    // Use the schedules for the currently selected grade level so periodNum indices match
+    const activeSchedules = getActiveSchedules();
+    const originalSchedule = activeSchedules[currentScheduleName] || currentSchedule || activeSchedules['normal'];
+
+    // Iterate original schedule and add inputs for numbered periods only
+    originalSchedule.forEach(origPeriod => {
+        const pn = origPeriod && origPeriod.periodNum;
+        if (!pn) return;
+
+        // Skip non-user-editable types by name
+        const skipIf = ['Passing', 'Lunch', 'Chapel', 'Pep Rally', 'Homeroom', 'SAINTS Advisory Time', 'Chapel Debrief'];
+        if (skipIf.some(s => (origPeriod.name || '').includes(s))) return;
+
+        const periodNumber = String(pn);
+        const defaultName = `Period ${periodNumber}`;
+        const globalName = globalNames[periodNumber];
+        const renameName = renames[periodNumber];
+        const inputValue = (globalName && globalName.trim()) ? globalName
+            : (renameName && renameName.trim()) ? renameName
+            : (origPeriod.name && origPeriod.name.trim()) ? origPeriod.name
+            : defaultName;
+
         const div = document.createElement('div');
         div.className = 'rename-period';
+
         const label = document.createElement('label');
-        label.htmlFor = `period-${index}`;
-        label.textContent = `Period ${index + 1}:`;
+        label.htmlFor = `period-${periodNumber}`;
+        label.textContent = `Period ${periodNumber}:`;
+
         const input = document.createElement('input');
         input.type = 'text';
-        input.id = `period-${index}`;
-        input.value = period.name;
-        input.onchange = (e) => renamePeriod(index, e.target.value);
+        input.id = `period-${periodNumber}`;
+        input.value = inputValue;
+        input.onchange = (e) => {
+            // Use global renamePeriod
+            renamePeriod(periodNumber, e.target.value);
+        };
+
         div.appendChild(label);
         div.appendChild(input);
         content.appendChild(div);
     });
 }
+window.populateRenamePeriods = populateRenamePeriods;
 
-// Countdown functions
-function updateCountdowns() {
-    const now = new Date();
-    const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    
-    // Add null check for font color
-    const fontColor = document.getElementById("font-color")?.value || "#ffffff";
+// --- DEVTOOLS secret debug overlay ---
+// Shows a small overlay only when the user types the sequence 'DEVTOOLS'.
+(() => {
+    const sequence = 'DEVTOOLS';
+    let buffer = '';
+    function showDebugOverlay() {
+    if (document.getElementById('devtools-debug-overlay')) return;
+    // create backdrop
+    const backdrop = document.createElement('div');
+    backdrop.id = 'devtools-debug-backdrop';
+    backdrop.style.position = 'fixed';
+    backdrop.style.inset = '0';
+    backdrop.style.zIndex = 2147483646;
+    backdrop.style.background = 'transparent';
+    document.body.appendChild(backdrop);
 
-    let currentPeriod = currentSchedule.find(period => 
-        currentTimeInSeconds >= getTimeInSeconds(period.start) && 
-        currentTimeInSeconds < getTimeInSeconds(period.end)
-    );
+    const overlay = document.createElement('div');
+    overlay.id = 'devtools-debug-overlay';
+    overlay.style.position = 'fixed';
+        overlay.style.right = '12px';
+        overlay.style.bottom = '12px';
+        overlay.style.zIndex = 2147483647;
+        overlay.style.background = 'rgba(0,0,0,0.85)';
+        overlay.style.color = '#fff';
+        overlay.style.padding = '12px';
+        overlay.style.borderRadius = '8px';
+        overlay.style.fontFamily = 'monospace';
+        overlay.style.maxWidth = '420px';
+        overlay.style.maxHeight = '60vh';
+        overlay.style.overflow = 'auto';
+    overlay.style.pointerEvents = 'auto';
 
-    // Add null checks for DOM elements
-    const periodTimeElement = document.getElementById("current-period-time");
-    const countdownHeadingElement = document.getElementById("countdown-heading");
+        // Header with title and button group so buttons don't overlap the title
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.gap = '12px';
+        header.style.marginBottom = '8px';
 
-    if (!periodTimeElement || !countdownHeadingElement) {
-        console.warn('Required DOM elements not found');
-        return;
-    }
+        const title = document.createElement('div');
+        title.style.fontWeight = '700';
+        title.textContent = 'DEVTOOLS Debug Overlay';
 
-    if (currentPeriod) {
-        const countdown = getTimeInSeconds(currentPeriod.end) - currentTimeInSeconds;
-        const timeRemaining = formatCountdown(countdown);
-        periodTimeElement.innerText = timeRemaining;
-        
-        const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
-        const headerText = `${scheduleName} Schedule ▸ ${currentPeriod.name}`;
-        countdownHeadingElement.innerText = headerText;
-        
-        // Update page title
-        document.title = `${currentPeriod.name} | ${timeRemaining}`;
-    } else {
-        let nextPeriod = currentSchedule.find(period => 
-            getTimeInSeconds(period.start) > currentTimeInSeconds
-        );
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.gap = '8px';
 
-        if (!nextPeriod) {
-            nextPeriod = currentSchedule[0];
-            const countdown = getTimeInSeconds(nextPeriod.start) + (24 * 3600 - currentTimeInSeconds);
-            const timeRemaining = formatCountdownHHMMSS(countdown);
-            periodTimeElement.innerText = timeRemaining;
-            
-            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
-            countdownHeadingElement.innerText = 
-                `${scheduleName} Schedule ▸ Free`;
-            
-            // Update page title
-            document.title = `Free | ${timeRemaining}`;
-        } else {
-            const countdown = getTimeInSeconds(nextPeriod.start) - currentTimeInSeconds;
-            const timeRemaining = formatCountdown(countdown);
-            periodTimeElement.innerText = timeRemaining;
-            
-            const previousPeriod = currentSchedule.find(period => 
-                getTimeInSeconds(period.end) <= currentTimeInSeconds
-            );
-            
-            const scheduleName = scheduleDisplayNames[currentScheduleName] || currentScheduleName;
-            if (previousPeriod && (currentTimeInSeconds - getTimeInSeconds(previousPeriod.end)) < 360) {
-                countdownHeadingElement.innerText = 
-                    `${scheduleName} Schedule ▸ Passing to ${nextPeriod.name}`;
-                // Update page title
-                document.title = `Passing | ${timeRemaining}`;
-            } else {
-                countdownHeadingElement.innerText = 
-                    `${scheduleName} Schedule ▸ Free until ${nextPeriod.name}`;
-                // Update page title
-                document.title = `Free | ${timeRemaining}`;
+        const cleanBtn = document.createElement('button');
+        cleanBtn.textContent = 'Clean/Normalize localStorage';
+        cleanBtn.style.cursor = 'pointer';
+        cleanBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            cleanBtn.disabled = true;
+            cleanBtn.textContent = 'Cleaning...';
+            try {
+                const report = normalizeLocalStorage();
+                // wait a tick to ensure changes persisted
+                setTimeout(() => {
+                    refreshDebugOverlay();
+                    cleanBtn.textContent = 'Cleaned';
+                    setTimeout(() => { cleanBtn.textContent = 'Clean/Normalize localStorage'; cleanBtn.disabled = false; }, 1200);
+                    // show brief status
+                    const status = document.getElementById('devtools-clean-status');
+                    if (status) status.textContent = `Fixed keys: ${report.fixedKeys.length}; details: ${report.fixedKeys.join(', ') || 'none'}`;
+                }, 150);
+            } catch (e) {
+                console.error('Normalization failed', e);
+                cleanBtn.textContent = 'Error';
+                cleanBtn.disabled = false;
             }
-        }
+        });
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.addEventListener('click', (ev) => { ev.stopPropagation(); overlay.remove(); const bd = document.getElementById('devtools-debug-backdrop'); if (bd) bd.remove(); });
+        btnGroup.appendChild(cleanBtn);
+        btnGroup.appendChild(closeBtn);
+
+        header.appendChild(title);
+        header.appendChild(btnGroup);
+        overlay.appendChild(header);
+
+    const status = document.createElement('div');
+    status.id = 'devtools-clean-status';
+    status.style.marginTop = '8px';
+    status.style.fontSize = '12px';
+    status.style.opacity = '0.9';
+    overlay.appendChild(status);
+
+    const content = document.createElement('pre');
+    content.id = 'devtools-debug-content';
+    content.style.whiteSpace = 'pre-wrap';
+    content.style.marginTop = '12px';
+    overlay.appendChild(content);
+
+        document.body.appendChild(overlay);
+        // clicking backdrop closes overlay too
+        backdrop.addEventListener('click', () => { overlay.remove(); backdrop.remove(); });
+        refreshDebugOverlay();
     }
-    
-    countdownHeadingElement.style.color = fontColor;
-    localStorage.setItem("fontColor", fontColor);
-}
 
-function getTimeInSeconds(time) {
-    const [hour, minute] = time.split(":").map(Number);
-    return hour * 3600 + minute * 60;
-}
+    function refreshDebugOverlay() {
+        const content = document.getElementById('devtools-debug-content');
+        if (!content) return;
+        const keys = Object.keys(localStorage).sort();
+        const renames = getPeriodRenames();
+        const globalNames = getGlobalPeriodNames();
+        const intervals = {
+            TimerManager_running: !!(window.TimerManager && window.TimerManager.isRunning && window.TimerManager.isRunning()),
+            legacy_countdownInterval: !!window.countdownInterval,
+            legacy_progressInterval: !!window.progressInterval
+        };
 
-function formatCountdown(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
+        // Build a key->value map showing parsed values where possible
+        const kv = {};
+        keys.forEach(k => {
+            const raw = localStorage.getItem(k);
+            let parsed = raw;
+            try {
+                parsed = JSON.parse(raw);
+            } catch (e) {
+                // not JSON, keep raw string
+                parsed = raw;
+            }
+            kv[k] = parsed;
+        });
 
-function formatCountdownHHMMSS(seconds) {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
+        const debug = {
+            now: new Date().toString(),
+            currentScheduleName,
+            periodRenames: renames,
+            globalPeriodNames: globalNames,
+            localStorage: kv,
+            intervals
+        };
+        content.textContent = JSON.stringify(debug, null, 2);
+    }
 
-function startCountdown() {
-    // Run immediately once
-    updateCountdowns();
-    // Then set up interval
-    return setInterval(updateCountdowns, 1000);
-}
+    // Normalization helper: attempt to fix malformed localStorage values
+    function normalizeLocalStorage() {
+        const fixedKeys = [];
+        try {
+            Object.keys(localStorage).forEach(k => {
+                try {
+                    const raw = localStorage.getItem(k);
+                    if (raw === null) return;
 
-// Schedule display functions
+                    // Fix literal '[object Object]'
+                    if (raw === '[object Object]') {
+                        // For known keys, prefer sensible defaults
+                        if (k === 'globalPeriodNames' || k === 'periodRenames') {
+                            localStorage.setItem(k, JSON.stringify({}));
+                        } else if (k.startsWith('customSchedule_')) {
+                            localStorage.setItem(k, JSON.stringify([]));
+                        } else {
+                            localStorage.setItem(k, JSON.stringify(null));
+                        }
+                        fixedKeys.push(k);
+                        return;
+                    }
+
+                    // For periodRenames/globalPeriodNames, ensure valid JSON
+                    if (k === 'periodRenames' || k === 'globalPeriodNames') {
+                        try {
+                            JSON.parse(raw);
+                        } catch (e) {
+                            // Could be a stringified object via toString(); try best-effort fallback
+                            // If there's another sensible source, copy it (e.g., periodRenames -> globalPeriodNames)
+                            if (k === 'globalPeriodNames') {
+                                const prRaw = localStorage.getItem('periodRenames');
+                                try {
+                                    const pr = prRaw ? JSON.parse(prRaw) : {};
+                                    localStorage.setItem(k, JSON.stringify(pr || {}));
+                                    fixedKeys.push(k);
+                                    return;
+                                } catch (e2) {
+                                    // fallback to empty object
+                                    localStorage.setItem(k, JSON.stringify({}));
+                                    fixedKeys.push(k);
+                                    return;
+                                }
+                            }
+                            // For periodRenames fallback to empty object
+                            localStorage.setItem(k, JSON.stringify({}));
+                            fixedKeys.push(k);
+                            return;
+                        }
+                    }
+
+                    // For custom schedules, ensure arrays
+                    if (k.startsWith('customSchedule_')) {
+                        try {
+                            const val = JSON.parse(raw);
+                            if (!Array.isArray(val)) {
+                                // coerce to array if possible
+                                localStorage.setItem(k, JSON.stringify(Array.isArray(val) ? val : []));
+                                fixedKeys.push(k);
+                            }
+                        } catch (e) {
+                            // replace with empty array
+                            localStorage.setItem(k, JSON.stringify([]));
+                            fixedKeys.push(k);
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    // ignore per-key errors
+                }
+            });
+        } catch (e) {
+            console.warn('normalizeLocalStorage error', e);
+        }
+        return { fixedKeys };
+    }
+
+    window.normalizeLocalStorage = normalizeLocalStorage;
+
+    // Keep a short-term undo snapshot for normalization
+    let _lastNormalizationSnapshot = null;
+
+    function takeNormalizationSnapshot() {
+        _lastNormalizationSnapshot = {};
+        Object.keys(localStorage).forEach(k => { _lastNormalizationSnapshot[k] = localStorage.getItem(k); });
+    }
+
+    function undoNormalization() {
+        if (!_lastNormalizationSnapshot) return { restored: 0 };
+        Object.keys(_lastNormalizationSnapshot).forEach(k => {
+            try { localStorage.setItem(k, _lastNormalizationSnapshot[k]); } catch (e) {}
+        });
+        const count = Object.keys(_lastNormalizationSnapshot).length;
+        _lastNormalizationSnapshot = null;
+        refreshDebugOverlay();
+        return { restored: count };
+    }
+    window.undoNormalization = undoNormalization;
+
+    // Attach commonly used inline handlers to DOM elements (safer than relying on inline attributes only)
+    function bindInlineHandlers() {
+        const signInBtn = document.getElementById('sign-in-button');
+        if (signInBtn && !signInBtn._bound) {
+            signInBtn.addEventListener('click', () => { if (typeof handleAuthButton === 'function') handleAuthButton(); });
+            signInBtn._bound = true;
+        }
+
+        const closeSettingsBtns = document.querySelectorAll('.close-settings, .settings-close, #settings-close, .close-settings');
+        closeSettingsBtns.forEach(btn => {
+            if (!btn._bound) {
+                btn.addEventListener('click', () => { if (typeof toggleSettingsSidebar === 'function') toggleSettingsSidebar(); else location.reload(); });
+                btn._bound = true;
+            }
+        });
+
+        const removeBg = document.getElementById('remove-bg-button');
+        if (removeBg && !removeBg._bound) {
+            removeBg.addEventListener('click', () => { if (typeof removeBackground === 'function') removeBackground(); });
+            removeBg._bound = true;
+        }
+
+        const progressCheckbox = document.getElementById('progress-bar');
+        if (progressCheckbox && !progressCheckbox._bound) {
+            progressCheckbox.addEventListener('change', () => { if (typeof toggleProgressBar === 'function') toggleProgressBar(); });
+            progressCheckbox._bound = true;
+        }
+
+        const scheduleDropdown = document.getElementById('schedule-dropdown');
+        if (scheduleDropdown && !scheduleDropdown._bound) {
+            scheduleDropdown.addEventListener('change', (e) => { if (typeof switchSchedule === 'function') switchSchedule(e.target.value); });
+            scheduleDropdown._bound = true;
+        }
+
+        // Save custom schedule button
+        const saveScheduleBtn = document.getElementById('save-schedule-button');
+        if (saveScheduleBtn && !saveScheduleBtn._bound) {
+            saveScheduleBtn.addEventListener('click', () => { if (typeof saveCustomSchedule === 'function') saveCustomSchedule(); });
+            saveScheduleBtn._bound = true;
+        }
+
+        const settingsButton = document.getElementById('settings-button');
+        if (settingsButton && !settingsButton._bound) {
+            settingsButton.addEventListener('click', () => { if (typeof toggleSettingsSidebar === 'function') toggleSettingsSidebar(); });
+            settingsButton._bound = true;
+        }
+
+        const saveExtensionButtons = document.querySelectorAll('#saveExtensionButton');
+        saveExtensionButtons.forEach(btn => {
+            if (!btn._bound) {
+                btn.addEventListener('click', () => { if (typeof saveExtensionGradient === 'function') saveExtensionGradient(); });
+                btn._bound = true;
+            }
+        });
+    }
+
+    // Enhance overlay close behavior and add Undo button
+    const originalShowDebugOverlay = window.refreshDevtoolsOverlay;
+    // We'll override show function by adding backdrop/ESC handling when overlay is created
+    const _origShow = null; // placeholder
+
+    // Monkey-patch showDebugOverlay to add ESC/backdrop and Undo UI (we cannot directly access inner closure functions here, so rely on DOM hookups)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const overlay = document.getElementById('devtools-debug-overlay');
+            const backdrop = document.getElementById('devtools-debug-backdrop');
+            if (overlay) overlay.remove();
+            if (backdrop) backdrop.remove();
+        }
+    });
+
+    // Click outside overlay to close (also remove backdrop)
+    document.addEventListener('click', (e) => {
+        const overlay = document.getElementById('devtools-debug-overlay');
+        if (!overlay) return;
+        const isInside = overlay.contains(e.target);
+        if (!isInside) {
+            const backdrop = document.getElementById('devtools-debug-backdrop');
+            overlay.remove();
+            if (backdrop) backdrop.remove();
+        }
+    });
+
+    // Add undo button wiring: add listener to overlay when present
+    const observer = new MutationObserver(() => {
+        const overlay = document.getElementById('devtools-debug-overlay');
+        if (!overlay) return;
+        if (overlay._wired) return;
+        // insert Undo button near clean status
+        const status = document.getElementById('devtools-clean-status');
+        if (status) {
+            const undoBtn = document.createElement('button');
+            undoBtn.textContent = 'Undo Clean';
+            undoBtn.style.marginLeft = '8px';
+            undoBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                const res = undoNormalization();
+                status.textContent = `Undo restored ${res.restored} keys`;
+            });
+            status.appendChild(undoBtn);
+        }
+        overlay._wired = true;
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    // Keyboard listener for letter sequence
+    window.addEventListener('keydown', (e) => {
+        // Only accept typical printable letters
+        const k = e.key && e.key.length === 1 ? e.key.toUpperCase() : null;
+        if (!k) return;
+        buffer += k;
+        if (buffer.length > sequence.length) buffer = buffer.slice(buffer.length - sequence.length);
+        if (buffer === sequence) {
+            showDebugOverlay();
+            buffer = '';
+        }
+    });
+
+    // Expose refresh function for overlay
+    window.refreshDevtoolsOverlay = refreshDebugOverlay;
+})();
+
+// Remove any block like this:
+//
+// if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
+//     chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+//         type: 'UPDATE_GRADIENT',
+//         settings: { angle: settings.angle, stops: settings.stops }
+//     }, function(response) {
+//         // Handle response if needed
+//     });
+// }
+
 function updateScheduleDisplay() {
     const scheduleContainer = document.getElementById("schedule");
+    if (!scheduleContainer) return;
     scheduleContainer.innerHTML = "";
-    currentSchedule.forEach((period) => {
+    const globalNames = getGlobalPeriodNames();
+    const renames = getPeriodRenames();
+    // Ensure originalSchedule matches the active grade level (high vs middle school)
+    const activeSchedules = getActiveSchedules();
+    const originalSchedule = activeSchedules[currentScheduleName] || currentSchedule;
+    currentSchedule.forEach((period, idx) => {
         if (period.name !== "Passing") {
+            // Find the canonical original period by periodNum first (more robust),
+            // otherwise fall back to the schedule index.
+            let origPeriod = null;
+            let displayName = period.name;
+            if (period && period.periodNum) {
+                origPeriod = originalSchedule.find(p => String(p.periodNum) === String(period.periodNum));
+            }
+            if (!origPeriod) {
+                origPeriod = originalSchedule[idx];
+            }
+            if (origPeriod && origPeriod.periodNum) {
+                const periodNum = origPeriod.periodNum;
+                const globalName = globalNames[periodNum];
+                const renameName = renames[periodNum];
+                if (globalName && globalName.trim()) {
+                    displayName = globalName;
+                } else if (renameName && renameName.trim()) {
+                    displayName = renameName;
+                } else {
+                    displayName = origPeriod.name;
+                }
+            }
             const periodDiv = document.createElement("div");
             periodDiv.className = "period";
             const label = document.createElement("label");
-            label.innerText = `${period.name}`;
+            label.innerText = `${displayName}`;
             const timer = document.createElement("span");
             timer.id = `Period_Timer`;
             periodDiv.appendChild(label);
@@ -572,326 +1033,225 @@ function updateScheduleDisplay() {
     updateCountdowns();
 }
 
-function setupCustomSchedule() {
-    const numPeriods = document.getElementById("num-periods").value;
-    const periodInputs = document.getElementById("period-inputs");
-    const saveButton = document.getElementById("save-schedule-button");
-    periodInputs.innerHTML = '';
-
-    if (numPeriods > 0) {
-        saveButton.style.display = 'block';
-        for (let i = 0; i < numPeriods; i++) {
-            const periodDiv = document.createElement("div");
-            periodDiv.innerHTML = `
-                <label for="period-start-${i}">Period ${i + 1} Start Time:</label>
-                <input type="time" id="period-start-${i}" onchange="updateCustomSchedule()" required />
-                <label for="period-end-${i}">End Time:</label>
-                <input type="time" id="period-end-${i}" onchange="updateCustomSchedule()" required />
-            `;
-            periodInputs.appendChild(periodDiv);
+function updateCountdowns() {
+    // Get current time in seconds
+    const now = new Date();
+    const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    let currentPeriod = null;
+    let periodIndex = -1;
+    // Find current period (including Lunch and Passing)
+    for (let i = 0; i < currentSchedule.length; i++) {
+        const period = currentSchedule[i];
+        if (!period || !period.start || !period.end) continue; // skip undefined or malformed
+        const start = getTimeInSeconds(period.start);
+        const end = getTimeInSeconds(period.end);
+        if (currentTimeInSeconds >= start && currentTimeInSeconds < end) {
+            currentPeriod = period;
+            periodIndex = i;
+            break;
         }
     }
-}
-
-function saveCustomSchedule() {
-    const scheduleName = document.getElementById("schedule-name").value;
-    const numPeriods = document.getElementById("num-periods").value;
-    const newSchedule = [];
-
-    for (let i = 0; i < numPeriods; i++) {
-        const startTime = document.getElementById(`period-start-${i}`).value;
-        const endTime = document.getElementById(`period-end-${i}`).value;
-
-        if (startTime && endTime) {
-            newSchedule.push({
-                name: `Period ${i + 1}`,
-                start: startTime,
-                end: endTime
-            });
-        }
-    }
-
-    if (scheduleName) {
-        localStorage.setItem(`customSchedule_${scheduleName}`, JSON.stringify(newSchedule));
-        alert(`Schedule "${scheduleName}" saved successfully!`);
-        updateScheduleDropdown();
-        switchSchedule(`customSchedule_${scheduleName}`);
+    const timerElement = document.getElementById("current-period-time");
+    const headingElement = document.getElementById("countdown-heading");
+    if (!timerElement || !headingElement) return;
+    let scheduleName = currentScheduleName || "normal";
+    const displayNames = {
+        normal: "Normal Schedule",
+        chapel: "Chapel Bell Schedule",
+        latePepRally: "Late Pep Rally Schedule",
+        earlyPepRally: "Early Pep Rally Schedule"
+    };
+    let headerName;
+    if (scheduleName.startsWith('customSchedule_')) {
+        headerName = scheduleName.replace('customSchedule_', '') + ' Schedule';
     } else {
-        alert("Please enter a schedule name.");
+        headerName = displayNames[scheduleName] || (scheduleName.charAt(0).toUpperCase() + scheduleName.slice(1) + ' Schedule');
+    }
+    const renames = getPeriodRenames();
+    let periodDisplayName = currentPeriod ? currentPeriod.name : '';
+    if (currentPeriod && currentPeriod.name.startsWith('Period ')) {
+        const periodNum = currentPeriod.name.split(' ')[1];
+        if (renames[periodNum]) {
+            periodDisplayName = renames[periodNum];
+        }
+    }
+    if (currentPeriod) {
+        headingElement.textContent = `${headerName} \u25B8 ${periodDisplayName}`;
+        const end = getTimeInSeconds(currentPeriod.end);
+        let secondsLeft = end - currentTimeInSeconds;
+        if (secondsLeft < 0) secondsLeft = 0;
+        const minutes = Math.floor(secondsLeft / 60);
+        const seconds = secondsLeft % 60;
+        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    } else {
+        // Always show countdown to next school day's Period 1 after last period ends
+        let nextDay = new Date();
+        nextDay.setHours(0,0,0,0);
+        do {
+            nextDay.setDate(nextDay.getDate() + 1);
+        } while (nextDay.getDay() === 0 || nextDay.getDay() === 6); // 0=Sun, 6=Sat
+        // Get start time of Period 1 for next school day
+        let nextScheduleName = 'normal';
+        if (nextDay.getDay() === 2) nextScheduleName = 'chapel'; // Tuesday
+        // You can add more logic for other days if needed
+        let nextSchedules = getActiveSchedules();
+        let nextSchedule = nextSchedules[nextScheduleName] || nextSchedules['normal'];
+        // Prefer finding by periodNum (more robust when names are renamed), fall back to name search
+        let period1 = nextSchedule.find(p => p && String(p.periodNum) === '1');
+        if (!period1) {
+            period1 = nextSchedule.find(p => p && p.name && p.name.startsWith('Period 1'));
+        }
+        if (!period1 || !period1.start) {
+            headingElement.textContent = `${headerName} \u25B8 No Period`;
+            timerElement.textContent = "00:00";
+            return;
+        }
+        let [h, m] = period1.start.split(':').map(Number);
+        let nextPeriod1Date = new Date(nextDay.getFullYear(), nextDay.getMonth(), nextDay.getDate(), h, m, 0);
+        let nowDate = new Date();
+        let secondsLeft = Math.floor((nextPeriod1Date - nowDate) / 1000);
+        if (secondsLeft < 0) secondsLeft = 0;
+        const hours = Math.floor(secondsLeft / 3600);
+        const minutes = Math.floor((secondsLeft % 3600) / 60);
+        const seconds = secondsLeft % 60;
+        headingElement.textContent = `${headerName} \u25B8 Free until Period 1`;
+        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
 }
 
+// Refresh page when 'x' button is clicked
+const closeButton = document.getElementById('close-button');
+if (closeButton) {
+    closeButton.addEventListener('click', () => {
+        location.reload();
+    });
+}
+
+// Refresh page when the settings sidebar close button (x) is clicked
+const settingsCloseButton = document.querySelector('.settings-close, #settings-close');
+if (settingsCloseButton) {
+    settingsCloseButton.addEventListener('click', () => {
+        location.reload();
+    });
+}
+
+// Refresh page when the settings sidebar close button (x) is clicked
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing code...
+    // Refresh page when the settings sidebar close button (x) is clicked
+    const sidebar = document.querySelector('.settings-sidebar, #settings-sidebar');
+    if (sidebar) {
+        sidebar.addEventListener('click', function(e) {
+            const target = e.target;
+            // Check for button, span, div, or svg with 'x' or '×' or aria-label='Close'
+            if (
+                (target.innerText && (target.innerText.trim() === '×' || target.innerText.trim().toLowerCase() === 'x')) ||
+                target.getAttribute('aria-label') === 'Close' ||
+                target.classList.contains('settings-close') ||
+                target.id === 'settings-close'
+            ) {
+                location.reload();
+            }
+        });
+    }
+    // ...existing code...
+});
+
+// Add this helper to populate the schedule dropdown based on selected grade level
 function updateScheduleDropdown() {
-    const dropdown = document.getElementById("schedule-dropdown");
+    const dropdown = document.getElementById('schedule-dropdown');
     if (!dropdown) return;
-    dropdown.innerHTML = "";
+
+    // Remove existing options
+    dropdown.innerHTML = '';
 
     const activeSchedules = getActiveSchedules();
-    for (let key in activeSchedules) {
-        const option = document.createElement("option");
-        option.value = key;
-        option.textContent = scheduleDisplayNames[key] || key.charAt(0).toUpperCase() + key.slice(1);
-        dropdown.appendChild(option);
-    }
-    for (let key in localStorage) {
-        if (key.startsWith("customSchedule_")) {
-            const option = document.createElement("option");
-            option.value = key;
-            option.textContent = key.replace("customSchedule_", "");
-            dropdown.appendChild(option);
-        }
+    Object.keys(activeSchedules).forEach(key => {
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = scheduleDisplayNames[key] || key;
+        dropdown.appendChild(opt);
+    });
+
+    // Try to keep the previously selected schedule
+    const selected = localStorage.getItem('currentScheduleName') || currentScheduleName || 'normal';
+    if (activeSchedules[selected]) {
+        dropdown.value = selected;
+    } else {
+        dropdown.value = Object.keys(activeSchedules)[0] || 'normal';
     }
 }
 
-// Load countdowns on page load
-window.addEventListener('load', function() {
-    const savedScheduleName = localStorage.getItem('currentScheduleName');
-    if (savedScheduleName) {
-        switchSchedule(savedScheduleName);
-    }
-});
-
-// Add this to your initialization code if not already present
-document.addEventListener('DOMContentLoaded', () => {
-    /* ...existing code... */
-    
-    // Add rename periods dropdown listener
-    const renameToggle = document.getElementById('rename-periods-toggle');
-    if (renameToggle) {
-        renameToggle.addEventListener('click', () => {
-            toggleDropdown('rename-periods-content', 'rename-periods-toggle');
-            populateRenamePeriods();
-        });
-    }
-});
-
-// Add this function to initialize saved schedules
+// No-op initializer for saved schedules to satisfy callers that expect it
 function initializeSavedSchedules() {
-    // No-op: do not load or save built-in schedules from localStorage anymore
+    // Intentionally minimal: custom schedule migration/loading is handled elsewhere.
+    // Kept as a defined function so initializeAppLogic() doesn't throw.
+    return;
 }
 
-// Add this function near the top (after variable declarations)
+// Prompt user for grade level on first run (minimal, DOM-safe)
 function promptForGradeLevelIfFirstTime() {
-    if (!localStorage.getItem('gradeLevel')) {
-        localStorage.clear();
+    if (localStorage.getItem('gradeLevel')) return;
 
-        // Create modal overlay
-        const modal = document.createElement('div');
-        modal.id = 'grade-level-modal';
-
-        // Modal content (improved design, now uses CSS classes)
-        modal.innerHTML = `
-            <div class="grade-level-modal-box">
-                <h2>Welcome!</h2>
-                <p>What school level are you in?</p>
-                <div class="grade-level-modal-buttons">
-                    <button id="choose-highschool" class="grade-level-modal-btn">High School</button>
-                    <button id="choose-middleschool" class="grade-level-modal-btn">Middle School</button>
-                </div>
-                <div class="grade-level-modal-info">
-                    <i class="fas fa-info-circle"></i>
-                    You can change your school level anytime in Settings.
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        document.getElementById('choose-highschool').onclick = () => {
-            localStorage.setItem('gradeLevel', 'highSchool');
-            gradeLevel = 'highSchool';
-            modal.remove();
-            updateScheduleDropdown();
-            switchSchedule('normal');
-        };
-        document.getElementById('choose-middleschool').onclick = () => {
-            localStorage.setItem('gradeLevel', 'middleSchool');
-            gradeLevel = 'middleSchool';
-            modal.remove();
-            updateScheduleDropdown();
-            switchSchedule('normal');
-        };
-    }
-}
-
-// Add this helper function
-function updateAllSchedules(oldName, newName) {
-    // Update all default schedules in memory only
-    Object.keys(schedules).forEach(scheduleName => {
-        const schedule = schedules[scheduleName];
-        let modified = false;
-        schedule.forEach(period => {
-            if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
-                period.name = newName;
-                modified = true;
-            }
-        });
-        // No localStorage save for built-in schedules
-    });
-
-    // Update custom schedules in localStorage
-    Object.keys(localStorage).forEach(key => {
-        if (key.startsWith('customSchedule_')) {
-            const customSchedule = JSON.parse(localStorage.getItem(key));
-            let modified = false;
-            customSchedule.forEach(period => {
-                if (period.name === oldName && !period.name.includes("Passing") && !period.name.includes("Lunch")) {
-                    period.name = newName;
-                    modified = true;
-                }
-            });
-            if (modified) {
-                localStorage.setItem(key, JSON.stringify(customSchedule));
-            }
-        }
-    });
-}
-
-// Update the renamePeriod function
-function renamePeriod(index, newName) {
-    if (!newName.trim()) return;
-
-    // Only allow renaming for main period indices
-    const mainIndices = getMainPeriodIndices(currentSchedule);
-    if (!mainIndices.includes(index)) return;
-
-    try {
-        setGlobalPeriodName(index, newName);
-
-        // Update all schedules (high school, middle school, custom)
-        [schedules, middleSchoolSchedules].forEach(schedObj => {
-            Object.values(schedObj).forEach(schedule => {
-                if (schedule[index] && !schedule[index].name.includes("Passing") && !schedule[index].name.includes("Lunch") && !schedule[index].name.includes("Chapel") && !schedule[index].name.includes("Pep Rally") && !schedule[index].name.includes("Homeroom") && !schedule[index].name.includes("SAINTS Advisory Time") && !schedule[index].name.includes("Chapel Debrief")) {
-                    schedule[index].name = newName;
-                }
-            });
-        });
-        // Update custom schedules in localStorage
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('customSchedule_')) {
-                const customSchedule = JSON.parse(localStorage.getItem(key));
-                if (customSchedule[index] && !customSchedule[index].name.includes("Passing") && !customSchedule[index].name.includes("Lunch") && !customSchedule[index].name.includes("Chapel") && !customSchedule[index].name.includes("Pep Rally") && !customSchedule[index].name.includes("Homeroom") && !customSchedule[index].name.includes("SAINTS Advisory Time") && !customSchedule[index].name.includes("Chapel Debrief")) {
-                    customSchedule[index].name = newName;
-                    localStorage.setItem(key, JSON.stringify(customSchedule));
-                }
-            }
-        });
-
-        // Update current schedule
-        currentSchedule[index].name = newName;
-        updateScheduleDisplay();
-        updateCountdowns();
-        populateRenamePeriods();
-
-        // Force refresh the schedule display
-        const scheduleContainer = document.getElementById("schedule");
-        if (scheduleContainer) {
-            scheduleContainer.innerHTML = '';
-            currentSchedule.forEach(period => {
-                if (period.name !== "Passing") {
-                    const periodDiv = document.createElement("div");
-                    periodDiv.className = "period";
-                    periodDiv.innerHTML = `<label>${period.name}</label><span id="Period_Timer"></span>`;
-                    scheduleContainer.appendChild(periodDiv);
-                }
-            });
-        }
-
-        console.log(`Successfully renamed period at index ${index} to ${newName}`);
-    } catch (error) {
-        console.error('Error renaming period:', error);
-    }
-}
-
-// Update the populateRenamePeriods function
-function populateRenamePeriods() {
-    const content = document.getElementById("rename-periods-content");
-    if (!content) return;
-    
-    content.innerHTML = ''; // Clear existing content
-    
-    // Get all periods except Passing, Lunch, Chapel, Pep Rally, Homeroom, SAINTS Advisory Time, Chapel Debrief
-    currentSchedule.forEach((period, index) => {
-        if (
-            !period.name.includes("Passing") &&
-            !period.name.includes("Lunch") &&
-            !period.name.includes("Chapel") &&
-            !period.name.includes("Pep Rally") &&
-            !period.name.includes("Homeroom") &&
-            !period.name.includes("SAINTS Advisory Time") &&
-            !period.name.includes("Chapel Debrief")
-        ) {
-            const div = document.createElement('div');
-            div.className = 'rename-period';
-            
-            // Find the original period number
-            let periodNumber = '';
-            if (period.name.includes("Period")) {
-                periodNumber = period.name.split(" ")[1]; // Get the number after "Period"
-            } else {
-                // If it's been renam ed, find the corresponding period in the original schedule
-                const originalPeriod = schedules[currentScheduleName].find((p, i) => i === index);
-                if (originalPeriod && originalPeriod.name.includes("Period")) {
-                    periodNumber = originalPeriod.name.split(" ")[1];
-                }
-            }
-            
-            const label = document.createElement('label');
-            label.htmlFor = `period-${index}`;
-            label.textContent = `Period ${periodNumber}:`; // Show "Period X:"
-            
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.id = `period-${index}`;
-            input.value = period.name;
-            input.onchange = (e) => renamePeriod(index, e.target.value);
-            
-            div.appendChild(label);
-            div.appendChild(input);
-            content.appendChild(div);
-        }
-    });
-}
-
-function updateCustomSchedule() {
-    const numPeriods = document.getElementById("num-periods").value;
-    const saveButton = document.getElementById("save-schedule-button");
-    let isValid = true;
-
-    // Validate all periods
-    for (let i = 0; i < numPeriods; i++) {
-        const startTime = document.getElementById(`period-start-${i}`).value;
-        const endTime = document.getElementById(`period-end-${i}`).value;
-        
-        if (!startTime || !endTime) {
-            isValid = false;
-            break;
-        }
-        
-        // Check if end time is after start time
-        if (startTime >= endTime) {
-            isValid = false;
-            break;
-        }
-    }
-
-    // Enable/disable save button based on validation
-    if (saveButton) {
-        saveButton.disabled = !isValid;
-    }
-}
-
-// Add a check to ensure script2.js is loaded
-window.addEventListener('load', function() {
-    if (typeof toggleSettingsSidebar !== 'function') {
-        console.error('Required functions not loaded. Please check script loading order.');
+    // Don't block if DOM not ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', promptForGradeLevelIfFirstTime);
         return;
     }
-    // Continue with initialization
-    initializeApp();
-});
 
-/* ...existing code... */
+    // Create modal overlay
+    const modal = document.createElement('div');
+    modal.id = 'grade-level-modal';
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.background = 'rgba(0,0,0,0.6)';
+    modal.style.zIndex = '11000';
+
+    modal.innerHTML = `
+        <div class="grade-level-modal-box" style="background:#fff;color:#222;padding:24px;border-radius:12px;min-width:280px;text-align:center;">
+            <h2 style="margin:0 0 12px 0;color:#00bfa5;">Welcome!</h2>
+            <p style="margin:0 0 16px 0;">What school level are you in?</p>
+            <div style="display:flex;gap:12px;justify-content:center;margin-bottom:12px;">
+                <button id="choose-highschool" style="padding:10px 16px;border-radius:8px;border:none;background:#00bfa5;color:#fff;cursor:pointer;">High School</button>
+                <button id="choose-middleschool" style="padding:10px 16px;border-radius:8px;border:none;background:#393E46;color:#fff;cursor:pointer;">Middle School</button>
+            </div>
+            <div style="font-size:12px;color:#666;">You can change this anytime in Settings.</div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const chooseHigh = document.getElementById('choose-highschool');
+    const chooseMiddle = document.getElementById('choose-middleschool');
+
+    const cleanup = () => {
+        if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
+        updateScheduleDropdown();
+    };
+
+    if (chooseHigh) {
+        chooseHigh.addEventListener('click', () => {
+            localStorage.setItem('gradeLevel', 'highSchool');
+            gradeLevel = 'highSchool';
+            cleanup();
+            // ensure schedule list updates and switch to normal
+            updateScheduleDropdown();
+            try { switchSchedule('normal'); } catch(e){/* safe fallback */ }
+        });
+    }
+    if (chooseMiddle) {
+        chooseMiddle.addEventListener('click', () => {
+            localStorage.setItem('gradeLevel', 'middleSchool');
+            gradeLevel = 'middleSchool';
+            cleanup();
+            updateScheduleDropdown();
+            try { switchSchedule('normal'); } catch(e){/* safe fallback */ }
+        });
+    }
+}
 
 // Add this function at an appropriate location in the file:
 function initializeSettingsPanels() {
@@ -919,13 +1279,46 @@ document.addEventListener("DOMContentLoaded", () => {
     initializeSettingsPanels();
 });
 
-// Remove any block like this:
-//
-// if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-//     chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-//         type: 'UPDATE_GRADIENT',
-//         settings: { angle: settings.angle, stops: settings.stops }
-//     }, function(response) {
-//         // Handle response if needed
-//     });
-// }  
+// { 
+// 	// Removed duplicate implementations of renamePeriod(...) and populateRenamePeriods(...)
+// 	// The authoritative implementations are defined earlier in this file and exported to window:
+// 	//   window.renamePeriod and window.populateRenamePeriods
+// 	// Replace the duplicated blocks with safe delegates to avoid clobbering or runtime errors.
+
+// 	// Compatibility wrapper: if legacy callers call the global functions before the authoritative ones exist,
+// 	// delegate to the authoritative implementations when available.
+// 	if (!window.renamePeriod) {
+// 		window.renamePeriod = function(periodNumber, newName) {
+// 			console.warn('renamePeriod called before initialization. Ignoring.');
+// 		};
+// 	}
+// 	if (!window.populateRenamePeriods) {
+// 		window.populateRenamePeriods = function() {
+// 			console.warn('populateRenamePeriods called before initialization. Ignoring.');
+// 		};
+// 	}
+
+// 	// Provide an index-to-periodNum helper for any callers that still pass an index.
+// 	// This does not overwrite the authoritative renamePeriod.
+// 	if (!window.renamePeriodIndexSafe) {
+// 		window.renamePeriodIndexSafe = function(indexOrPeriodNum, newName) {
+// 			let periodNum = indexOrPeriodNum;
+// 			// If passed an index, try map to periodNum from original schedules or currentSchedule
+// 			if (!/^\d+$/.test(String(periodNum))) {
+// 				const idx = parseInt(indexOrPeriodNum, 10);
+// 				if (!isNaN(idx)) {
+// 					// Prefer currentSchedule mapping, fallback to original schedule mapping
+// 					const candidate = (Array.isArray(currentSchedule) && currentSchedule[idx]) ? currentSchedule[idx] : (schedules[currentScheduleName] || schedules.normal)[idx];
+// 					periodNum = candidate?.periodNum || (candidate?.name && candidate.name.split(' ')[1]);
+// 				}
+// 			}
+// 			if (!periodNum) {
+// 				console.warn('renamePeriodIndexSafe: cannot determine period number for', indexOrPeriodNum);
+// 				return;
+// 			}
+// 			if (typeof window.renamePeriod === 'function') {
+// 				return window.renamePeriod(String(periodNum), newName);
+// 			}
+// 		};
+// 	}
+// }
