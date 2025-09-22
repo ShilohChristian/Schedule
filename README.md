@@ -36,3 +36,5 @@ This project is licensed under the MIT License.
 - Developed by [Shiloh Christian](https://shilohchristian.github.io/Schedule/)
 - Inspired by modern school scheduling needs.
 
+Note: Fixed a runtime error where `loadGradientDirection` was missing from `script2.js` (added helper functions `loadGradientDirection` and `updateGradientDirection` to initialize and sync the gradient direction select control).
+
