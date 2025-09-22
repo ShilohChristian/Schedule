@@ -62,7 +62,7 @@ function saveBackground(imageData) {
             throw new Error('Background save verification failed');
         }
         
-        console.log('Background saved successfully');
+    console.debug('Background saved successfully');
         return true;
     } catch (error) {
         console.error('Error saving background:', error);
@@ -105,7 +105,7 @@ async function loadSettings() {
         const firestoreSettings = await loadUserSettings();
         
         if (firestoreSettings) {
-            console.log("Applying settings from Firestore");
+            console.debug("Applying settings from Firestore");
             const fontColor = firestoreSettings.fontColor || "#ffffff";
             const fontColorElement = document.getElementById('font-color');
             const countdownHeading = document.getElementById('countdown-heading');
@@ -113,7 +113,7 @@ async function loadSettings() {
             if (fontColorElement) fontColorElement.value = fontColor;
             if (countdownHeading) countdownHeading.style.color = fontColor;
         } else {
-            console.log("No Firestore settings found. Falling back to localStorage.");
+            console.debug("No Firestore settings found. Falling back to localStorage.");
             const fontColor = localStorage.getItem("fontColor") || "#ffffff";
             const fontColorElement = document.getElementById('font-color');
             const countdownHeading = document.getElementById('countdown-heading');
@@ -410,7 +410,7 @@ function removeBackground() {
     if (window.authManager?.currentUser && typeof window.authManager.deleteUserBackground === 'function') {
         window.authManager.deleteUserBackground(window.authManager.currentUser.uid, 'bgImage')
             .then(() => {
-                console.log('Firestore bgImage deleted successfully');
+                console.debug('Firestore bgImage deleted successfully');
             })
             .catch((err) => {
                 console.error('Error deleting bgImage from Firestore:', err);
@@ -649,13 +649,13 @@ function closeOtherDropdowns(exceptContent) {
 
 // Event Listeners
 document.addEventListener("DOMContentLoaded", function() {
-    console.log('DOM Content Loaded');
+    console.debug('DOM Content Loaded');
     
     const dropArea = document.getElementById("bg-image-drop-area");
     const bgInput = document.getElementById("bg-image");
     
-    console.log('Drop area element:', dropArea);
-    console.log('File input element:', bgInput);
+    console.debug('Drop area element:', dropArea);
+    console.debug('File input element:', bgInput);
 
     if (dropArea && bgInput) {
         // Handle drag and drop
@@ -663,7 +663,7 @@ document.addEventListener("DOMContentLoaded", function() {
             dropArea.addEventListener(eventName, function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                console.log('Drag event:', eventName);
+                console.debug('Drag event:', eventName);
                 
                 if (eventName === 'dragenter' || eventName === 'dragover') {
                     dropArea.classList.add('drag-over');
@@ -677,8 +677,14 @@ document.addEventListener("DOMContentLoaded", function() {
     loadSettings();
     loadShadowSettings();
     loadCountdownColor();
-    loadGradientDirection();
-    setupDropdownListeners();
+    // Ensure gradient direction control is initialized
+    if (typeof loadGradientDirection === 'function') {
+        loadGradientDirection();
+    }
+    // Ensure dropdown toggle handlers are attached
+    if (typeof setupDropdownListeners === 'function') {
+        setupDropdownListeners();
+    }
     
     // Load saved background
     const savedBg = localStorage.getItem('bgImage');
@@ -812,92 +818,147 @@ document.addEventListener("DOMContentLoaded", function() {
     updateAuthButtonText();
 });
 
-function setupDropdownListeners() {
-    // Set up click handlers for the dropdown toggles
-    document.getElementById('rename-periods-toggle')?.addEventListener('click', () => {
-        toggleDropdown('rename-periods-content', 'rename-periods-toggle');
-        populateRenamePeriods(); // Populate rename periods when the dropdown is opened
-    });
-    document.getElementById('custom-schedule-toggle')?.addEventListener('click', () => toggleDropdown('custom-schedule-content', 'custom-schedule-toggle'));
-    
-    // Remove the old event listeners first
-    const timerShadowCheckbox = document.getElementById('timer-shadow');
-    if (timerShadowCheckbox) {
-        timerShadowCheckbox.removeEventListener('change', toggleShadowSettings);
-        timerShadowCheckbox.addEventListener('change', function() {
-            toggleShadowSettings();
-            updateTimerShadow();
-        });
-    }
-}
-
-function preventDefaults(e) {
-    e.preventDefault();
-    e.stopPropagation();
-}
-
-// Add this new function
-function loadCountdownColor() {
-    const countdownColor = localStorage.getItem("countdownColor") || "#ffffff";
-    const countdownElement = document.getElementById("current-period-time");
-    if (countdownElement) {
-        countdownElement.style.color = countdownColor;
-    }
-    
-    const colorInput = document.getElementById("countdown-color");
-    if (colorInput) {
-        colorInput.value = countdownColor;
-    }
-}
-
-// Add this new function
-function updateCountdownColor() {
-    const color = document.getElementById("countdown-color").value;
-    document.getElementById("current-period-time").style.color = color;
-    localStorage.setItem("countdownColor", color);
-    saveSettings();
-}
-
-// Also add this new function since it's referenced but missing
+// Initialize gradient direction select control from saved settings
 function loadGradientDirection() {
-    const direction = localStorage.getItem("gradientDirection") || "to bottom";
-    const directionSelect = document.getElementById("gradient-direction");
-    if (directionSelect) {
-        directionSelect.value = direction;
-    }
-}
-
-function populateRenamePeriods() {
-    const renamePeriodsContent = document.getElementById("rename-periods-content");
-    if (!renamePeriodsContent) {
-        console.error('Rename periods content not found');
-        return;
-    }
-    
-    renamePeriodsContent.innerHTML = ''; // Clear existing content
-
-    currentSchedule.forEach((period, index) => {
-        if (period.name !== "Passing" && period.name !== "Lunch") {
-            const periodDiv = document.createElement("div");
-            periodDiv.className = "rename-period";
-            periodDiv.innerHTML = `
-                <label for="rename-period-${index}">Rename ${period.name}:</label>
-                <input type="text" id="rename-period-${index}" value="${period.name}" onchange="renamePeriod(${index}, this.value)">
-            `;
-            renamePeriodsContent.appendChild(periodDiv);
+    try {
+        // Prefer extension-specific saved settings if present
+        const extSettingsRaw = localStorage.getItem('extensionGradientSettings');
+        if (extSettingsRaw) {
+            const extSettings = JSON.parse(extSettingsRaw);
+            const dir = extSettings.angle ?? extSettings.angle;
+            const select = document.getElementById('gradientDirection');
+            if (select && dir !== undefined) select.value = String(dir);
+            return;
         }
-    });
-}
 
-function renamePeriod(index, newName) {
-    if (index >= 0 && index < currentSchedule.length) {
-        currentSchedule[index].name = newName;
-        updateScheduleDisplay();
-        updateCountdowns();
-        localStorage.setItem('currentSchedule', JSON.stringify(currentSchedule)); // Save renamed periods
-        saveSettings();
+        // Fallback to the app's gradientSettings
+        const saved = JSON.parse(localStorage.getItem('gradientSettings'));
+        const angle = saved?.angle ?? 90;
+        const select = document.getElementById('gradientDirection');
+        if (select) select.value = String(angle);
+    } catch (err) {
+        console.error('Error loading gradient direction:', err);
     }
 }
+
+// Update gradient direction handler exposed globally for inline onchange handlers
+function updateGradientDirection(angle) {
+    try {
+        const parsed = parseInt(angle, 10);
+        // Update extension preview local storage (used by index.html preview code)
+        const extRaw = localStorage.getItem('extensionGradientSettings');
+        let ext = extRaw ? JSON.parse(extRaw) : {};
+        ext.angle = parsed;
+        localStorage.setItem('extensionGradientSettings', JSON.stringify(ext));
+
+        // Update app gradient settings as well
+        const appRaw = localStorage.getItem('gradientSettings');
+        let app = appRaw ? JSON.parse(appRaw) : { enabled: true, angle: parsed, startColor: '#000035', endColor: '#00bfa5' };
+        app.angle = parsed;
+        localStorage.setItem('gradientSettings', JSON.stringify(app));
+
+        // Apply gradient update if updateGradient is available
+        if (typeof updateGradient === 'function') {
+            updateGradient(true);
+        } else if (typeof GradientManager !== 'undefined' && GradientManager.applyGradient) {
+            // Try to call the static apply if provided
+            GradientManager.applyGradient(app);
+        } else {
+            // As a last resort, set body background using the two-color gradient
+            const gradientString = `linear-gradient(${parsed}deg, ${app.startColor || '#000035'}, ${app.endColor || '#00bfa5'})`;
+            document.body.style.background = gradientString;
+            const preview = document.querySelector('.gradient-preview');
+            if (preview) preview.style.background = gradientString;
+        }
+    } catch (err) {
+        console.error('Error updating gradient direction:', err);
+    }
+}
+
+// Expose globally for inline HTML onchange handlers
+window.loadGradientDirection = loadGradientDirection;
+window.updateGradientDirection = updateGradientDirection;
+
+// Attach click listeners to dropdown toggles and manage dropdown visibility
+function setupDropdownListeners() {
+    try {
+        // Delegate: add listener to document to catch dynamically added toggles too
+        document.addEventListener('click', function (e) {
+            const toggle = e.target.closest('.dropdown-toggle');
+            if (!toggle) return;
+
+            // Prevent default actions
+            e.preventDefault();
+
+            const content = toggle.nextElementSibling;
+            if (!content || !content.classList.contains('dropdown-content')) return;
+
+            const isOpen = content.classList.contains('show');
+
+            // Close all other dropdowns
+            document.querySelectorAll('.dropdown-content.show').forEach(el => {
+                if (el !== content) el.classList.remove('show');
+            });
+            document.querySelectorAll('.dropdown-toggle.active').forEach(el => {
+                if (el !== toggle) el.classList.remove('active');
+            });
+
+            // Toggle current
+            if (isOpen) {
+                content.classList.remove('show');
+                toggle.classList.remove('active');
+            } else {
+                content.classList.add('show');
+                toggle.classList.add('active');
+            }
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.dropdown-toggle') || e.target.closest('.dropdown-content')) return;
+            document.querySelectorAll('.dropdown-content.show').forEach(el => el.classList.remove('show'));
+            document.querySelectorAll('.dropdown-toggle.active').forEach(el => el.classList.remove('active'));
+        });
+    } catch (err) {
+        console.error('Error setting up dropdown listeners:', err);
+    }
+}
+
+// Expose globally for callers/tests
+window.setupDropdownListeners = setupDropdownListeners;
+
+// Add a delegated click handler to reliably catch dropdown toggle clicks
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        const panelsRoot = document.querySelector('.settings-panels') || document.getElementById('settings-sidebar');
+
+        const handleToggleClick = (e) => {
+            const toggle = e.target.closest('.dropdown-toggle');
+            if (!toggle) return;
+            // Derive IDs: "xxx-toggle" -> "xxx-content"
+            const toggleId = toggle.id || toggle.getAttribute('data-toggle-id') || '';
+            const contentId = toggleId ? toggleId.replace('-toggle', '-content') : (toggle.dataset.target ? `${toggle.dataset.target}-content` : null);
+            if (!contentId) {
+                console.warn('Dropdown toggle click: could not derive content id for', toggle);
+                return;
+            }
+            console.debug('Dropdown toggle clicked:', { toggleId, contentId });
+            // Close other dropdowns and toggle this one
+            const contentEl = document.getElementById(contentId);
+            closeOtherDropdowns(contentEl);
+            toggleDropdown(contentId, toggleId || toggle.dataset.target || toggle);
+        };
+
+        if (panelsRoot) {
+            panelsRoot.addEventListener('click', handleToggleClick);
+        } else {
+            // Fallback: global delegation if panels root not present
+            document.body.addEventListener('click', handleToggleClick);
+        }
+    } catch (err) {
+        console.error('Error installing dropdown delegation:', err);
+    }
+});
 
 // New gradient functionality
 
@@ -948,14 +1009,15 @@ function createProgressBar() {
     
     progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
     
-    // Start the update loop
+    // Start the update loop (TimerManager will call updateProgressBar each second if enabled)
     updateProgressBar();
-    
-    // Update progress bar when switching periods
-    if (window.progressInterval) {
-        clearInterval(window.progressInterval);
+    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
+        window.TimerManager.setProgress(true);
+    } else {
+        // Fallback to legacy interval when TimerManager is not present
+        if (window.progressInterval) clearInterval(window.progressInterval);
+        window.progressInterval = setInterval(updateProgressBar, 1000);
     }
-    window.progressInterval = setInterval(updateProgressBar, 1000);
 }
 
 function updateProgressBarStyle() {
@@ -1124,21 +1186,31 @@ function createProgressBar() {
     
     // Start the update loop
     updateProgressBar();
-    
-    // Update progress bar when switching periods
-    if (window.progressInterval) {
-        clearInterval(window.progressInterval);
+    // If TimerManager is available, let it handle periodic updates. Otherwise, use legacy interval.
+    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
+        window.TimerManager.setProgress(true);
+    } else {
+        // Update progress bar when switching periods
+        if (window.progressInterval) {
+            clearInterval(window.progressInterval);
+        }
+        window.progressInterval = setInterval(updateProgressBar, 1000);
     }
-    window.progressInterval = setInterval(updateProgressBar, 1000);
 }
 
 // Modify the existing startCountdown function to include progress bar updates
 function startCountdown() {
+    // If TimerManager is present, delegate to it
+    if (window.TimerManager && typeof window.TimerManager.start === 'function') {
+        window.TimerManager.start();
+        return window.TimerManager.getIntervalId ? window.TimerManager.getIntervalId() : null;
+    }
+    // Legacy fallback
     updateCountdowns();
-    updateProgressBar(); // Add this line
+    updateProgressBar();
     return setInterval(() => {
         updateCountdowns();
-        updateProgressBar(); // Add this line
+        updateProgressBar();
     }, 1000);
 }
 
@@ -1235,11 +1307,14 @@ function removeProgressBar() {
     if (progressBar) {
         progressBar.remove();
     }
-    
-    // Clear any existing update interval
-    if (window.progressInterval) {
-        clearInterval(window.progressInterval);
-        window.progressInterval = null;
+    // If TimerManager exists, disable progress updates via it; otherwise clear legacy interval
+    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
+        window.TimerManager.setProgress(false);
+    } else {
+        if (window.progressInterval) {
+            clearInterval(window.progressInterval);
+            window.progressInterval = null;
+        }
     }
 }
 
@@ -1451,6 +1526,8 @@ function resetDropArea(dropArea) {
     }
 }
 
+
+
 // Fix for the first error: Missing gradient-stops container
 function initializeGradientControls() {
     const container = document.querySelector('.gradient-controls');
@@ -1491,6 +1568,7 @@ function applyUploadedImage(imageData, dropArea) {
             preview.style.backgroundImage = `url('${imageData}')`;
             preview.style.backgroundSize = 'cover';
             preview.style.backgroundPosition = 'center';
+            preview.style.backgroundRepeat = 'no-repeat';
         }
         
         // Apply to body
@@ -1676,7 +1754,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function updateFirestoreSettings() {
     if (window.authManager && window.authManager.currentUser) {
         await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
-        console.log("Firestore settings updated on settings close.");
+    console.debug("Firestore settings updated on settings close.");
     }
 }
 
@@ -1852,6 +1930,15 @@ document.addEventListener('DOMContentLoaded', function() {
         updatePopupGradient(0, stops[0].color, stops[0].position);
     });
 });
+ 
+// Add missing countdown color helpers (used during initialization)
+function loadCountdownColor() {
+    const countdownColor = localStorage.getItem("countdownColor") || "#ffffff";
+    const countdownElement = document.getElementById("current-period-time");
+    if (countdownElement) {
+        countdownElement.style.color = countdownColor;
+    }
+}
 
 // Update box border
 function updateBoxBorder() {
