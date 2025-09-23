@@ -614,8 +614,9 @@ function toggleDropdown(contentId, toggleId) {
         return;
     }
 
-    // First close any other open dropdowns
+    // First close any other open dropdowns (but do not auto-close the rename-periods dropdown)
     document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
+        if (dropdown.id === 'rename-periods-content') return; // keep rename dropdown open unless its own toggle is used
         if (dropdown.id !== contentId) {
             dropdown.classList.remove('show');
             const otherToggle = document.getElementById(dropdown.id.replace('-content', '-toggle'));
@@ -913,11 +914,23 @@ function setupDropdownListeners() {
             }
         });
 
-        // Close dropdowns when clicking outside
+        // Close dropdowns when clicking outside, but keep the rename-periods dropdown open
         document.addEventListener('click', function (e) {
+            // If the click is inside a toggle or a dropdown content, do nothing
             if (e.target.closest('.dropdown-toggle') || e.target.closest('.dropdown-content')) return;
-            document.querySelectorAll('.dropdown-content.show').forEach(el => el.classList.remove('show'));
-            document.querySelectorAll('.dropdown-toggle.active').forEach(el => el.classList.remove('active'));
+
+            document.querySelectorAll('.dropdown-content.show').forEach(el => {
+                // Keep the rename periods dropdown open unless its toggle is explicitly clicked or settings are closed
+                if (el.id === 'rename-periods-content') return;
+                el.classList.remove('show');
+                try {
+                    const toggleId = el.id.replace('-content', '-toggle');
+                    const toggleEl = document.getElementById(toggleId);
+                    if (toggleEl) toggleEl.classList.remove('active');
+                } catch (err) {
+                    // ignore
+                }
+            });
         });
     } catch (err) {
         console.error('Error setting up dropdown listeners:', err);
