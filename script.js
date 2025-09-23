@@ -1037,6 +1037,17 @@ function updateScheduleDisplay() {
     updateCountdowns();
 }
 
+// Update the browser tab title with current period and remaining time
+function updateTabTitle(periodDisplayName, timeText) {
+    try {
+        if (!periodDisplayName || !timeText) return;
+        document.title = `${periodDisplayName} | ${timeText}`;
+    } catch (e) {
+        // silent
+    }
+}
+
+
 function updateCountdowns() {
     // Get current time in seconds
     const now = new Date();
@@ -1086,7 +1097,9 @@ function updateCountdowns() {
         if (secondsLeft < 0) secondsLeft = 0;
         const minutes = Math.floor(secondsLeft / 60);
         const seconds = secondsLeft % 60;
-        timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        const timeText = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.textContent = timeText;
+        if (typeof updateTabTitle === 'function') updateTabTitle(periodDisplayName, timeText);
     } else {
         // Always show countdown to next school day's Period 1 after last period ends
         let nextDay = new Date();
@@ -1118,8 +1131,10 @@ function updateCountdowns() {
         const hours = Math.floor(secondsLeft / 3600);
         const minutes = Math.floor((secondsLeft % 3600) / 60);
         const seconds = secondsLeft % 60;
-        headingElement.textContent = `${headerName} \u25B8 Free until Period 1`;
-        timerElement.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    headingElement.textContent = `${headerName} \u25B8 Free`;
+        const timeText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        timerElement.textContent = timeText;
+    if (typeof updateTabTitle === 'function') updateTabTitle('Free', timeText);
     }
 }
 
