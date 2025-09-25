@@ -1101,7 +1101,48 @@ function updateCountdowns() {
         timerElement.textContent = timeText;
         if (typeof updateTabTitle === 'function') updateTabTitle(periodDisplayName, timeText);
     } else {
-        // Always show countdown to next school day's Period 1 after last period ends
+        // First: try to find the next upcoming period later today
+        const now = new Date();
+        const todayYear = now.getFullYear();
+        const todayMonth = now.getMonth();
+        const todayDate = now.getDate();
+
+        let upcomingPeriod = null;
+        for (let i = 0; i < currentSchedule.length; i++) {
+            const p = currentSchedule[i];
+            if (!p || !p.start) continue;
+            const startSec = getTimeInSeconds(p.start);
+            if (startSec > currentTimeInSeconds) {
+                upcomingPeriod = p;
+                break;
+            }
+        }
+
+        if (upcomingPeriod) {
+            // Count down to today's upcoming period
+            const [h, m] = upcomingPeriod.start.split(':').map(Number);
+            const targetDate = new Date(todayYear, todayMonth, todayDate, h, m, 0);
+            let secondsLeft = Math.floor((targetDate - now) / 1000);
+            if (secondsLeft < 0) secondsLeft = 0;
+            const hours = Math.floor(secondsLeft / 3600);
+            const minutes = Math.floor((secondsLeft % 3600) / 60);
+            const seconds = secondsLeft % 60;
+
+            // Determine display name for upcoming period (respect renames)
+            let upcomingDisplayName = upcomingPeriod.name || 'Next';
+            if (upcomingDisplayName.startsWith('Period ')) {
+                const periodNum = upcomingDisplayName.split(' ')[1];
+                if (renames[periodNum]) upcomingDisplayName = renames[periodNum];
+            }
+
+            headingElement.textContent = `${headerName} \u25B8 ${upcomingDisplayName}`;
+            const timeText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerElement.textContent = timeText;
+            if (typeof updateTabTitle === 'function') updateTabTitle(upcomingDisplayName, timeText);
+            return;
+        }
+
+        // No more periods today -> fall back to existing logic: countdown to next school day's Period 1
         let nextDay = new Date();
         nextDay.setHours(0,0,0,0);
         do {
@@ -1123,18 +1164,18 @@ function updateCountdowns() {
             timerElement.textContent = "00:00";
             return;
         }
-        let [h, m] = period1.start.split(':').map(Number);
-        let nextPeriod1Date = new Date(nextDay.getFullYear(), nextDay.getMonth(), nextDay.getDate(), h, m, 0);
+        let [nh, nm] = period1.start.split(':').map(Number);
+        let nextPeriod1Date = new Date(nextDay.getFullYear(), nextDay.getMonth(), nextDay.getDate(), nh, nm, 0);
         let nowDate = new Date();
         let secondsLeft = Math.floor((nextPeriod1Date - nowDate) / 1000);
         if (secondsLeft < 0) secondsLeft = 0;
         const hours = Math.floor(secondsLeft / 3600);
         const minutes = Math.floor((secondsLeft % 3600) / 60);
         const seconds = secondsLeft % 60;
-    headingElement.textContent = `${headerName} \u25B8 Free`;
+        headingElement.textContent = `${headerName} \u25B8 Free`;
         const timeText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
         timerElement.textContent = timeText;
-    if (typeof updateTabTitle === 'function') updateTabTitle('Free', timeText);
+        if (typeof updateTabTitle === 'function') updateTabTitle('Free', timeText);
     }
 }
 
