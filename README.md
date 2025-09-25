@@ -38,3 +38,5 @@ This project is licensed under the MIT License.
 
 Note: Fixed a runtime error where `loadGradientDirection` was missing from `script2.js` (added helper functions `loadGradientDirection` and `updateGradientDirection` to initialize and sync the gradient direction select control).
 
+Branding: Added a high-resolution `favicon.svg` (and a PNG fallback) to modernize the site iconography.
+
