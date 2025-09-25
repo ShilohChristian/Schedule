@@ -1,2017 +1,2226 @@
-// Global variables
-let activeStop = null;
-let dropOverlay = null;
-
-// Add this at the start of the file
-function waitForAuth() {
-    return new Promise((resolve) => {
-        const checkAuth = () => {
-            if (window.authManager) {
-                resolve(window.authManager);
-            } else {
-                setTimeout(checkAuth, 50);
-            }
-        };
-        checkAuth();
-    });
+/* Global Styles */
+body {
+    margin: 0;
+    font-family: 'Roboto', Arial, sans-serif;
+    background: linear-gradient(90deg, #000035 0%, #00bfa5 100%);
+    color: #ffffff;
+    height: 100vh;
+    overflow: hidden;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+    position: relative;
+    z-index: 0;
+    /* Remove fallback solid color, or keep as fallback only */
+    background-color: #000035;
 }
 
-// Add a check for auth manager availability
-function getAuthManager() {
-    return new Promise((resolve) => {
-        const check = () => {
-            if (window.authManager) {
-                resolve(window.authManager);
-            } else {
-                setTimeout(check, 50);
-            }
-        };
-        check();
-    });
+/* Add global transitions */
+* {
+    transition: all 0.3s ease;
 }
 
-// Settings Management
-function toggleSettingsSidebar() {  
-    const sidebar = document.getElementById("settings-sidebar");
-    sidebar.classList.toggle("open");
-    
-    // Save settings when closing the sidebar
-    if (!sidebar.classList.contains("open")) {
-        saveSettings();
-    }
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 20px;
 }
 
-// Add missing helper function
-function hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : null;
+.main-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    padding-left: 20px;
+    position: relative;
 }
 
-// Add these functions at the start of the file
-function saveBackground(imageData) {
-    try {
-        // First, try to remove any existing background
-        localStorage.removeItem('bgImage');
-        
-        // Then save the new background
-        localStorage.setItem('bgImage', imageData);
-        
-        // Verify the save was successful
-        const savedData = localStorage.getItem('bgImage');
-        if (!savedData) {
-            throw new Error('Background save verification failed');
-        }
-        
-    console.debug('Background saved successfully');
-        return true;
-    } catch (error) {
-        console.error('Error saving background:', error);
-        return false;
-    }
+.schedule-container {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    width: 30%;
+    max-width: 300px;
+    color: #000035;
+    margin-bottom: 20px;
+    text-align: center;
+    line-height: 2;
+    position: fixed;
+    bottom: 240px;
+    left: 20px;
+    z-index: 2;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
 }
 
-function loadBackground() {
-    try {
-        const bgImage = localStorage.getItem('bgImage');
-        if (!bgImage) return false;
-
-        // Create a test image to verify the data
-        const img = new Image();
-        img.onload = function() {
-            document.body.style.backgroundImage = `url('${bgImage}')`;
-            document.body.style.backgroundSize = 'cover';
-            document.body.style.backgroundPosition = 'center';
-            document.body.style.backgroundRepeat = 'no-repeat';
-            document.body.style.backgroundAttachment = 'fixed';
-        };
-        img.onerror = function() {
-            console.error('Failed to load background image');
-            localStorage.removeItem('bgImage');
-            return false;
-        };
-        img.src = bgImage;
-        
-        return true;
-    } catch (error) {
-        console.error('Error loading background:', error);
-        return false;
-    }
+/* Consolidated heading styles */
+h3 {
+    font-size: 1.2em;
+    color: #ffffff;
+    display: inline;
 }
 
-// Modify your loadSettings function
-async function loadSettings() {
-    try {
-        await waitForAuth();
-        const firestoreSettings = await loadUserSettings();
-        
-        if (firestoreSettings) {
-            console.debug("Applying settings from Firestore");
-            const fontColor = firestoreSettings.fontColor || "#ffffff";
-            const fontColorElement = document.getElementById('font-color');
-            const countdownHeading = document.getElementById('countdown-heading');
-            
-            if (fontColorElement) fontColorElement.value = fontColor;
-            if (countdownHeading) countdownHeading.style.color = fontColor;
-        } else {
-            console.debug("No Firestore settings found. Falling back to localStorage.");
-            const fontColor = localStorage.getItem("fontColor") || "#ffffff";
-            const fontColorElement = document.getElementById('font-color');
-            const countdownHeading = document.getElementById('countdown-heading');
-            
-            if (fontColorElement) fontColorElement.value = fontColor;
-            if (countdownHeading) countdownHeading.style.color = fontColor;
-        }
-        
-        // Load other settings with null checks
-        await loadShadowSettings();
-        loadProgressBarSettings();
-        loadWhiteBoxSettings();
-        
-    } catch (error) {
-        console.error('Error loading settings:', error);
-    }
+/* Consolidated select styles */
+select {
+    font-size: 1.2em;
+    color: #000035;
+    background-color: #ffffff;
+    border: 2px solid #00bfa5;
+    border-radius: 5px;
+    padding: 5px;
+    margin-left: 10px;
 }
 
-function loadWhiteBoxSettings() {
-    const savedColor = localStorage.getItem("whiteBoxColor") || "rgba(255, 255, 255, 0.9)";
-    const savedOpacity = localStorage.getItem("whiteBoxOpacity") || "90";
-    const whiteBoxTextColor = localStorage.getItem("whiteBoxTextColor") || "#000035";
-    
-    document.querySelector(".schedule-container").style.backgroundColor = savedColor;
-    document.querySelector(".schedule-container").style.color = whiteBoxTextColor;
-    document.getElementById("white-box-heading").style.color = whiteBoxTextColor;
-    
-    // Set input values
-    const colorMatch = savedColor.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
-    if (colorMatch) {
-        const [r, g, b] = [colorMatch[1], colorMatch[2], colorMatch[3]].map(Number);
-        document.getElementById("white-box-color").value = rgbToHex(r, g, b);
-    }
-    
-    document.getElementById("white-box-opacity").value = savedOpacity;
-    document.getElementById("white-box-text-color").value = whiteBoxTextColor;
-    
-    // Update opacity display
-    const opacityDisplay = document.querySelector('#white-box-opacity + .range-value');
-    if (opacityDisplay) {
-        opacityDisplay.textContent = `${savedOpacity}%`;
-    }
+.schedule-container h1 {
+    text-align: center;
+    font-size: 1.5em;
 }
 
-// Add helper function for RGB to Hex conversion
-function rgbToHex(r, g, b) {
-    return '#' + [r, g, b].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
+#schedule {
+    margin-bottom: 20px;
 }
 
-// UI Controls
-// Simplified image handling
-function handleBgImageUpload(file) {
-    if (!file) {
-        console.error('No file provided');
-        return;
-    }
-
-    // Reset any active states
-    dropOverlay?.classList.remove('active');
-    document.getElementById('bg-image-drop-area')?.classList.remove('drag-over');
-
-    // Validate file
-    if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-    }
-
-    // Updated file type check
-    const allowedTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/avif',
-        'image/bmp',
-        'image/tiff',
-        'image/svg+xml'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-        alert('Supported formats: JPG, PNG • Max 5MB');
-        return;
-    }
-
-    // Disable gradient if enabled
-    if (window.gradientManager) {
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox && checkbox.checked) {
-            checkbox.checked = false;
-            window.gradientManager.toggleGradient();
-        }
-    }
-
-    // Show loading state
-    const dropArea = document.getElementById('bg-image-drop-area');
-    if (dropArea) {
-        dropArea.style.opacity = '0.5';
-        dropArea.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    }
-
-    // Process the image
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        processUploadedImage(e.target.result, dropArea, file.type);
-    };
-    reader.onerror = function(error) {
-        console.error('FileReader error:', error);
-        alert('Error reading file');
-    };
-
-    try {
-        reader.readAsDataURL(file);
-    } catch (error) {
-        console.error('Error starting file read:', error);
-        alert('Error reading file');
-    }
+.current-period {
+    position: fixed;
+    bottom: 10px;
+    left: 20px;
+    text-align: left;
+    z-index: 2;
 }
 
-// Modified processUploadedImage function to call applyAndSaveImage instead of applyUploadedImage
-async function processUploadedImage(dataUrl, dropArea, fileType) {
-    const img = new Image();
-    
-    img.onload = function() {
-        try {
-            // For GIFs and SVGs, use original file
-            if (fileType === 'image/gif' || fileType === 'image/svg+xml') {
-                applyAndSaveImage(dataUrl); // Replaced applyUploadedImage with applyAndSaveImage
-                return;
-            }
-
-            // For other formats, compress
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            let { width, height } = calculateImageDimensions(img.width, img.height);
-            canvas.width = width;
-            canvas.height = height;
-            
-            ctx.drawImage(img, 0, 0, width, height);
-            const compressedImage = canvas.toDataURL(fileType, 0.7);
-            
-            applyAndSaveImage(compressedImage);
-        } catch (error) {
-            console.error('Error processing image:', error);
-            hideProcessingOverlay();
-            alert('Error processing image');
-        }
-    };
-    
-    img.onerror = function() {
-        hideProcessingOverlay();
-        alert('Invalid image file');
-    };
-    
-    img.src = dataUrl;
+#current-schedule-title {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #ffffff;
 }
 
-function applyAndSaveImage(imageData) {
-    try {
-        // Update preview
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = `url('${imageData}')`;
-            preview.style.backgroundSize = 'cover';
-            preview.style.backgroundPosition = 'center';
-            preview.style.backgroundRepeat = 'no-repeat';
-        }
-        
-        // Apply to body with correct CSS
-        document.body.style.backgroundImage = `url('${imageData}')`;
-        document.body.style.backgroundSize = 'cover';
-        document.body.style.backgroundPosition = 'center';
-        document.body.style.backgroundRepeat = 'no-repeat';
-        document.body.style.backgroundAttachment = 'fixed';
-        
-        // Save to localStorage
-        localStorage.setItem('bgImage', imageData);
-        saveSettings();
-        updateFirestoreSettings();
-        showSuccessMessage();
-    } catch (error) {
-        console.error('Error applying image:', error);
-        alert('Error applying image');
-    } finally {
-        hideProcessingOverlay();
-    }
+#remove-bg-button {
+    background-color: white;
+    color: #000035;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-function showProcessingOverlay() {
-    let overlay = document.querySelector('.processing-overlay');
-    if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'processing-overlay';
-        overlay.innerHTML = `
-            <div class="processing-content">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Processing image...</p>
-            </div>
-        `;
-        document.body.appendChild(overlay);
-    }
-    overlay.classList.add('active');
+#remove-bg-button:hover {
+    background-color: #f0f0f0;
 }
 
-function hideProcessingOverlay() {
-    const overlay = document.querySelector('.processing-overlay');
-    if (overlay) {
-        overlay.classList.remove('active');
-    }
+#current-period-time {
+    font-size: 8em;
+    color: #ffffff;
+    margin-top: 20px;
 }
 
-function showSuccessMessage() {
-    const successMessage = document.createElement('div');
-    successMessage.className = 'upload-success';
-    successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
-    
-    const dropArea = document.getElementById('bg-image-drop-area');
-    if (dropArea && dropArea.parentNode) {
-        const existingMessage = dropArea.parentNode.querySelector('.upload-success');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
-        setTimeout(() => successMessage.remove(), 3000);
-    }
+#current-schedule-title, #current-period-time {
+    color: inherit;
 }
 
-function applyImageBackground(imageUrl) {
-    if (!imageUrl) return;
-    
-    // Set background properties to prevent repeat and always cover
-    document.body.style.backgroundImage = `url('${imageUrl}')`;
-    document.body.style.backgroundSize = 'cover';
-    document.body.style.backgroundPosition = 'center';
-    document.body.style.backgroundRepeat = 'no-repeat';
-    document.body.style.backgroundAttachment = 'fixed';
-    
-    // Save to localStorage
-    localStorage.setItem('bgImage', imageUrl);
-    
-    // Update preview if it exists
-    const preview = document.getElementById('bg-preview');
-    if (preview) {
-        preview.style.backgroundImage = `url('${imageUrl}')`;
-        preview.style.backgroundSize = 'cover';
-        preview.style.backgroundPosition = 'center';
-        preview.style.backgroundRepeat = 'no-repeat';
-    }
-
-    // Disable gradient if it's enabled
-    if (window.gradientManager) {
-        window.gradientManager.enabled = false;
-        window.gradientManager.updateUI();
-        window.gradientManager.saveSettings();
-    }
+#settings-button {
+    position: fixed;
+    bottom: 20px;
+    right: 80px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    color: #ffffff;
+    font-size: 24px;
+    width: 50px;
+    height: 50px;
+    border-radius: 25px;
+    cursor: pointer;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
 }
 
-function clearBackgrounds() {
-    // Modified to only reset backgroundImage, not the gradient
-    document.body.style.backgroundImage = 'none';
+#settings-button:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: rotate(45deg);
 }
 
-function applyGradientBackground(settings) {
-    // Clear any existing background image
-    document.body.style.backgroundImage = '';
-    localStorage.removeItem("bgImage");
-
-    let gradientString = `linear-gradient(${settings.direction}, `;
-    settings.stops.forEach((stop, index) => {
-        gradientString += `${stop.color} ${stop.position}%`;
-        if (index < settings.stops.length - 1) {
-            gradientString += ', ';
-        }
-    });
-    gradientString += ')';
-    
-    document.body.style.background = gradientString;
-    document.body.style.opacity = settings.opacity / 100;
+/* Consolidated dropdown styles */
+.dropdown-toggle {
+    width: calc(100% - 20px);
+    padding: 12px;
+    margin: 10px;
+    background: rgba(0, 191, 165, 0.1);
+    border: 1px solid rgba(0, 191, 165, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    margin-left: 10px; /* Added margin for spacing */
+    margin-right: 10px; /* Added margin for spacing */
 }
 
-function removeBackground() {
-    // First check if there's actually a background to remove
-    const hasBackground = document.body.style.backgroundImage || localStorage.getItem('bgImage');
-    if (!hasBackground || hasBackground === 'none') return;
-
-    // Clear the background
-    document.body.style.backgroundImage = '';
-    localStorage.removeItem('bgImage');
-
-    // Remove background from Firestore using the dedicated delete function
-    if (window.authManager?.currentUser && typeof window.authManager.deleteUserBackground === 'function') {
-        window.authManager.deleteUserBackground(window.authManager.currentUser.uid, 'bgImage')
-            .then(() => {
-                console.debug('Firestore bgImage deleted successfully');
-            })
-            .catch((err) => {
-                console.error('Error deleting bgImage from Firestore:', err);
-            });
-    }
-
-    // Enable gradient with a small delay to ensure proper state update
-    setTimeout(() => {
-        if (window.gradientManager) {
-            window.gradientManager.enabled = true;
-            const checkbox = document.getElementById('gradient-enabled');
-            if (checkbox) checkbox.checked = true;
-
-            // Ensure gradientManager.stops is a valid array before applying gradient
-            if (!Array.isArray(window.gradientManager.stops) || window.gradientManager.stops.length === 0) {
-                window.gradientManager.stops = [
-                    { color: '#000035', position: 0 },
-                    { color: '#00bfa5', position: 100 }
-                ];
-            }
-
-            window.gradientManager.updateUI?.();
-            window.gradientManager.applyGradient?.();
-            window.gradientManager.saveSettings?.();
-        }
-        
-        // Update preview
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = 'none';
-            preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
-        }
-    }, 50);
+.dropdown-toggle:hover {
+    background: rgba(0, 191, 165, 0.2);
+    transform: translateY(-1px);
 }
 
-function updateWhiteBoxColor() {
-    const color = document.getElementById("white-box-color").value;
-    const opacity = document.getElementById("white-box-opacity").value;
-    const rgb = hexToRgb(color);
-    const rgba = `rgba(${rgb}, ${opacity / 100})`;
-    
-    document.querySelector(".schedule-container").style.backgroundColor = rgba;
-    
-    // Update opacity display
-    const opacityDisplay = document.querySelector('#white-box-opacity + .range-value');
-    if (opacityDisplay) {
-        opacityDisplay.textContent = `${opacity}%`;
-    }
-    
-    // Save both color and opacity
-    localStorage.setItem("whiteBoxColor", rgba);
-    localStorage.setItem("whiteBoxOpacity", opacity);
-    saveSettings();
+.dropdown-toggle h3 {
+    margin: 0;
+    font-weight: 500;
 }
 
-function updateWhiteBoxTextColor() {
-    const whiteBoxTextColor = document.getElementById("white-box-text-color").value;
-    const whiteBoxHeading = document.getElementById("white-box-heading");
-    whiteBoxHeading.style.color = whiteBoxTextColor;
-    document.querySelector(".schedule-container").style.color = whiteBoxTextColor; // Change text color in the white box
-    localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor); // Save to local storage
-    saveSettings();
+.triangle {
+    transition: transform 0.3s ease;
 }
 
-// Shadow System
-function updateTimerShadow() {
-    const checkbox = document.getElementById("timer-shadow");
-    const timerElement = document.getElementById("current-period-time");
-    const previewElement = document.getElementById("shadow-preview");
-    const content = document.getElementById("shadow-settings-content");
-    
-    if (!checkbox || !timerElement || !previewElement || !content) {
-        console.error('Required elements not found');
-        return;
-    }
-
-    // Get all shadow settings
-    const settings = {
-        enabled: checkbox.checked,
-        color: document.getElementById("shadow-color")?.value || "#000000",
-        opacity: document.getElementById("shadow-opacity")?.value || 50,
-        blur: document.getElementById("shadow-blur")?.value || 4,
-        distance: document.getElementById("shadow-distance")?.value || 2,
-        angle: document.getElementById("shadow-angle")?.value || 45
-    };
-
-    // Toggle content visibility
-    content.classList.toggle("show", settings.enabled);
-
-    if (!settings.enabled) {
-        timerElement.style.textShadow = 'none';
-        previewElement.style.textShadow = 'none';
-    } else {
-        // Calculate shadow
-        const angleRad = (settings.angle * Math.PI) / 180;
-        const x = Math.cos(angleRad) * settings.distance;
-        const y = Math.sin(angleRad) * settings.distance;
-        const rgba = `rgba(${hexToRgb(settings.color)}, ${settings.opacity / 100})`;
-        const shadowValue = `${x}px ${y}px ${settings.blur}px ${rgba}`;
-        
-        // Apply shadow
-        timerElement.style.textShadow = shadowValue;
-        previewElement.style.textShadow = shadowValue;
-
-        // Update range value displays
-        updateRangeValues(settings);
-    }
-
-    // Save settings
-    localStorage.setItem("timerShadowSettings", JSON.stringify(settings));
-    saveSettings();
+.dropdown-toggle.active .triangle {
+    transform: rotate(180deg);
 }
 
-function updateRangeValues(settings) {
-    const rangeLabels = {
-        'shadow-opacity': ['%', settings.opacity],
-        'shadow-blur': ['px', settings.blur],
-        'shadow-distance': ['px', settings.distance],
-        'shadow-angle': ['°', settings.angle]
-    };
-
-    for (const [id, [unit, value]] of Object.entries(rangeLabels)) {
-        const rangeValue = document.querySelector(`[for="${id}"] + input + .range-value`);
-        if (rangeValue) {
-            rangeValue.textContent = `${value}${unit}`;
-        }
-    }
+.dropdown-content {
+    margin: 0 10px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(0, 191, 165, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-function loadShadowSettings() {
-    try {
-        const savedSettings = JSON.parse(localStorage.getItem("timerShadowSettings") || "null") || {
-            enabled: false,
-            color: "#000000",
-            opacity: 50,
-            blur: 4,
-            distance: 2,
-            angle: 45
-        };
-
-        // Add null checks for all DOM elements
-        const elements = {
-            checkbox: document.getElementById("timer-shadow"),
-            colorInput: document.getElementById("shadow-color"),
-            opacityInput: document.getElementById("shadow-opacity"),
-            blurInput: document.getElementById("shadow-blur"),
-            distanceInput: document.getElementById("shadow-distance"),
-            angleInput: document.getElementById("shadow-angle")
-        };
-
-        // Apply settings only if elements exist
-        Object.entries(elements).forEach(([key, element]) => {
-            if (element) {
-                switch(key) {
-                    case 'checkbox':
-                        element.checked = savedSettings.enabled;
-                        break;
-                    case 'colorInput':
-                        element.value = savedSettings.color;
-                        break;
-                    case 'opacityInput':
-                        element.value = savedSettings.opacity;
-                        break;
-                    case 'blurInput':
-                        element.value = savedSettings.blur;
-                        break;
-                    case 'distanceInput':
-                        element.value = savedSettings.distance;
-                        break;
-                    case 'angleInput':
-                        element.value = savedSettings.angle;
-                        break;
-                }
-            }
-        });
-
-        // Update shadow if enabled
-        if (savedSettings.enabled) {
-            updateTimerShadow();
-        }
-    } catch (error) {
-        console.error('Error loading shadow settings:', error);
-    }
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin: 8px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 191, 165, 0.3);
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
 }
 
-function toggleShadowSettings() {
-    const content = document.getElementById("shadow-settings-content");
-    if (!content) {
-        console.error('Shadow settings content not found');
-        return;
-    }
-    content.classList.toggle("show");
+.dropdown-content label {
+    display: block;
+    color: #00bfa5;
+    margin-top: 12px;
+    font-size: 14px;
 }
 
-// Replace this function in script2.js
-function toggleDropdown(contentId, toggleId) {
-    const content = document.getElementById(contentId);
-    const toggle = document.getElementById(toggleId);
-    if (!content || !toggle) {
-        console.error('Dropdown elements not found:', { contentId, toggleId });
-        return;
-    }
-
-    // First close any other open dropdowns (but do not auto-close the rename-periods dropdown)
-    document.querySelectorAll('.dropdown-content.show').forEach(dropdown => {
-        if (dropdown.id === 'rename-periods-content') return; // keep rename dropdown open unless its own toggle is used
-        if (dropdown.id !== contentId) {
-            dropdown.classList.remove('show');
-            const otherToggle = document.getElementById(dropdown.id.replace('-content', '-toggle'));
-            if (otherToggle) {
-                otherToggle.classList.remove('active');
-            }
-        }
-    });
-
-    // Now toggle the clicked dropdown
-    content.classList.toggle('show');
-    toggle.classList.toggle('active');
-
-    // Special handling for rename periods dropdown
-    if (contentId === 'rename-periods-content' && content.classList.contains('show')) {
-        populateRenamePeriods();
-    }
+#period-inputs > div {
+    background: rgba(0, 191, 165, 0.05);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 191, 165, 0.1);
 }
 
-function closeOtherDropdowns(exceptContent) {
-    document.querySelectorAll('.dropdown-content.show').forEach(content => {
-        if (content !== exceptContent) {
-            content.classList.remove('show');
-            const toggle = content.previousElementSibling;
-            if (toggle && toggle.classList.contains('dropdown-toggle')) {
-                toggle.classList.remove('active');
-            }
-        }
-    });
+#save-schedule-button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: #00bfa5;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-// Event Listeners
-document.addEventListener("DOMContentLoaded", function() {
-    console.debug('DOM Content Loaded');
-    
-    const dropArea = document.getElementById("bg-image-drop-area");
-    const bgInput = document.getElementById("bg-image");
-    
-    console.debug('Drop area element:', dropArea);
-    console.debug('File input element:', bgInput);
+#save-schedule-button:hover {
+    background: #00a693;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
 
-    if (dropArea && bgInput) {
-        // Handle drag and drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.debug('Drag event:', eventName);
-                
-                if (eventName === 'dragenter' || eventName === 'dragover') {
-                    dropArea.classList.add('drag-over');
-                } else {
-                    dropArea.classList.remove('drag-over');
-                }
-            });
-        });
+/* Modern Settings Sidebar */
+.settings-sidebar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #1a1a1a;
+    color: #ffffff;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.settings-sidebar.open {
+    display: block;
+    opacity: 1;
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-left i {
+    font-size: 1.25rem;
+    color: #00bfa5;
+}
+
+.header-left h2 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin: 0;
+    color: inherit;
+}
+
+.close-settings {
+    background: none;
+    border: none;
+    color: inherit;
+    width: 32px;
+    height: 32px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.close-settings:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.close-settings i {
+    font-size: 1.25rem;
+}
+
+.settings-sidebar.light-mode .settings-header {
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+}
+
+.settings-sidebar.light-mode .close-settings:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.theme-toggle {
+    position: fixed; /* Change to fixed */
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.settings-sidebar.open .theme-toggle {
+    display: flex;  /* Show only when settings sidebar is open */
+}
+
+.theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.settings-actions button {
+    background: none;
+    border: none;
+    color: #ffffff;
+    padding: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.settings-actions button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.close-settings span {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.settings-content {
+    display: flex;
+    height: calc(100vh - 73px);
+}
+
+/* Update notice modal */
+.update-notice-backdrop {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.55);
+    z-index: 12000;
+    padding: 20px;
+}
+.update-notice-dialog {
+    background: linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%);
+    color: #0b2545;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+    max-width: 560px;
+    width: 100%;
+    padding: 22px 20px;
+    font-family: 'Roboto', Arial, sans-serif;
+    position: relative;
+}
+.update-notice-dialog h2 {
+    margin: 0 0 8px 0;
+    color: #012a4a;
+    font-size: 1.25rem;
+}
+.update-notice-dialog p {
+    margin: 0 0 16px 0;
+    color: #134e4a;
+    line-height: 1.4;
+}
+.update-notice-close {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    border: none;
+    background: transparent;
+    color: #3a3a3a;
+    font-size: 20px;
+    cursor: pointer;
+}
+.update-notice-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 8px;
+}
+.btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #00bfa5, #0077b6);
+    color: #fff;
+}
+.btn-primary:hover { filter: brightness(0.95); }
+/* .update-notice-settings removed (button removed) */
+
+/* Legal panel styles */
+.legal-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 12px;
+}
+.legal-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 16px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.legal-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.legal-card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #00bfa5;
+}
+.legal-desc {
+    color: rgba(255,255,255,0.85);
+    margin: 0;
+    line-height: 1.4;
+}
+.legal-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+}
+.btn-primary {
+    background: linear-gradient(90deg, #00bfa5, #00a693);
+    color: #001;
+    border: none;
+}
+.legal-updated {
+    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+}
+.legal-footer {
+    margin-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.03);
+    padding-top: 12px;
+}
+.legal-note {
+    color: rgba(255,255,255,0.75);
+    margin: 0;
+}
+
+@media (max-width: 700px) {
+    .schedule-container { width: 90%; left: 10px; bottom: 300px; }
+    #current-period-time { font-size: 6em; }
+    .legal-grid { grid-template-columns: 1fr; }
+}
+
+.settings-nav {
+    position: sticky;
+    top: 73px; /* Match header height */
+    background: rgba(255, 255, 255, 0.05);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 1rem;
+    width: 240px;
+    min-width: 240px;
+    height: calc(100vh - 73px);
+}
+
+.settings-panels {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.settings-group {
+    max-width: 800px;
+    margin: 0 auto 1.5rem auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.theme-toggle {
+    position: fixed; /* Change to fixed */
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    color: inherit;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+    transform: scale(1.1);
+}
+
+.theme-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.settings-panels {
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.settings-panel {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.settings-panel.active {
+    display: block;
+}
+
+.settings-group {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    padding: 20px;
+    width: 100%;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+}
+
+.settings-group h3 {
+    font-size: 1.1rem;
+    margin: 0 0 1rem 0;
+    color: #00bfa5;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Light theme modifications */
+.settings-sidebar.light-mode {
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+.settings-sidebar.light-mode .settings-nav {
+    background: #f5f5f5;
+    border-right-color: #e0e0e0;
+}
+
+.settings-sidebar.light-mode .settings-group {
+    background: #f5f5f5;
+}
+
+.settings-sidebar.light-mode .nav-item {
+    color: #1a1a1a;
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.settings-sidebar.light-mode .nav-item.active {
+    background: #00bfa5;
+    color: #ffffff;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(0, 173, 181, 0.2);
+    transform: translateY(-1px);
+}
+
+.settings-sidebar button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.close-settings-sidebar {
+    background: rgba(0, 173, 181, 0.1);
+    border: 1px solid rgba(0, 173, 181, 0.2);
+    color: #EEEEEE;
+}
+
+close-settings-sidebar:hover {
+    background: rgba(0, 173, 181, 0.2);
+}
+
+.dropdown-content {
+    padding: 10px 20px;  /* Add some padding for better visibility */
+    background-color: rgba(255, 255, 255, 0.1); /* Light background for contrast */
+    border-radius: 8px;  /* Rounded corners for a smoother look */
+    display: none;       /* Hide by default */
+    transition: max-height 0.3s ease;
+    overflow: hidden;    /* Hide overflow content */
+    padding: 15px;
+    margin: 10px 0;
+}
+
+/* When the dropdown is toggled to show */
+.dropdown-content.show {
+    display: block;      /* Show the dropdown */
+    max-height: none;    /* Allow the content to expand to its full size */
+}
+
+/* Double Spaced Text Elements */
+.settings-sidebar div {
+    margin-bottom: 20px;
+}
+
+.settings-sidebar button {
+    background-color: #00ADB5;
+    color: #EEEEEE;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.settings-sidebar button:hover {
+    background-color: #009aa1;
+    transform: translateY(-2px);
+}
+
+.settings-sidebar button:active {
+    background-color: #004d40;
+    transform: translateY(1px);
+}
+
+@media (max-width: 600px) {
+    .schedule-container {
+        width: 80%;
+        max-width: none; 
+        margin: 0 auto;
+        position: static;
     }
 
-    loadSettings();
-    loadShadowSettings();
-    loadCountdownColor();
-    // Ensure gradient direction control is initialized
-    if (typeof loadGradientDirection === 'function') {
-        loadGradientDirection();
+    .current-period {
+        position: relative;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        text-align: center;
     }
-    // Ensure dropdown toggle handlers are attached
-    if (typeof setupDropdownListeners === 'function') {
-        setupDropdownListeners();
-    }
-    
-    // Load saved background
-    const savedBg = localStorage.getItem('bgImage');
-    if (savedBg) {
-        applyImageBackground(savedBg);
-    }
-    
-    // Initialize shadow settings if enabled
-    const savedSettings = JSON.parse(localStorage.getItem("timerShadowSettings"));
-    if (savedSettings && savedSettings.enabled) {
-        const content = document.getElementById("shadow-settings-content");
-        if (content) {
-            content.classList.add("show");
-        }
-    }
-    
-    // Add click handler for rename periods toggle
-    const renamePeriodsToggle = document.getElementById('rename-periods-toggle');
-    if (renamePeriodsToggle) {
-        renamePeriodsToggle.addEventListener('click', function() {
-            const content = document.getElementById('rename-periods-content');
-            const isOpen = content.classList.contains('show');
-            
-            // Close all dropdowns first
-            document.querySelectorAll('.dropdown-content').forEach(el => {
-                el.classList.remove('show');
-            });
-            document.querySelectorAll('.dropdown-toggle').forEach(el => {
-                el.classList.remove('active');
-            });
-            
-            // Toggle current dropdown
-            if (!isOpen) {
-                content.classList.add('show');
-                this.classList.add('active');
-                populateRenamePeriods();
-            }
-        });
+}
+/* Media query for smaller screens */
+@media (max-width: 600px) {
+    .schedule-container {
+        width: 90%; /* Adjust the width to 90% of the viewport */
+        max-width: none; /* Remove the max-width constraint */
+        margin: 10px auto; /* Center the container */
+        padding: 10px; /* Adjust padding for better spacing */
     }
 
-    // Load saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        document.getElementById('settings-sidebar').classList.add('light-mode');
-        const icon = document.querySelector('.theme-toggle i');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-    }
-
-    // Add event listeners for progress bar inputs
-    document.getElementById('progress-bar-color')?.addEventListener('input', updateProgressBarStyle);
-    document.getElementById('progress-bar-opacity')?.addEventListener('input', updateProgressBarStyle);
-    
-    // Initialize progress bar if enabled
-    if (localStorage.getItem('progressBarEnabled') === 'true') {
-        const checkbox = document.getElementById('progress-bar');
-        if (checkbox) {
-            checkbox.checked = true;
-            createProgressBar();
-            updateProgressBarStyle();
-        }
-    }
-
-    // Add drop overlay to body
-    dropOverlay = document.createElement('div');
-    dropOverlay.className = 'drop-overlay';
-    dropOverlay.innerHTML = `
-        <div class="drop-content">
-            <i class="fas fa-cloud-upload-alt"></i>
-            <p class="drop-text">Drop your image here</p>
-            <p class="drop-subtext">Release to upload background</p>
-        </div>
-    `;
-    document.body.appendChild(dropOverlay);
-
-    // Disable document-level drag and drop for now
-    /*
-    document.addEventListener('dragenter', function(e) {
-        e.preventDefault();
-        if (dropOverlay && !document.getElementById('settings-sidebar').classList.contains('open')) {
-            dropOverlay.classList.add('active');
-        }
-    });
-
-    document.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        if (e.target === document.documentElement) {
-            dropOverlay?.classList.remove('active');
-        }
-    });
-
-    document.addEventListener('dragover', function(e) {
-        e.preventDefault();
-    });
-
-    document.addEventListener('drop', function(e) {
-        e.preventDefault();
-        dropOverlay?.classList.remove('active');
-        // Only handle if file(s) present and settings sidebar is not open
-        if (
-            e.dataTransfer?.files?.length &&
-            !document.getElementById('settings-sidebar').classList.contains('open')
-        ) {
-            const file = e.dataTransfer.files[0];
-            if (file) handleBgImageUpload(file);
-        }
-    });
-    */
-
-    // Ensure drop overlay is only shown when settings are closed
-    const settingsSidebar = document.getElementById('settings-sidebar');
-    if (settingsSidebar) {
-        settingsSidebar.addEventListener('transitionend', function() {
-            if (!this.classList.contains('open')) {
-                dropOverlay?.classList.remove('active');
-            }
-        });
-    }
-
-    // Setup drag and drop handling
-    setupDragAndDrop();
-
-    // Add font color change handler
-    document.getElementById('font-color')?.addEventListener('input', function(e) {
-        const color = e.target.value;
-        document.getElementById('countdown-heading').style.color = color;
-        localStorage.setItem('fontColor', color);
-        saveSettings();
-    });
-
-    updateAuthButtonText();
-});
-
-// Initialize gradient direction select control from saved settings
-function loadGradientDirection() {
-    try {
-        // Prefer extension-specific saved settings if present
-        const extSettingsRaw = localStorage.getItem('extensionGradientSettings');
-        if (extSettingsRaw) {
-            const extSettings = JSON.parse(extSettingsRaw);
-            const dir = extSettings.angle ?? extSettings.angle;
-            const select = document.getElementById('gradientDirection');
-            if (select && dir !== undefined) select.value = String(dir);
-            return;
-        }
-
-        // Fallback to the app's gradientSettings
-        const saved = JSON.parse(localStorage.getItem('gradientSettings'));
-        const angle = saved?.angle ?? 90;
-        const select = document.getElementById('gradientDirection');
-        if (select) select.value = String(angle);
-    } catch (err) {
-        console.error('Error loading gradient direction:', err);
+    .current-period {
+        position: relative; /* Change position to allow for proper alignment */
+        bottom: 0;
+        left: 0;
+        width: 100%; /* Ensure it takes full width */
+        text-align: center; /* Center the text */
     }
 }
 
-// Update gradient direction handler exposed globally for inline onchange handlers
-function updateGradientDirection(angle) {
-    try {
-        const parsed = parseInt(angle, 10);
-        // Update extension preview local storage (used by index.html preview code)
-        const extRaw = localStorage.getItem('extensionGradientSettings');
-        let ext = extRaw ? JSON.parse(extRaw) : {};
-        ext.angle = parsed;
-        localStorage.setItem('extensionGradientSettings', JSON.stringify(ext));
-
-        // Update app gradient settings as well
-        const appRaw = localStorage.getItem('gradientSettings');
-        let app = appRaw ? JSON.parse(appRaw) : { enabled: true, angle: parsed, startColor: '#000035', endColor: '#00bfa5' };
-        app.angle = parsed;
-        localStorage.setItem('gradientSettings', JSON.stringify(app));
-
-        // Apply gradient update if updateGradient is available
-        if (typeof updateGradient === 'function') {
-            updateGradient(true);
-        } else if (typeof GradientManager !== 'undefined' && GradientManager.applyGradient) {
-            // Try to call the static apply if provided
-            GradientManager.applyGradient(app);
-        } else {
-            // As a last resort, set body background using the two-color gradient
-            const gradientString = `linear-gradient(${parsed}deg, ${app.startColor || '#000035'}, ${app.endColor || '#00bfa5'})`;
-            document.body.style.background = gradientString;
-            const preview = document.querySelector('.gradient-preview');
-            if (preview) preview.style.background = gradientString;
-        }
-    } catch (err) {
-        console.error('Error updating gradient direction:', err);
-    }
+#bg-image-drop-area {
+    border: 2px dashed #00bfa5;
+    border-radius: 8px;
+    padding: 5px; /* Reduced padding */
+    text-align: center;
+    cursor: pointer;
+    margin: 10px 0;
+    transition: all 0.3s ease;
+    background-color: rgba(0, 191, 165, 0.1);
+    min-height: 30px; /* Reduced min-height */
+    width: 150px; /* Set a fixed width */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    border: 2px dashed currentColor;
+    background-color: transparent;
+    color: inherit;
 }
 
-// Expose globally for inline HTML onchange handlers
-window.loadGradientDirection = loadGradientDirection;
-window.updateGradientDirection = updateGradientDirection;
-
-// Attach click listeners to dropdown toggles and manage dropdown visibility
-function setupDropdownListeners() {
-    try {
-        // Delegate: add listener to document to catch dynamically added toggles too
-        document.addEventListener('click', function (e) {
-            const toggle = e.target.closest('.dropdown-toggle');
-            if (!toggle) return;
-
-            // Prevent default actions
-            e.preventDefault();
-
-            const content = toggle.nextElementSibling;
-            if (!content || !content.classList.contains('dropdown-content')) return;
-
-            const isOpen = content.classList.contains('show');
-
-            // Close all other dropdowns
-            document.querySelectorAll('.dropdown-content.show').forEach(el => {
-                if (el !== content) el.classList.remove('show');
-            });
-            document.querySelectorAll('.dropdown-toggle.active').forEach(el => {
-                if (el !== toggle) el.classList.remove('active');
-            });
-
-            // Toggle current
-            if (isOpen) {
-                content.classList.remove('show');
-                toggle.classList.remove('active');
-            } else {
-                content.classList.add('show');
-                toggle.classList.add('active');
-            }
-        });
-
-        // Close dropdowns when clicking outside, but keep the rename-periods dropdown open
-        document.addEventListener('click', function (e) {
-            // If the click is inside a toggle or a dropdown content, do nothing
-            if (e.target.closest('.dropdown-toggle') || e.target.closest('.dropdown-content')) return;
-
-            document.querySelectorAll('.dropdown-content.show').forEach(el => {
-                // Keep the rename periods dropdown open unless its toggle is explicitly clicked or settings are closed
-                if (el.id === 'rename-periods-content') return;
-                el.classList.remove('show');
-                try {
-                    const toggleId = el.id.replace('-content', '-toggle');
-                    const toggleEl = document.getElementById(toggleId);
-                    if (toggleEl) toggleEl.classList.remove('active');
-                } catch (err) {
-                    // ignore
-                }
-            });
-        });
-    } catch (err) {
-        console.error('Error setting up dropdown listeners:', err);
-    }
+#bg-image-drop-area:hover {
+    background-color: rgba(0, 191, 165, 0.2);
+    border-color: #ffffff;
 }
 
-// Expose globally for callers/tests
-window.setupDropdownListeners = setupDropdownListeners;
-
-// Add a delegated click handler to reliably catch dropdown toggle clicks
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const panelsRoot = document.querySelector('.settings-panels') || document.getElementById('settings-sidebar');
-
-        const handleToggleClick = (e) => {
-            const toggle = e.target.closest('.dropdown-toggle');
-            if (!toggle) return;
-            // Derive IDs: "xxx-toggle" -> "xxx-content"
-            const toggleId = toggle.id || toggle.getAttribute('data-toggle-id') || '';
-            const contentId = toggleId ? toggleId.replace('-toggle', '-content') : (toggle.dataset.target ? `${toggle.dataset.target}-content` : null);
-            if (!contentId) {
-                console.warn('Dropdown toggle click: could not derive content id for', toggle);
-                return;
-            }
-            console.debug('Dropdown toggle clicked:', { toggleId, contentId });
-            // Close other dropdowns and toggle this one
-            const contentEl = document.getElementById(contentId);
-            closeOtherDropdowns(contentEl);
-            toggleDropdown(contentId, toggleId || toggle.dataset.target || toggle);
-        };
-
-        if (panelsRoot) {
-            panelsRoot.addEventListener('click', handleToggleClick);
-        } else {
-            // Fallback: global delegation if panels root not present
-            document.body.addEventListener('click', handleToggleClick);
-        }
-    } catch (err) {
-        console.error('Error installing dropdown delegation:', err);
-    }
-});
-
-// New gradient functionality
-
-// Progress Bar Functions
-function toggleProgressBar() {
-    const checkbox = document.getElementById('progress-bar');
-    const settings = document.getElementById('progress-bar-settings');
-    
-    if (checkbox.checked) {
-        settings.style.display = 'block';
-        createProgressBar();
-        updateProgressBarStyle();
-    } else {
-        settings.style.display = 'none';
-        removeProgressBar();
-    }
-    
-    // Save preference
-    localStorage.setItem('progressBarEnabled', checkbox.checked);
-    saveSettings();
+#bg-image-drop-area.drag-over {
+    background-color: rgba(0, 191, 165, 0.3);
+    border-color: #ffffff;
+    transform: scale(1.02);
 }
 
-function createProgressBar() {
-    removeProgressBar(); // Remove any existing progress bar first
-    
-    const progressBar = document.createElement('div');
-    progressBar.className = 'progress-overlay';
-    document.body.insertBefore(progressBar, document.body.firstChild);
-    
-    // Get saved values or use defaults
-    let color = localStorage.getItem('progressBarColor');
-    let opacity = localStorage.getItem('progressBarOpacity');
-    if (!color) {
-        color = '#000000';
-        localStorage.setItem('progressBarColor', color);
-    }
-    if (!opacity) {
-        opacity = '20';
-        localStorage.setItem('progressBarOpacity', opacity);
-    }
-    
-    // Update input elements with saved values
-    const colorInput = document.getElementById('progress-bar-color');
-    const opacityInput = document.getElementById('progress-bar-opacity');
-    
-    if (colorInput) colorInput.value = color;
-    if (opacityInput) opacityInput.value = opacity;
-    
-    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
-    
-    // Start the update loop (TimerManager will call updateProgressBar each second if enabled)
-    updateProgressBar();
-    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
-        window.TimerManager.setProgress(true);
-    } else {
-        // Fallback to legacy interval when TimerManager is not present
-        if (window.progressInterval) clearInterval(window.progressInterval);
-        window.progressInterval = setInterval(updateProgressBar, 1000);
-    }
+#bg-image-drop-area p {
+    margin: 2px 0; /* Reduced margin */
+    color: #ffffff;
+    font-size: 10px; /* Reduced font size */
+    color: inherit;
+    opacity: 0.8;
 }
 
-function updateProgressBarStyle() {
-    const progressBar = document.querySelector('.progress-overlay');
-    if (!progressBar) return;
-    
-    const color = document.getElementById('progress-bar-color').value;
-    const opacity = document.getElementById('progress-bar-opacity').value;
-    
-    // Save the values immediately
-    localStorage.setItem('progressBarColor', color);
-    localStorage.setItem('progressBarOpacity', opacity);
-    
-    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
-    
-    // Update opacity display
-    const opacityDisplay = document.querySelector('#progress-bar-opacity + .range-value');
-    if (opacityDisplay) {
-        opacityDisplay.textContent = `${opacity}%`;
-    }
-    
-    saveSettings();
+#bg-image {
+    display: none; /* Hide the file input */
 }
 
-function updateProgressBar() {
-    const progressBar = document.querySelector('.progress-overlay');
-    if (!progressBar) return;
-    
-    const now = new Date();
-    const currentTimeInSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    
-    // Find current period
-    let currentPeriod = currentSchedule.find(period => {
-        const startTime = getTimeInSeconds(period.start);
-        const endTime = getTimeInSeconds(period.end);
-        return currentTimeInSeconds >= startTime && currentTimeInSeconds < endTime;
-    });
-
-    if (currentPeriod) {
-        // We're in a period
-        const startTime = getTimeInSeconds(currentPeriod.start);
-        const endTime = getTimeInSeconds(currentPeriod.end);
-        const totalDuration = endTime - startTime;
-        const elapsed = currentTimeInSeconds - startTime;
-        const progress = (elapsed / totalDuration) * 100;
-        progressBar.style.width = `${progress}%`;
-        return;
-    }
-
-    // Find the next period
-    let nextPeriod = currentSchedule.find(period => 
-        getTimeInSeconds(period.start) > currentTimeInSeconds
-    );
-
-    // If there's no next period, we've reached the end of the day
-    if (!nextPeriod) {
-        // Use the first period of tomorrow
-        nextPeriod = currentSchedule[0];
-
-        // Calculate progress through the overnight period
-        const lastPeriodEnd = getTimeInSeconds(currentSchedule[currentSchedule.length - 1].end);
-        const nextDayStart = getTimeInSeconds(nextPeriod.start) + (24 * 3600);
-        const totalDuration = nextDayStart - lastPeriodEnd;
-        // When after midnight, currentTimeInSeconds is small (e.g. 1800). Add 24h to compute elapsed since lastPeriodEnd.
-        let elapsed = (currentTimeInSeconds + (24 * 3600)) - lastPeriodEnd;
-        // Prevent division by zero and clamp values
-        let progress = 0;
-        if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
-        // Clamp between 0 and 100
-        progress = Math.max(0, Math.min(100, progress));
-
-        progressBar.style.width = `${progress}%`;
-        return;
-    }
-
-    // We're in between periods
-    const previousPeriod = [...currentSchedule]
-        .reverse()
-        .find(period => getTimeInSeconds(period.end) <= currentTimeInSeconds);
-
-    if (previousPeriod) {
-        const freeStart = getTimeInSeconds(previousPeriod.end);
-        const freeEnd = getTimeInSeconds(nextPeriod.start);
-        const totalDuration = freeEnd - freeStart;
-        const elapsed = currentTimeInSeconds - freeStart;
-    let progress = 0;
-    if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
-    progress = Math.max(0, Math.min(100, progress));
-    progressBar.style.width = `${progress}%`;
-    } else {
-        // Before first period of the day
-        const firstPeriodStart = getTimeInSeconds(nextPeriod.start);
-        const totalDuration = firstPeriodStart;
-        const elapsed = currentTimeInSeconds;
-    let progress = 0;
-    if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
-    progress = Math.max(0, Math.min(100, progress));
-    progressBar.style.width = `${progress}%`;
-    }
+#save-schedule-button {
+    margin-top: 15px;
+    padding: 8px 16px; /* Existing padding */
+    background-color: #00bfa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    width: auto; /* Change from 100% to auto for dynamic width */
+    display: block !important; /* Force display */
+    margin-left: 10px; /* Add left margin for spacing */
+    margin-right: 10px; /* Add right margin for spacing */
 }
 
-// Add to the loadSettings function
-function loadProgressBarSettings() {
-    // Set defaults: enabled true, color black, opacity 20
-    let enabled = localStorage.getItem('progressBarEnabled');
-    let color = localStorage.getItem('progressBarColor');
-    let opacity = localStorage.getItem('progressBarOpacity');
-
-    // If not set, use defaults and save them
-    if (enabled === null) {
-        enabled = true;
-        localStorage.setItem('progressBarEnabled', 'true');
-    } else {
-        enabled = enabled === 'true';
-    }
-    if (!color) {
-        color = '#000000';
-        localStorage.setItem('progressBarColor', color);
-    }
-    if (!opacity) {
-        opacity = '10';
-        localStorage.setItem('progressBarOpacity', opacity);
-    }
-
-    const checkbox = document.getElementById('progress-bar');
-    const colorInput = document.getElementById('progress-bar-color');
-    const opacityInput = document.getElementById('progress-bar-opacity');
-    const settings = document.getElementById('progress-bar-settings');
-    
-    if (checkbox && colorInput && opacityInput) {
-        checkbox.checked = enabled;
-        colorInput.value = color;
-        opacityInput.value = opacity;
-        settings.style.display = enabled ? 'block' : 'none';
-        
-        // Update opacity display
-        const opacityDisplay = document.querySelector('#progress-bar-opacity + .range-value');
-        if (opacityDisplay) {
-            opacityDisplay.textContent = `${opacity}%`;
-        }
-        
-        if (enabled) {
-            createProgressBar();
-        }
-    }
+#save-schedule-button:hover {
+    background-color: #00796b;
 }
 
-function createProgressBar() {
-    removeProgressBar(); // Remove any existing progress bar first
-    
-    const progressBar = document.createElement('div');
-    progressBar.className = 'progress-overlay';
-    document.body.insertBefore(progressBar, document.body.firstChild);
-    
-    // Get saved values or use defaults
-    let color = localStorage.getItem('progressBarColor');
-    let opacity = localStorage.getItem('progressBarOpacity');
-    if (!color) {
-        color = '#000000';
-        localStorage.setItem('progressBarColor', color);
-    }
-    if (!opacity) {
-        opacity = '20';
-        localStorage.setItem('progressBarOpacity', opacity);
-    }
-    
-    // Update input elements with saved values
-    const colorInput = document.getElementById('progress-bar-color');
-    const opacityInput = document.getElementById('progress-bar-opacity');
-    
-    if (colorInput) colorInput.value = color;
-    if (opacityInput) opacityInput.value = opacity;
-    
-    progressBar.style.backgroundColor = `rgba(${hexToRgb(color)}, ${opacity / 100})`;
-    
-    // Start the update loop
-    updateProgressBar();
-    // If TimerManager is available, let it handle periodic updates. Otherwise, use legacy interval.
-    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
-        window.TimerManager.setProgress(true);
-    } else {
-        // Update progress bar when switching periods
-        if (window.progressInterval) {
-            clearInterval(window.progressInterval);
-        }
-        window.progressInterval = setInterval(updateProgressBar, 1000);
-    }
+#custom-schedule-content {
+    padding: 15px;
+    display: none;
 }
 
-// Modify the existing startCountdown function to include progress bar updates
-function startCountdown() {
-    // If TimerManager is present, delegate to it
-    if (window.TimerManager && typeof window.TimerManager.start === 'function') {
-        window.TimerManager.start();
-        return window.TimerManager.getIntervalId ? window.TimerManager.getIntervalId() : null;
-    }
-    // Legacy fallback
-    updateCountdowns();
-    updateProgressBar();
-    return setInterval(() => {
-        updateCountdowns();
-        updateProgressBar();
-    }, 1000);
+#custom-schedule-content.show {
+    display: block;
 }
 
-function updateFont() {
-    const fontFamily = document.getElementById('font-family').value;
-    document.body.style.fontFamily = fontFamily;
-    localStorage.setItem('fontFamily', fontFamily);
-    saveSettings();
+/* ...existing code... */
+
+.settings-group {
+    border: 1px solid rgba(0, 173, 181, 0.2);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 0 auto 20px auto;
+    background: #393E46;
+    max-width: 800px;
+    width: calc(100% - 40px);
 }
 
-function toggleTheme() {
-    const sidebar = document.getElementById('settings-sidebar');
-    const icon = document.querySelector('.theme-toggle i');
-    const text = document.querySelector('.theme-toggle-text');
-    
-    sidebar.classList.toggle('light-mode');
-    
-    // Update icon, text and save preference
-    if (sidebar.classList.contains('light-mode')) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
-        localStorage.setItem('theme', 'light');
-    } else {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-        text.textContent = 'Dark Mode';
-        localStorage.setItem('theme', 'dark');
-    }
-
-    // Add smooth transition effect
-    icon.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-        icon.style.transform = '';
-    }, 300);
+.settings-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #00ADB5;
+    font-size: 1.1em;
+    font-weight: bold;
 }
 
-// Add the new navigation functionality
-function initializeSettingsPanels() {
-    const navItems = document.querySelectorAll('.nav-item');
-    
-    navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            // Remove active class from all items and panels
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.remove('active'));
-            
-            // Add active class to clicked item and corresponding panel
-            item.classList.add('active');
-            const targetPanel = document.getElementById(`${item.dataset.target}-panel`);
-            if (targetPanel) {
-                targetPanel.classList.add('active');
-            }
-        });
-    });
+/* Improved Dropdown Styling */
+.dropdown-toggle {
+    width: 100%;
+    padding: 15px;
+    background: rgba(34, 34, 34, 0.3);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-bottom: 5px;
 }
 
-// Update the theme loading code
-document.addEventListener('DOMContentLoaded', () => {
-    const savedTheme = localStorage.getItem('theme');
-    const sidebar = document.getElementById('settings-sidebar');
-    const icon = document.querySelector('.theme-toggle i');
-    const text = document.querySelector('.theme-toggle-text');
-    
-    if (savedTheme === 'light') {
-        sidebar.classList.add('light-mode');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
-    }
-});
+.dropdown-toggle:hover {
+    background: rgba(34, 34, 34, 0.5);
+}
 
-// ...existing code...
+.dropdown-toggle.active {
+    background: rgba(34, 34, 34, 0.6);
+    border-radius: 8px 8px 0 0;
+    margin-bottom: 0;
+}
 
-window.addEventListener('beforeunload', function (e) {
-    // Save settings before closing the tab
-    if (typeof window.gradientControls !== 'undefined') {
-        window.gradientControls.saveSettings();
-    }
-    
-    // You can add other settings to save here as well
-    // For example, save white box settings
-    const whiteBoxColor = document.querySelector(".schedule-container").style.backgroundColor;
+.dropdown-content {
+    display: none;
+    padding: 20px;
+    background: rgba(34, 34, 34, 0.3);
+    border-radius: 0 0 8px 8px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    margin-bottom: 15px;
+}
 
-    const whiteBoxTextColor = document.getElementById("white-box-heading").style.color;
-    localStorage.setItem("whiteBoxColor", whiteBoxColor);
-    localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
-});
+.dropdown-content.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
 
-// ...existing code...
+/* Improved Dropdown Styling */
+.dropdown-toggle {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: #393E46;
+    border: 1px solid #00ADB5;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+}
 
-function removeProgressBar() {
-    const progressBar = document.querySelector('.progress-overlay');
-    if (progressBar) {
-        progressBar.remove();
-    }
-    // If TimerManager exists, disable progress updates via it; otherwise clear legacy interval
-    if (window.TimerManager && typeof window.TimerManager.setProgress === 'function') {
-        window.TimerManager.setProgress(false);
-    } else {
-        if (window.progressInterval) {
-            clearInterval(window.progressInterval);
-            window.progressInterval = null;
-        }
+.dropdown-toggle:hover {
+    background: #454b54;
+    transform: translateY(-1px);
+}
+
+.dropdown-toggle h3 {
+    margin: 0;
+    font-weight: 500;
+}
+
+.triangle {
+    transition: transform 0.3s ease;
+}
+
+.dropdown-toggle.active .triangle {
+    transform: rotate(180deg);
+}
+
+.dropdown-content {
+    width: 100%;
+    margin: 10px 0;
+    padding: 15px;
+    background: #393E46;
+    border: 1px solid #00ADB5;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: calc(100% - 16px);
+    padding: 8px;
+    margin: 8px 0;
+    background: #222831;
+    border: 1px solid #00ADB5;
+    border-radius: 4px;
+    color: #EEEEEE;
+    font-size: 14px;
+}
+
+.dropdown-content label {
+    display: block;
+    color: #00bfa5;
+    margin-top: 12px;
+    font-size: 14px;
+}
+
+#period-inputs > div {
+    background: rgba(0, 191, 165, 0.05);
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 191, 165, 0.1);
+}
+
+#save-schedule-button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 10px;
+    background: #00bfa5;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#save-schedule-button:hover {
+    background: #00a693;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* ...existing code... */
+
+/* Improved Settings Sidebar Layout */
+.settings-sidebar {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    background: #222831;  /* Changed from rgba(0, 0, 53, 0.95) to solid color */
+    overflow-y: auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.settings-group {
+    max-width: 800px;
+    margin: 0 auto 20px auto;
+    padding: 15px;
+}
+
+/* Handle long content in dropdowns */
+.dropdown-content {
+    max-height: 400px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #00bfa5 rgba(255, 255, 255, 0.1);
+}
+
+.dropdown-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.dropdown-content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.dropdown-content::-webkit-scrollbar-thumb {
+    background: #00bfa5;
+    border-radius: 4px;
+}
+
+/* Fix inputs and labels from overflowing */
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: calc(100% - 20px);
+    box-sizing: border-box;
+}
+
+#period-inputs > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+}
+
+@media (max-width: 600px) {
+    #period-inputs > div {
+        grid-template-columns: 1fr;
     }
 }
 
 /* ...existing code... */
 
-function setupDragAndDrop() {
-    // Create drop overlay if it doesn't exist
-    if (!dropOverlay) {
-        dropOverlay = document.createElement('div');
-        dropOverlay.className = 'drop-overlay';
-        dropOverlay.innerHTML = `
-            <div class="drop-content">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p class="drop-text">Drop your image here</p>
-                <p class="drop-subtext">Release to upload background</p>
-            </div>
-        `;
-        document.body.appendChild(dropOverlay);
-    }
-
-    const dropArea = document.getElementById('bg-image-drop-area');
-    const fileInput = document.getElementById('bg-image');
-
-    if (dropArea && fileInput) {
-        let isProcessing = false;
-        let lastClick = 0;
-        const CLICK_DELAY = 500; // Minimum time between clicks
-
-        // Handle drop area click with debounce
-        dropArea.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const now = Date.now();
-            if (isProcessing || (now - lastClick) < CLICK_DELAY) return;
-            lastClick = now;
-            isProcessing = true;
-            
-            fileInput.click();
-        });
-
-        // Handle file selection
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                handleBgImageUpload(file);
-                // Reset file input and processing flag after delay
-                setTimeout(() => {
-                    this.value = '';
-                    isProcessing = false;
-                }, 1000);
-            } else {
-                isProcessing = false;
-            }
-        });
-
-        // Handle drag and drop events
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                if (eventName === 'dragenter' || eventName === 'dragover') {
-                    dropArea.classList.add('drag-over');
-                } else {
-                    dropArea.classList.remove('drag-over');
-                }
-
-                if (eventName === 'drop') {
-                    const file = e.dataTransfer.files[0];
-                    if (file) handleBgImageUpload(file);
-                }
-            });
-        });
-    }
+.timer-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-// Update the handleBgImageUpload function to show better feedback
-function handleBgImageUpload(file) {
-    if (!file) {
-        console.error('No file provided');
-        return;
-    }
+/* ...existing code... */
 
-    // Reset any active states
-    dropOverlay?.classList.remove('active');
-    document.getElementById('bg-image-drop-area')?.classList.remove('drag-over');
-
-    // Validate file
-    if (file.size > 5 * 1024 * 1024) {
-        alert('File size must be less than 5MB');
-        return;
-    }
-
-    // Updated file type check
-    const allowedTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/avif',
-        'image/bmp',
-        'image/tiff',
-        'image/svg+xml'
-    ];
-
-    if (!allowedTypes.includes(file.type)) {
-        alert('Supported formats: JPG, PNG • Max 5MB');
-        return;
-    }
-
-    // Disable gradient if enabled
-    if (window.gradientManager) {
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox && checkbox.checked) {
-            checkbox.checked = false;
-            window.gradientManager.toggleGradient();
-        }
-    }
-
-    // Show loading state
-    const dropArea = document.getElementById('bg-image-drop-area');
-    if (dropArea) {
-        dropArea.style.opacity = '0.5';
-        dropArea.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    }
-
-    // Process the image
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        processUploadedImage(e.target.result, dropArea, file.type);
-    };
-    reader.onerror = function(error) {
-        console.error('FileReader error:', error);
-        alert('Error reading file');
-    };
-
-    try {
-        reader.readAsDataURL(file);
-    } catch (error) {
-        console.error('Error starting file read:', error);
-        alert('Error reading file');
-    }
+#text-shadow-dropdown {
+    background-color: #ffffff; /* White background */
+    color: #000035; /* Dark text color */
+    border: 2px solid #00bfa5; /* Border color */
+    border-radius: 5px; /* Rounded corners */
+    padding: 10px; /* Padding for better spacing */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: border-color 0.3s; /* Smooth border color transition */
 }
 
-async function processUploadedImage(dataUrl, dropArea, fileType) {
-    // Helper to load image as a Promise so we can await it
-    function loadImage(url) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = reject;
-            img.src = url;
-        });
-    }
-
-    try {
-        const img = await loadImage(dataUrl);
-
-        // For GIFs and SVGs, use original file to preserve animation/vectors
-        if (fileType === 'image/gif' || fileType === 'image/svg+xml') {
-            await applyUploadedImage(dataUrl, dropArea);
-            return;
-        }
-
-        // For other formats, compress if needed
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        let { width, height } = calculateImageDimensions(img.width, img.height);
-        canvas.width = width;
-        canvas.height = height;
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Use original format if possible, fallback to JPEG
-        let outputType = fileType;
-        if (!['image/webp', 'image/avif', 'image/png'].includes(fileType)) {
-            outputType = 'image/jpeg';
-        }
-
-        const compressedImage = canvas.toDataURL(outputType, 0.7);
-        await applyUploadedImage(compressedImage, dropArea);
-    } catch (e) {
-        console.error('Image processing failed', e);
-        resetDropArea(dropArea);
-        alert('Invalid image file');
-    }
+#text-shadow-dropdown:focus {
+    border-color: #00796b; /* Darker border on focus */
+    outline: none; /* Remove outline */
 }
 
-function calculateImageDimensions(width, height) {
-    const MAX_WIDTH = 1920;
-    const MAX_HEIGHT = 1080;
-    
-    if (width > MAX_WIDTH) {
-        height *= MAX_WIDTH / width;
-        width = MAX_WIDTH;
-    }
-    if (height > MAX_HEIGHT) {
-        width *= MAX_HEIGHT / height;
-        height = MAX_HEIGHT;
-    }
-    
-    return { width, height };
+#text-shadow-dropdown option {
+    background-color: #ffffff; /* White background for options */
+    color: #000035; /* Dark text color for options */
 }
 
-function resetDropArea(dropArea) {
-    if (dropArea) {
-        dropArea.style.opacity = '1';
-        dropArea.innerHTML = `
-            <i class="fas fa-cloud-upload-alt"></i>
-            <div class="upload-text">
-                <p class="main-text">Drop image here or click to upload</p>
-                <p class="sub-text">Supports JPG, PNG • Max 5MB</p>
-            </div>
-        `;
-    }
+/* ...existing code... */
+
+#shadow-settings-content {
+    padding: 15px;
+    background: #393E46;
+    border-radius: 8px;
 }
 
-
-
-// Fix for the first error: Missing gradient-stops container
-function initializeGradientControls() {
-    const container = document.querySelector('.gradient-controls');
-    if (!container) return;
-
-    // Create gradient-stops container if it doesn't exist
-    let stopsContainer = container.querySelector('.gradient-stops');
-    if (!stopsContainer) {
-        stopsContainer = document.createElement('div');
-        stopsContainer.className = 'gradient-stops';
-        container.appendChild(stopsContainer);
-    }
-
-    // Initialize default stops
-    stopsContainer.innerHTML = ''; // Clear existing stops
-    const defaultStops = [
-        { color: '#000035', position: 0 },
-        { color: '#00bfa5', position: 100 }
-    ];
-
-    defaultStops.forEach(stop => {
-        const stopElement = document.createElement('div');
-        stopElement.className = 'gradient-stop';
-        stopElement.style.left = `${stop.position}%`;
-        stopElement.style.backgroundColor = stop.color;
-        stopElement.dataset.color = stop.color;
-        stopElement.dataset.position = stop.position;
-        stopsContainer.appendChild(stopElement);
-    });
+#shadow-settings-content input[type="range"] {
+    width: 100%;
+    margin: 10px 0;
 }
 
-// Fix for the second error: Add missing applyUploadedImage function
-async function applyUploadedImage(imageData, dropArea) {
-    try {
-        // If the imageData is a data URL and large, show the large-image modal immediately
-        try {
-            const MAX_CHARS = 400 * 1024;
-            if (typeof imageData === 'string' && imageData.startsWith('data:') && imageData.length > MAX_CHARS) {
-                // Ask the user what to do right away
-                const choice = await showLargeImageModalAsync(imageData.length);
-                if (choice.action === 'compress') {
-                    const compressed = await compressDataUrlToMax(imageData, MAX_CHARS);
-                    if (compressed) {
-                        imageData = compressed;
-                    } else {
-                        // Compression failed: remove image and abort applying
-                        try { localStorage.removeItem('bgImage'); } catch (e) {}
-                        resetDropArea(dropArea);
-                        return;
-                    }
-                } else if (choice.action === 'remove' || choice.action === 'cancel') {
-                    // Remove image and abort applying (no local-only fallback)
-                    try { localStorage.removeItem('bgImage'); } catch (e) {}
-                    resetDropArea(dropArea);
-                    return;
-                }
-            }
-        } catch (e) {
-            console.warn('Large-image immediate handling failed', e);
-        }
-        // Update preview
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = `url('${imageData}')`;
-            preview.style.backgroundSize = 'cover';
-            preview.style.backgroundPosition = 'center';
-            preview.style.backgroundRepeat = 'no-repeat';
-        }
-        
-        // Apply to body
-        document.body.style.backgroundImage = `url('${imageData}')`;
-        document.body.style.backgroundSize = 'cover';
-        document.body.style.backgroundPosition = 'center';
-        document.body.style.backgroundRepeat = 'no-repeat';
-        
-        // Save to localStorage
-        localStorage.setItem('bgImage', imageData);
-        
-        // Reset gradient if enabled
-        const gradientEnabled = document.getElementById('gradient-enabled');
-        if (gradientEnabled) {
-            gradientEnabled.checked = false;
-            const gradientControls = document.getElementById('gradient-controls');
-            if (gradientControls) {
-                gradientControls.classList.remove('active');
-            }
-        }
-        
-        // Reset drop area
-        resetDropArea(dropArea);
-        
-        // Show success message
-        const successMessage = document.createElement('div');
-        successMessage.className = 'upload-success';
-        successMessage.innerHTML = '<i class="fas fa-check-circle"></i> Image uploaded successfully!';
-        dropArea.parentNode.insertBefore(successMessage, dropArea.nextSibling);
-        
-        // Remove success message after 3 seconds
-        setTimeout(() => successMessage.remove(), 3000);
-        
-    } catch (error) {
-        console.error('Error applying image:', error);
-        alert('Error applying image');
-        resetDropArea(dropArea);
-    }
+#shadow-settings-content input[type="color"] {
+    width: 50px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: none;
 }
 
-// Update the GradientControls class initialization
-document.addEventListener('DOMContentLoaded', () => {
-    initializeGradientControls();
-    // Initialize other components...
-});
-
-// ...existing code...
-
-window.addEventListener('beforeunload', function (e) {
-    // Save settings before closing the tab
-    if (typeof window.gradientControls !== 'undefined') {
-        window.gradientControls.saveSettings();
-    }
-    
-    // You can add other settings to save here as well
-    // For example, save white box settings
-    const whiteBoxColor = document.querySelector(".schedule-container").style.backgroundColor;
-
-    const whiteBoxTextColor = document.getElementById("white-box-heading").style.color;
-    localStorage.setItem("whiteBoxColor", whiteBoxColor);
-    localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
-});
-
-// Simplified gradient management
-function updateGradient(save = true) {
-    const enabled = document.getElementById('gradient-enabled')?.checked || false;
-    // Use the correct color picker IDs
-    const startColor = document.getElementById('gradient-start-color')?.value || '#000035';
-    const endColor = document.getElementById('gradient-end-color')?.value || '#00bfa5';
-    const angle = document.getElementById('gradient-angle')?.value || '90';
-
-    if (enabled) {
-        // Clear any background image
-        document.body.style.backgroundImage = '';
-        localStorage.removeItem('bgImage');
-
-        // Remove background from Firestore using the dedicated delete function
-        if (window.authManager?.currentUser && typeof window.authManager.deleteUserBackground === 'function') {
-            window.authManager.deleteUserBackground(window.authManager.currentUser.uid);
-        }
-
-        // Apply gradient
-        const gradientString = `linear-gradient(${angle}deg, ${startColor}, ${endColor})`;
-        document.body.style.background = gradientString;
-        
-        // Update preview if it exists
-        const preview = document.querySelector('.gradient-preview');
-        if (preview) {
-            preview.style.background = gradientString;
-        }
-        
-        // Save settings only if requested
-        if (save) {
-            const settings = {
-                enabled,
-                startColor,
-                endColor,
-                angle
-            };
-            localStorage.setItem('gradientSettings', JSON.stringify(settings));
-        }
-    }
+#shadow-settings-content div {
+    margin-bottom: 15px;
 }
 
-function loadGradientSettings() {
-    const savedSettings = JSON.parse(localStorage.getItem('gradientSettings')) || {
-        enabled: true,
-        angle: 90,
-        stops: [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ]
-    };
-
-    // Set the controls
-    const gradientEnabled = document.getElementById('gradient-enabled');
-    const gradientStart = document.getElementById('gradient-start-color');
-    const gradientEnd = document.getElementById('gradient-end-color');
-    const gradientAngle = document.getElementById('gradient-angle');
-    const gradientControls = document.querySelector('.gradient-controls');
-
-    if (gradientEnabled) gradientEnabled.checked = savedSettings.enabled;
-    if (gradientStart) gradientStart.value = savedSettings.startColor;
-    if (gradientEnd) gradientEnd.value = savedSettings.endColor;
-    if (gradientAngle) gradientAngle.value = savedSettings.angle;
-    
-    // Show controls if enabled
-    if (gradientControls && savedSettings.enabled) {
-        gradientControls.classList.add('active');
-    }
-
-    // Apply the gradient without saving
-    updateGradient(false);
+#shadow-settings-content label {
+    display: block;
+    margin-bottom: 5px;
+    color: #EEEEEE;
 }
 
-// Add this to your DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', () => {
-    loadGradientSettings();
-    // Set up gradient control listeners
-    document.getElementById('gradient-enabled')?.addEventListener('change', () => updateGradient(true));
-    document.getElementById('gradient-start-color')?.addEventListener('input', () => updateGradient(true));
-    document.getElementById('gradient-end-color')?.addEventListener('input', () => updateGradient(true));
-    document.getElementById('gradient-angle')?.addEventListener('input', (e) => {
-        updateGradient(true);
-        const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-        if (angleDisplay) {
-            angleDisplay.textContent = `${e.target.value}°`;
-        }
-    });
-});
+/* ...existing code... */
 
-// ...existing code...
-
-async function handleAuthButton() {
-    const auth = await getAuthManager();
-    if (auth.isAuthenticated) {
-        auth.logout();
-    } else {
-        auth.signIn(); // Directly call signIn instead of showLoginModal
-    }
+#shadow-preview {
+    font-size: 4em;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #ffffff;
 }
 
-// Modify your updateAuthButtonText function
-async function updateAuthButtonText() {
-    const auth = await getAuthManager();
-    const buttonText = document.getElementById('auth-button-text');
-    const headerButtonText = document.getElementById('header-auth-text');
-    
-    if (buttonText) {
-        buttonText.textContent = auth.isAuthenticated ? 'Sign Out' : 'Sign In';
-    }
-    if (headerButtonText) {
-        headerButtonText.textContent = auth.isAuthenticated ? 'Sign Out' : 'Sign In';
-    }
+.range-value {
+    display: inline-block;
+    margin-left: 10px;
+    color: #ffffff;
+    min-width: 40px;
 }
 
-// Add this to your initialization code or DOM content loaded event
-document.addEventListener('DOMContentLoaded', () => {
-    updateAuthButtonText();
-});
-
-// New function: Update Firestore settings on settings close
-async function updateFirestoreSettings() {
-    if (window.authManager && window.authManager.currentUser) {
-        await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
-    console.debug("Firestore settings updated on settings close.");
-    }
+#shadow-settings-content {
+    display: none;
 }
 
-// Add this function to handle saving settings
-async function saveSettings() {
-    // Always ensure the latest bgImage is in Firestore settings
-    if (window.authManager?.currentUser) {
-        if (window.authManager.userSettings) {
-            window.authManager.userSettings.bgImage = localStorage.getItem('bgImage') || null;
-        }
-        await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
-    }
+#shadow-settings-content.show {
+    display: block;
 }
 
-// ...existing code...
+/* ...existing code... */
 
-// Add this to your gradient manager's applyGradient method
-function applyGradient() {
-    if (!this.enabled) return;
-    
-    try {
-        // ...existing gradient application code...
-        
-        // Send settings to Chrome extension if it exists
-        if (chrome?.runtime?.sendMessage) {
-            chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-                type: 'UPDATE_GRADIENT',
-                settings: {
-                    angle: this.angle,
-                    stops: this.stops
-                }
-            });
-        }
-    } catch (error) {
-        console.error('Error applying gradient:', error);
-    }
+/* ...existing code... */
+
+.switch-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;        /* Reduced from 10px */
+    margin-bottom: 12px; /* Reduced from 15px */
 }
 
-// ...existing code...
-
-// Add these functions after your existing gradient management code
-
-function initializePopupGradientControls() {
-    const container = document.getElementById('popup-gradient-settings');
-    if (!container) return;
-
-    // Load saved settings
-    const savedSettings = localStorage.getItem('popupGradientSettings');
-    let settings = {
-        enabled: true,
-        angle: 90,
-        stops: [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
-        ]
-    };
-
-    if (savedSettings) {
-        try {
-            settings = JSON.parse(savedSettings);
-        } catch (e) {
-            console.warn('Invalid popup gradient settings');
-        }
-    }
-
-    // Set initial state
-    document.getElementById('popup-gradient-enabled').checked = settings.enabled;
-    document.getElementById('popup-gradient-angle').value = settings.angle;
-    
-    // Update stops
-    updatePopupGradientStops(settings.stops);
-    
-    // Apply initial gradient
-    updatePopupGradientPreview(settings);
-    
-    // Send to extension if available
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        const extId = chrome.runtime.id; // Ensure an extension ID is provided
-        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-            type: 'UPDATE_GRADIENT',
-            settings: {
-                angle: settings.angle,
-                stops: settings.stops
-            }
-        });
-    }
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;     /* Reduced from 60px */
+    height: 24px;    /* Reduced from 34px */
 }
 
-function updatePopupGradientStops(stops) {
-    const container = document.getElementById('popup-gradient-stops');
-    if (!container) return;
-
-    container.innerHTML = stops.map((stop, index) => `
-        <div class="gradient-stop">
-            <input type="color" value="${stop.color}" 
-                onchange="updatePopupGradient(${index}, this.value, this.nextElementSibling.value)">
-            <input type="number" min="0" max="100" value="${stop.position}" 
-                onchange="updatePopupGradient(${index}, this.previousElementSibling.value, this.value)">
-            ${stops.length > 2 ? `
-                <button class="remove-stop" onclick="removePopupGradientStop(${index})">
-                    <i class="fas fa-times"></i>
-                </button>
-            ` : ''}
-        </div>
-    `).join('');
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
-function updatePopupGradient(index, color, position) {
-    const savedSettings = JSON.parse(localStorage.getItem('popupGradientSettings') || '{}');
-    const stops = savedSettings.stops || [
-        { color: '#000035', position: 0 },
-        { color: '#00bfa5', position: 100 }
-    ];
-
-    stops[index] = { color, position: parseInt(position) };
-    stops.sort((a, b) => a.position - b.position);
-
-    const settings = {
-        enabled: document.getElementById('popup-gradient-enabled').checked,
-        angle: parseInt(document.getElementById('popup-gradient-angle').value),
-        stops
-    };
-
-    localStorage.setItem('popupGradientSettings', JSON.stringify(settings));
-    updatePopupGradientPreview(settings);
-
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-            type: 'UPDATE_GRADIENT',
-            settings: { angle: settings.angle, stops: settings.stops }
-        }, function(response) {
-            // ...existing code...
-        });
-    }
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #393E46;
+    transition: .4s;
+    border-radius: 34px;
+    border: 2px solid #00ADB5;
 }
 
-function updatePopupGradientPreview(settings) {
-    const preview = document.getElementById('popup-gradient-preview');
-    if (!preview) return;
-
-    const gradientString = `linear-gradient(${settings.angle}deg, ${
-        settings.stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
-    })`;
-    
-    preview.style.background = gradientString;
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;    /* Reduced from 26px */
+    width: 18px;     /* Reduced from 26px */
+    left: 3px;       /* Reduced from 4px */
+    bottom: 1px;     /* Reduced from 2px */
+    background-color: #EEEEEE;
+    transition: .4s;
+    border-radius: 50%;
 }
 
-// Add this to your existing event listener
-document.addEventListener('DOMContentLoaded', function() {
-    // ...existing code...
-    
-    // Initialize popup gradient controls
-    initializePopupGradientControls();
-    
-    // Add event listeners for popup gradient controls
-    document.getElementById('popup-gradient-enabled')?.addEventListener('change', () => {
-        updatePopupGradient(0, document.querySelector('#popup-gradient-stops input[type="color"]').value, 0);
-    });
-    
-    document.getElementById('popup-gradient-angle')?.addEventListener('input', (e) => {
-        updatePopupGradient(0, document.querySelector('#popup-gradient-stops input[type="color"]').value, 0);
-        const angleDisplay = document.querySelector('#popup-gradient-angle + .range-value');
-        if (angleDisplay) {
-            angleDisplay.textContent = `${e.target.value}°`;
-        }
-    });
-    
-    document.getElementById('popup-add-stop')?.addEventListener('click', () => {
-        const savedSettings = JSON.parse(localStorage.getItem('popupGradientSettings') || '{}');
-        const stops = savedSettings.stops || [];
-        stops.push({ color: '#ffffff', position: 50 });
-        updatePopupGradientStops(stops);
-        updatePopupGradient(0, stops[0].color, stops[0].position);
-    });
-});
- 
-// Add missing countdown color helpers (used during initialization)
-function loadCountdownColor() {
-    const countdownColor = localStorage.getItem("countdownColor") || "#ffffff";
-    const countdownElement = document.getElementById("current-period-time");
-    if (countdownElement) {
-        countdownElement.style.color = countdownColor;
-    }
+input:checked + .slider {
+    background-color: #00ADB5;
 }
 
-// Update box border
-function updateBoxBorder() {
-    const color = document.getElementById('box-border-color').value;
-    const width = document.getElementById('box-border-width').value;
-    const scheduleContainer = document.querySelector('.schedule-container');
-    
-    if (scheduleContainer) {
-        scheduleContainer.style.border = width > 0 ? `${width}px solid ${color}` : 'none';
-        
-        // Update width display
-        const widthDisplay = document.querySelector('#box-border-width + .range-value');
-        if (widthDisplay) {
-            widthDisplay.textContent = `${width}px`;
-        }
-        
-        // Save settings
-        localStorage.setItem('boxBorderColor', color);
-        localStorage.setItem('boxBorderWidth', width);
-        saveSettings();
-    }
+input:checked + .slider:before {
+    transform: translateX(22px); /* Reduced from 26px */
+}
+
+.switch-label {
+    color: #ffffff;
+    font-size: 1em;
+}
+
+/* ...existing code... */
+
+#gradient-stops {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.gradient-stop {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.gradient-stop input[type="color"] {
+    width: 50px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+.gradient-stop input[type="number"] {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid #00bfa5;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.remove-stop {
+    background: none;
+    border: none;
+    color: #ff5252;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0 5px;
+}
+
+#add-stop {
+    background: #00bfa5;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+#add-stop:hover {
+    background: #00896f;
+}
+
+/* ...existing code... */
+
+#gradient-preview {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    margin: 10px 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: linear-gradient(to right, #000035, #00bfa5);
+}
+
+.gradient-controls {
+    background: #393E46;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.gradient-opacity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.gradient-opacity input[type="range"] {
+    flex-grow: 1;
+}
+
+.gradient-layer-toggle {
+    margin: 10px 0;
+}
+
+#gradient-stops {
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.gradient-stop {
+    display: grid;
+    grid-template-columns: auto 80px 30px;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.gradient-stop:last-child {
+    margin-bottom: 0;
+}
+
+.gradient-stop input[type="color"] {
+    width: 60px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: none;
+}
+
+.gradient-stop input[type="number"] {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #00bfa5;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* ...existing code... */
+
+.gradient-editor {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 10px;
+}
+
+.gradient-editor.show {
+    display: block;
+}
+
+.gradient-preview {
+    width: 100%;
+    height: 100px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gradient-bar-container {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    margin: 15px 0;
+    padding: 10px 0;
+}
+
+.gradient-bar {
+    width: 100%;
+    height: 24px;
+    border-radius: 4px;
+    margin: 20px 0;
+    background: linear-gradient(to right, #000035, #00bfa5);
+}
+
+.gradient-stops-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100%;
+}
+
+.gradient-stop-marker {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 2px;
+    margin-left: -8px;
+    background: white;
+    border: 2px solid #00bfa5;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.gradient-stop-marker:hover,
+.gradient-stop-marker.active {
+    transform: scale(1.2);
+    z-index: 2;
+}
+
+.gradient-controls {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 15px;
+    align-items: center;
+}
+
+.stop-editor {
+    background: #393E46;
+    padding: 12px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.stop-editor input[type="color"] {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.position-input {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.position-input input {
+    width: 60px;
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.delete-stop {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ff4444;
+    padding: 4px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.delete-stop:hover {
+    background: rgba(255, 0, 0, 0.1);
+}
+
+/* ...existing code... */
+
+/* Remove or update these styles if they exist */
+.drop-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 191, 165, 0.15);
+    z-index: 10000;
+    pointer-events: none;
+    display: none;
+}
+
+.drop-overlay.active {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+/* ...existing code... */
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.popup {
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.popup button {
+    margin: 0 10px;
+    padding: 5px 15px;
+}
+
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popup-box {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    text-align: center;
+    /* Ensure text is dark for legibility */
+    color: #000;
+}
+
+.popup-box p {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.popup-buttons {
+    display: flex;
+    justify-content: space-around;
+}
+
+.popup-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.popup-btn.confirm {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.popup-btn.cancel {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+input, select {
+    margin-bottom: 10px;
+}
+
+.settings-group input[type="text"],
+.settings-group input[type="number"],
+.settings-group input[type="time"],
+.settings-group select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.settings-group input[type="color"] {
+    width: 60px;
+    height: 30px;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.settings-group input[type="range"] {
+    width: calc(100% - 60px);
+    margin-bottom: 1rem;
+}
+
+/* ...existing code... */
+
+/* Improved nav buttons */
+.nav-item {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: inherit;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(4px);
+}
+
+.nav-item.active {
+    background: rgba(0, 191, 165, 0.15);
+    border-color: rgba(0, 191, 165, 0.3);
+    color: #00bfa5;
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.legal-links {
+    padding: 10px 0;
+}
+
+.legal-links a {
+    color: #00bfa5;
+    text-decoration: none;
+    padding: 8px 0;
+    display: inline-block;
+    transition: color 0.3s ease;
+}
+
+.legal-links a:hover {
+    color: #ffffff;
+}
+
+/* ...existing code... */
+
+/* Gradient Test Panel Styles */
+.gradient-preview {
+    width: 300px;
+    height: 100px;
+    margin: 20px 0;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.gradient-controls {
+    margin: 20px 0;
+}
+
+.gradient-controls .controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.gradient-controls label {
+    color: inherit;
+    margin-right: 10px;
+}
+
+.gradient-controls input[type="color"] {
+    width: 60px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+}
+
+.gradient-save-btn {
+    background: #00bfa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+.gradient-save-btn:hover {
+    background: #00a693;
+}
+
+/* ...existing code... */
+
+/* ...existing code... */
+
+.settings-nav {
+    width: 200px;
+    background: #222;
+    border-right: 1px solid #333;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    background: none;
+    color: #fff;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.nav-item i {
+    width: 20px;
+    margin-right: 10px;
+    font-size: 16px;
+}
+
+.nav-item:hover {
+    background: #333;
+}
+
+.nav-item.active {
+    background: #00bfa5;
+    color: #fff;
+    position: relative;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #fff;
+}
+
+.settings-group h3 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.settings-group h3 i {
+    margin-right: 10px;
+    color: #00bfa5;
+}
+
+/* ...existing code... */
+
+/* Extension Panel Styles */
+.color-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.direction-controls {
+    margin-bottom: 20px;
+}
+
+#saveExtensionButton {
+    background: #00bfa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+#saveExtensionButton:hover {
+    background: #00a392;
+}
+
+#extensionPreview {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* ...existing code... */
+
+/* Progress Bar Styles */
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100vh; /* Changed from 4px to 100vh */
+    background: rgba(0, 191, 165, 0.2);
+    transition: width 0.5s linear;
+    z-index: 1;
+    pointer-events: none; /* Ensure clicks pass through */
+}
+
+#progress-bar-settings {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(34, 34, 34, 0.5);
+    border-radius: 8px;
+}
+
+/* ...existing code... */
+
+/* Schedule Section Dropdowns */
+#rename-periods, #custom-schedule {
+    margin: 10px 0;
+}
+
+.dropdown-toggle {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-toggle.active {
+    border-radius: 8px 8px 0 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-content {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 15px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dropdown-content.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content input:focus {
+    outline: none;
+    border-color: #00bfa5;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.rename-period {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#save-schedule-button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #00bfa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#save-schedule-button:hover {
+    background: #00a593;
+}
+
+/* Welcome popup styles */
+#grade-level-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.grade-level-modal-box {
+    background: #fff;
+    color: #222;
+    border-radius: 18px;
+    padding: 40px 36px 32px 36px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    text-align: center;
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    border: 2.5px solid #00bfa5;
+    transition: box-shadow 0.2s;
+}
+
+.grade-level-modal-box h2 {
+    margin-bottom: 18px;
+    color: #00bfa5;
+    font-size: 2.1em;
+    font-weight: 700;
+}
+
+.grade-level-modal-box p {
+    margin-bottom: 8px;
+    font-size: 1.18em;
+    font-weight: 500;
+}
+
+.grade-level-modal-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.grade-level-modal-btn {
+    min-width: 160px;
+    padding: 18px 0;
+    background: linear-gradient(90deg, #00bfa5 60%, #00796b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.18em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,191,165,0.10);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+    border: 2px solid transparent;
+    letter-spacing: 0.02em;
+}
+
+.grade-level-modal-btn:last-child {
+    background: linear-gradient(90deg, #00796b 60%, #00bfa5 100%);
+}
+
+.grade-level-modal-btn:hover,
+.grade-level-modal-btn:focus {
+    background: linear-gradient(90deg, #00bfa5 80%, #00796b 100%);
+    box-shadow: 0 6px 24px rgba(0,191,165,0.18);
+    transform: translateY(-2px) scale(1.06);
+    border: 2px solid #00bfa5;
+}
+
+.grade-level-modal-info {
+    margin-top: 18px;
+    color: #888;
+    font-size: 0.98em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.grade-level-modal-info i {
+    color: #00bfa5;
+}
+
+.nav-item.active {
+    background: #00bfa5;
+    color: #fff;
+    position: relative;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #fff;
+}
+
+.settings-group h3 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.settings-group h3 i {
+    margin-right: 10px;
+    color: #00bfa5;
+}
+
+/* ...existing code... */
+
+/* Extension Panel Styles */
+.color-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.direction-controls {
+    margin-bottom: 20px;
+}
+
+#saveExtensionButton {
+    background: #00bfa5;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+#saveExtensionButton:hover {
+    background: #00a392;
+}
+
+#extensionPreview {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    margin-top: 20px;
+}
+
+/* ...existing code... */
+
+/* Progress Bar Styles */
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100vh; /* Changed from 4px to 100vh */
+    background: rgba(0, 191, 165, 0.2);
+    transition: width 0.5s linear;
+    z-index: 1;
+    pointer-events: none; /* Ensure clicks pass through */
+}
+
+#progress-bar-settings {
+    display: none;
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(34, 34, 34, 0.5);
+    border-radius: 8px;
+}
+
+/* ...existing code... */
+
+/* Schedule Section Dropdowns */
+#rename-periods, #custom-schedule {
+    margin: 10px 0;
+}
+
+.dropdown-toggle {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-bottom: 0;
+}
+
+.dropdown-toggle:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-toggle.active {
+    border-radius: 8px 8px 0 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-content {
+    display: none;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0 0 8px 8px;
+    padding: 15px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.dropdown-content.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dropdown-content input[type="text"],
+.dropdown-content input[type="number"],
+.dropdown-content input[type="time"] {
+    width: 100%;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #fff;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content input:focus {
+    outline: none;
+    border-color: #00bfa5;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.rename-period {
+    margin: 10px 0;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+#save-schedule-button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #00bfa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#save-schedule-button:hover {
+    background: #00a593;
+}
+
+/* Welcome popup styles */
+#grade-level-modal {
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.grade-level-modal-box {
+    background: #fff;
+    color: #222;
+    border-radius: 18px;
+    padding: 40px 36px 32px 36px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    text-align: center;
+    min-width: 320px;
+    max-width: 95vw;
+    position: relative;
+    font-family: 'Inter', 'Roboto', Arial, sans-serif;
+    border: 2.5px solid #00bfa5;
+    transition: box-shadow 0.2s;
+}
+
+.grade-level-modal-box h2 {
+    margin-bottom: 18px;
+    color: #00bfa5;
+    font-size: 2.1em;
+    font-weight: 700;
+}
+
+.grade-level-modal-box p {
+    margin-bottom: 8px;
+    font-size: 1.18em;
+    font-weight: 500;
+}
+
+.grade-level-modal-buttons {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.grade-level-modal-btn {
+    min-width: 160px;
+    padding: 18px 0;
+    background: linear-gradient(90deg, #00bfa5 60%, #00796b 100%);
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    font-size: 1.18em;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 12px rgba(0,191,165,0.10);
+    transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    outline: none;
+    border: 2px solid transparent;
+    letter-spacing: 0.02em;
+}
+
+.grade-level-modal-btn:last-child {
+    background: linear-gradient(90deg, #00796b 60%, #00bfa5 100%);
+}
+
+.grade-level-modal-btn:hover,
+.grade-level-modal-btn:focus {
+    background: linear-gradient(90deg, #00bfa5 80%, #00796b 100%);
+    box-shadow: 0 6px 24px rgba(0,191,165,0.18);
+    transform: translateY(-2px) scale(1.06);
+    border: 2px solid #00bfa5;
+}
+
+.grade-level-modal-info {
+    margin-top: 18px;
+    color: #888;
+    font-size: 0.98em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.grade-level-modal-info i {
+    color: #00bfa5;
 }
