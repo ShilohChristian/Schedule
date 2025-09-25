@@ -236,7 +236,7 @@ function handleBgImageUpload(file) {
 }
 
 // Modified processUploadedImage function to call applyAndSaveImage instead of applyUploadedImage
-function processUploadedImage(dataUrl, dropArea, fileType) {
+async function processUploadedImage(dataUrl, dropArea, fileType) {
     const img = new Image();
     
     img.onload = function() {
@@ -1089,14 +1089,19 @@ function updateProgressBar() {
     if (!nextPeriod) {
         // Use the first period of tomorrow
         nextPeriod = currentSchedule[0];
-        
+
         // Calculate progress through the overnight period
         const lastPeriodEnd = getTimeInSeconds(currentSchedule[currentSchedule.length - 1].end);
         const nextDayStart = getTimeInSeconds(nextPeriod.start) + (24 * 3600);
         const totalDuration = nextDayStart - lastPeriodEnd;
-        const elapsed = currentTimeInSeconds - lastPeriodEnd;
-        const progress = (elapsed / totalDuration) * 100;
-        
+        // When after midnight, currentTimeInSeconds is small (e.g. 1800). Add 24h to compute elapsed since lastPeriodEnd.
+        let elapsed = (currentTimeInSeconds + (24 * 3600)) - lastPeriodEnd;
+        // Prevent division by zero and clamp values
+        let progress = 0;
+        if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
+        // Clamp between 0 and 100
+        progress = Math.max(0, Math.min(100, progress));
+
         progressBar.style.width = `${progress}%`;
         return;
     }
@@ -1111,15 +1116,19 @@ function updateProgressBar() {
         const freeEnd = getTimeInSeconds(nextPeriod.start);
         const totalDuration = freeEnd - freeStart;
         const elapsed = currentTimeInSeconds - freeStart;
-        const progress = (elapsed / totalDuration) * 100;
-        progressBar.style.width = `${progress}%`;
+    let progress = 0;
+    if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
+    progress = Math.max(0, Math.min(100, progress));
+    progressBar.style.width = `${progress}%`;
     } else {
         // Before first period of the day
         const firstPeriodStart = getTimeInSeconds(nextPeriod.start);
         const totalDuration = firstPeriodStart;
         const elapsed = currentTimeInSeconds;
-        const progress = (elapsed / totalDuration) * 100;
-        progressBar.style.width = `${progress}%`;
+    let progress = 0;
+    if (totalDuration > 0) progress = (elapsed / totalDuration) * 100;
+    progress = Math.max(0, Math.min(100, progress));
+    progressBar.style.width = `${progress}%`;
     }
 }
 
@@ -1473,19 +1482,29 @@ function handleBgImageUpload(file) {
     }
 }
 
-function processUploadedImage(dataUrl, dropArea, fileType) {
-    const img = new Image();
-    img.onload = function() {
+async function processUploadedImage(dataUrl, dropArea, fileType) {
+    // Helper to load image as a Promise so we can await it
+    function loadImage(url) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = reject;
+            img.src = url;
+        });
+    }
+
+    try {
+        const img = await loadImage(dataUrl);
+
         // For GIFs and SVGs, use original file to preserve animation/vectors
         if (fileType === 'image/gif' || fileType === 'image/svg+xml') {
-            applyUploadedImage(dataUrl, dropArea);
+            await applyUploadedImage(dataUrl, dropArea);
             return;
         }
 
         // For other formats, compress if needed
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
         let { width, height } = calculateImageDimensions(img.width, img.height);
         canvas.width = width;
         canvas.height = height;
@@ -1496,18 +1515,14 @@ function processUploadedImage(dataUrl, dropArea, fileType) {
         if (!['image/webp', 'image/avif', 'image/png'].includes(fileType)) {
             outputType = 'image/jpeg';
         }
-        
+
         const compressedImage = canvas.toDataURL(outputType, 0.7);
-        applyUploadedImage(compressedImage, dropArea);
-    };
-    
-    img.onerror = function() {
-        console.error('Image loading error');
+        await applyUploadedImage(compressedImage, dropArea);
+    } catch (e) {
+        console.error('Image processing failed', e);
         resetDropArea(dropArea);
         alert('Invalid image file');
-    };
-    
-    img.src = dataUrl;
+    }
 }
 
 function calculateImageDimensions(width, height) {
@@ -1573,8 +1588,34 @@ function initializeGradientControls() {
 }
 
 // Fix for the second error: Add missing applyUploadedImage function
-function applyUploadedImage(imageData, dropArea) {
+async function applyUploadedImage(imageData, dropArea) {
     try {
+        // If the imageData is a data URL and large, show the large-image modal immediately
+        try {
+            const MAX_CHARS = 400 * 1024;
+            if (typeof imageData === 'string' && imageData.startsWith('data:') && imageData.length > MAX_CHARS) {
+                // Ask the user what to do right away
+                const choice = await showLargeImageModalAsync(imageData.length);
+                if (choice.action === 'compress') {
+                    const compressed = await compressDataUrlToMax(imageData, MAX_CHARS);
+                    if (compressed) {
+                        imageData = compressed;
+                    } else {
+                        // Compression failed: remove image and abort applying
+                        try { localStorage.removeItem('bgImage'); } catch (e) {}
+                        resetDropArea(dropArea);
+                        return;
+                    }
+                } else if (choice.action === 'remove' || choice.action === 'cancel') {
+                    // Remove image and abort applying (no local-only fallback)
+                    try { localStorage.removeItem('bgImage'); } catch (e) {}
+                    resetDropArea(dropArea);
+                    return;
+                }
+            }
+        } catch (e) {
+            console.warn('Large-image immediate handling failed', e);
+        }
         // Update preview
         const preview = document.getElementById('bg-preview');
         if (preview) {
