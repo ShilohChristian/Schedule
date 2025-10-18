@@ -994,6 +994,7 @@ function updateScheduleDisplay() {
     const scheduleContainer = document.getElementById("schedule");
     if (!scheduleContainer) return;
     scheduleContainer.innerHTML = "";
+    const showTimes = (localStorage.getItem('showPeriodTimes') === 'true');
     const globalNames = getGlobalPeriodNames();
     const renames = getPeriodRenames();
     // Ensure originalSchedule matches the active grade level (high vs middle school)
@@ -1027,6 +1028,16 @@ function updateScheduleDisplay() {
             periodDiv.className = "period";
             const label = document.createElement("label");
             label.innerText = `${displayName}`;
+            if (showTimes && origPeriod && origPeriod.start && origPeriod.end) {
+                const timesSpan = document.createElement('span');
+                timesSpan.className = 'period-times';
+                timesSpan.style.marginLeft = '8px';
+                timesSpan.style.fontSize = '0.9em';
+                timesSpan.style.opacity = '0.85';
+                // Show times without parentheses as requested
+                timesSpan.innerText = `${origPeriod.start} - ${origPeriod.end}`;
+                label.appendChild(timesSpan);
+            }
             const timer = document.createElement("span");
             timer.id = `Period_Timer`;
             periodDiv.appendChild(label);
