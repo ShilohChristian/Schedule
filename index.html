@@ -69,6 +69,15 @@
     </script>
 </head>
 <body>
+    <!-- Mobile top bar (only shown on small screens) -->
+    <div class="mobile-topbar" role="banner" aria-hidden="false">
+        <div class="mobile-topbar-inner">
+            <img src="favicon.svg" alt="Shiloh Schedule" class="mobile-logo" />
+            <button class="mobile-settings-btn" aria-label="Open settings" onclick="toggleSettingsSidebar()">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </div>
     <button id="sign-in-button" onclick="handleAuthButton()">
         <i class="fas fa-user"></i>
     </button>
@@ -310,6 +319,17 @@
                                 <!-- Will be populated by JavaScript -->
                             </div>
                         </div>
+                        <div class="settings-group">
+                            <h3><i class="fas fa-clock"></i> Display Options</h3>
+                            <div class="switch-container">
+                                <label class="switch-label" for="show-period-times">Show period times next to names</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="show-period-times" onchange="toggleShowPeriodTimes(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <p class="help-text" style="font-size:12px; color: #6b7c8a; margin-top:8px;">When enabled, each period will display its start and end time next to the period name.</p>
+                        </div>
                     </div>
                     <div class="settings-group" style="display:none">
                         <h3><i class="fas fa-plus-circle"></i> Custom Schedule</h3>
@@ -333,36 +353,33 @@
                     <div class="settings-group">
                         <h3>About</h3>
                         <div class="about-content">
-                            <!-- Updated About Content -->
-                            <h2>About Shiloh Christian Bell Schedule</h2>
-                            <p>The Shiloh Christian Bell Schedule is a modern, web-based application designed to help students, teachers, and staff stay on track during the school day. With real-time countdown timers and customizable settings, it adapts to different scheduling needs—whether it’s the standard daily schedule or special event times.</p>
-                            
-                            <h4>Features and Functionality:</h4>
+                            <h2>Shiloh Schedule — current site</h2>
+                            <p>Shiloh Schedule is a lightweight, browser-based schedule and countdown app for schools. It shows the active period, a live countdown timer, and provides flexible schedule management with user-customizable visuals and persistent settings.</p>
+
+                            <h4>Key features</h4>
                             <ul class="feature-list">
-                                <li><strong>Live Countdown Timer:</strong> Always displays the remaining time of the current period, ensuring timely transitions between classes and activities.</li>
-                                <li><strong>Customizable Schedule Management:</strong> Choose from multiple preloaded schedules or create custom ones to fit your unique class arrangements.</li>
-                                <li><strong>Visual Customization:</strong> Personalize the look with options for background images, gradients, colors, and text effects to match your style.</li>
-                                <li><strong>Responsive Design:</strong> Accessible from both desktops and mobile devices, providing a smooth experience on any screen.</li>
-                                <li><strong>Secure Integration:</strong> Utilizes Firebase for authentication and data storage so that your settings and preferences are safely preserved.</li>
+                                <li><strong>Live countdown</strong> for the current period with automatic schedule switching.</li>
+                                <li><strong>Multiple schedules</strong> (Normal, Chapel, Pep Rally, Custom) with rename/save capability.</li>
+                                <li><strong>Appearance controls</strong>: background image or gray-themed panels, gradients, color picks, and timer shadow options.</li>
+                                <li><strong>Show period times</strong> option (Settings → Schedule) to display start/end times beside each period.</li>
+                                <li><strong>Auth & sync</strong> via Firebase (Google sign-in) to save settings across devices—optional and controlled by the user.</li>
+                                <li><strong>Chrome extension integration</strong> to sync gradient themes when available.</li>
                             </ul>
-                            
-                            <h4>How It Works:</h4>
-                            <p>The application automatically detects the current time and maps it to the correct school period based on the chosen schedule. It highlights the active period, updates the countdown timer in real time, and lets you personalize visual elements through an intuitive settings panel. Customizations are saved using both local storage and secure Firebase integration.</p>
-                            
-                            <h4>Why Choose Shiloh Schedule?</h4>
-                            <p>Shiloh Schedule streamlines daily time management for the school community, offering flexibility with customizable schedules and visual themes. Its modern design, robust features, and secure data handling make it an essential tool for staying on schedule.</p>
-                            
+
+                            <h4>How to use</h4>
+                            <ol>
+                                <li>Open Settings (cog) → Appearance to customize visuals or set a background.</li>
+                                <li>Use Settings → Schedule to switch schedules or enable "Show period times".</li>
+                                <li>Sign in with Google if you want settings synced across devices (optional).</li>
+                            </ol>
+
+                            <h4>Privacy & data</h4>
+                            <p>Personal data is only used for authentication and optional settings sync via Firebase. No data is sold. See the Privacy Policy for details.</p>
+
                             <div class="contact-info">
-                                <p>For support or inquiries, please email us at <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
-                                <p class="version-info">Version 2.7</p>
-                                <p class="creator-info">Developed by Brady Blackwell</p>
-                                <div class="changelog">
-                                    <h4>Update 2.7 (Sept 21, 2025)</h4>
-                                    <ul class="changelog-list">
-                                        <li>Fixed period rename persistence and mapping issues.</li>
-                                        <li>Polished UI and reduced console noise for production release.</li>
-                                    </ul>
-                                </div>
+                                <p>Questions or issues? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
+                                <p class="version-info">Version 2.7.3</p>
+                                <p class="creator-info">Maintained by Brady Blackwell</p>
                             </div>
                         </div>
                     </div>
@@ -549,6 +566,23 @@
             </div>
         </div>
     </div>
+    <!-- Redesigned update notice modal (shows once) -->
+    <div id="update-notice-backdrop" class="update-notice-backdrop" aria-hidden="true">
+        <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
+            <div class="update-notice-body">
+                <div class="update-header">
+                    <img src="favicon.svg" alt="Logo" class="update-logo" />
+                    <div class="update-title-block">
+                        <h2 id="update-notice-title">Update — Bug fixes & new option</h2>
+                    </div>
+                </div>
+                <p>We've fixed a number of bugs related to background images, gradient handling, and settings persistence. We've also added a new <strong>"Show Period Times"</strong> option in Settings → Appearance so you can display each period's start and end time next to its name.</p>
+                <div class="update-notice-actions">
+                    <button id="update-notice-ok" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -561,6 +595,36 @@
                     window.authManager.toggleProfileVisibility();
                 });
             }
+                // Show redesigned update notice once (versioned key). Only OK will dismiss.
+                try {
+                    const key = 'updateNoticeShown_v1';
+                    const backdrop = document.getElementById('update-notice-backdrop');
+                    if (backdrop && !localStorage.getItem(key)) {
+                        // reveal and keep visible until OK is clicked
+                        backdrop.style.display = 'flex';
+                        backdrop.setAttribute('aria-hidden', 'false');
+
+                        const okBtn = document.getElementById('update-notice-ok');
+
+                        // OK: mark shown permanently and close (move focus first to avoid aria-hidden on focused element)
+                        okBtn.addEventListener('click', function() {
+                            try { localStorage.setItem(key, 'true'); } catch (e) {}
+                            try {
+                                // remove focus from the button to avoid hiding a focused element
+                                okBtn.blur();
+                            } catch (e) {}
+                            try {
+                                // move focus to a sensible, focusable element outside the backdrop
+                                const target = document.getElementById('settings-button') || document.getElementById('sign-in-button') || document.body;
+                                if (target && typeof target.focus === 'function') target.focus();
+                            } catch (e) {}
+                            backdrop.style.display = 'none';
+                            backdrop.setAttribute('aria-hidden', 'true');
+                        });
+                    }
+                } catch (e) {
+                    // ignore storage failures
+                }
         });
     </script>
 </body>
