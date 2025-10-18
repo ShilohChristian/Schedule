@@ -122,13 +122,31 @@ async function loadSettings() {
             if (countdownHeading) countdownHeading.style.color = fontColor;
         }
         
-        // Load other settings with null checks
+    // Initialize show period times checkbox from Firestore or localStorage
+    const showTimesSetting = firestoreSettings?.showPeriodTimes ?? (localStorage.getItem('showPeriodTimes') === 'true');
+    const showTimesCheckbox = document.getElementById('show-period-times');
+    if (showTimesCheckbox) showTimesCheckbox.checked = !!showTimesSetting;
+
+    // Load other settings with null checks
         await loadShadowSettings();
         loadProgressBarSettings();
         loadWhiteBoxSettings();
         
     } catch (error) {
         console.error('Error loading settings:', error);
+    }
+}
+
+// Toggle handler for showing/hiding period times next to names
+function toggleShowPeriodTimes(enabled) {
+    try {
+        localStorage.setItem('showPeriodTimes', enabled ? 'true' : 'false');
+        // re-render schedule
+        if (typeof updateScheduleDisplay === 'function') updateScheduleDisplay();
+        // Persist to Firestore as part of saveSettings if desired
+        if (typeof saveSettings === 'function') saveSettings();
+    } catch (e) {
+        console.error('Failed to toggle showPeriodTimes', e);
     }
 }
 
@@ -473,6 +491,33 @@ function updateWhiteBoxTextColor() {
     document.querySelector(".schedule-container").style.color = whiteBoxTextColor; // Change text color in the white box
     localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor); // Save to local storage
     saveSettings();
+}
+
+// Update the main countdown/timer color and reflect in previews + persisted settings
+function updateCountdownColor() {
+    try {
+        const input = document.getElementById('countdown-color');
+        if (!input) return;
+        const color = input.value;
+
+        const timerElement = document.getElementById('current-period-time');
+        if (timerElement) timerElement.style.color = color;
+
+        // Update any small preview used for shadow/color previews
+        const preview = document.getElementById('shadow-preview');
+        if (preview) preview.style.color = color;
+
+        // Persist choice
+        localStorage.setItem('countdownColor', color);
+
+        // Call shared save routine if available
+        if (typeof saveSettings === 'function') {
+            // don't await here; keep UI snappy
+            try { saveSettings(); } catch (e) { /* ignore */ }
+        }
+    } catch (e) {
+        console.error('Failed to update countdown color', e);
+    }
 }
 
 // Shadow System
