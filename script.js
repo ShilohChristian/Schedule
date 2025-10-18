@@ -334,6 +334,33 @@ function getTimeInSeconds(timeStr) {
     return h * 3600 + m * 60;
 }
 
+// Helper: format 'HH:MM' (24-hour) to 12-hour time with AM/PM
+function formatTime12(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return timeStr || '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let h = parseInt(parts[0], 10);
+    const m = parts[1].padStart(2, '0');
+    if (isNaN(h)) return timeStr;
+    const period = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${h}:${m} ${period}`;
+}
+
+// Helper: format 'HH:MM' to 12-hour hour without AM/PM (e.g., '13:10' -> '1:10')
+function formatHour12NoSuffix(timeStr) {
+    if (!timeStr || typeof timeStr !== 'string') return timeStr || '';
+    const parts = timeStr.split(':');
+    if (parts.length < 2) return timeStr;
+    let h = parseInt(parts[0], 10);
+    const m = parts[1].padStart(2, '0');
+    if (isNaN(h)) return timeStr;
+    h = h % 12;
+    if (h === 0) h = 12;
+    return `${h}:${m}`;
+}
+
 // Helper: get period renames from localStorage
 function getPeriodRenames() {
     return JSON.parse(localStorage.getItem('periodRenames') || '{}');
@@ -622,7 +649,7 @@ window.populateRenamePeriods = populateRenamePeriods;
 // --- DEVTOOLS secret debug overlay ---
 // Shows a small overlay only when the user types the sequence 'DEVTOOLS'.
 (() => {
-    const sequence = 'DEVTOOLS';
+    const sequence = '/dev';
     let buffer = '';
     function showDebugOverlay() {
     if (document.getElementById('devtools-debug-overlay')) return;
@@ -695,7 +722,30 @@ window.populateRenamePeriods = populateRenamePeriods;
         closeBtn.textContent = 'Close';
         closeBtn.style.cursor = 'pointer';
         closeBtn.addEventListener('click', (ev) => { ev.stopPropagation(); overlay.remove(); const bd = document.getElementById('devtools-debug-backdrop'); if (bd) bd.remove(); });
+        
+        // Add Clear localStorage button (with snapshot so Undo can restore)
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = 'Clear localStorage';
+        clearBtn.style.cursor = 'pointer';
+        clearBtn.style.marginLeft = '8px';
+        clearBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            const ok = confirm('Clear all localStorage? This will remove all saved settings. You can undo via the "Undo Clean" button in this panel if needed. Continue?');
+            if (!ok) return;
+            try {
+                // take a snapshot so undoNormalization can restore
+                if (typeof takeNormalizationSnapshot === 'function') takeNormalizationSnapshot();
+                localStorage.clear();
+                refreshDebugOverlay();
+                const status = document.getElementById('devtools-clean-status');
+                if (status) status.textContent = 'localStorage cleared — use "Undo Clean" to restore';
+            } catch (e) {
+                console.error('Failed to clear localStorage', e);
+                alert('Failed to clear localStorage (see console)');
+            }
+        });
         btnGroup.appendChild(cleanBtn);
+        btnGroup.appendChild(clearBtn);
         btnGroup.appendChild(closeBtn);
 
         header.appendChild(title);
@@ -962,10 +1012,10 @@ window.populateRenamePeriods = populateRenamePeriods;
     });
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Keyboard listener for letter sequence
+    // Keyboard listener for sequence (now '/dev')
     window.addEventListener('keydown', (e) => {
-        // Only accept typical printable letters
-        const k = e.key && e.key.length === 1 ? e.key.toUpperCase() : null;
+        // Accept single-character keys (including '/' and letters). Normalize to lowercase for comparison.
+        const k = e.key && e.key.length === 1 ? e.key.toLowerCase() : null;
         if (!k) return;
         buffer += k;
         if (buffer.length > sequence.length) buffer = buffer.slice(buffer.length - sequence.length);
@@ -1034,8 +1084,10 @@ function updateScheduleDisplay() {
                 timesSpan.style.marginLeft = '8px';
                 timesSpan.style.fontSize = '0.9em';
                 timesSpan.style.opacity = '0.85';
-                // Show times without parentheses as requested
-                timesSpan.innerText = `${origPeriod.start} - ${origPeriod.end}`;
+                // Show times with 12-hour hour (no AM/PM) so hours never exceed 12
+                const startFormatted = formatHour12NoSuffix(origPeriod.start);
+                const endFormatted = formatHour12NoSuffix(origPeriod.end);
+                timesSpan.innerText = `${startFormatted} - ${endFormatted}`;
                 label.appendChild(timesSpan);
             }
             const timer = document.createElement("span");
