@@ -1,9 +1,23 @@
 /* Global Styles */
+:root{
+    /* Theme palette (dark slate + teal / blue accents) */
+    --bg-dark: #071427; /* deep navy background */
+    --bg-shell: #0b2540; /* shell / panel gradient end */
+    --panel: #393E46; /* card / panel background */
+    /* Neutral accents (gray theme) */
+    --accent: #6f7a84; /* muted gray accent */
+    --accent-2: #55606a;
+    --text-primary: #eaf6ff; /* main text */
+    --text-muted: #cfe9ff;
+    --muted-2: rgba(255,255,255,0.06);
+    --card-border: rgba(255,255,255,0.03);
+    --glass: rgba(0,0,0,0.2);
+}
 body {
     margin: 0;
     font-family: 'Roboto', Arial, sans-serif;
-    background: linear-gradient(90deg, #000035 0%, #00bfa5 100%);
-    color: #ffffff;
+    background: var(--bg-shell);
+    color: var(--text-primary);
     height: 100vh;
     overflow: hidden;
     background-size: cover !important;
@@ -12,8 +26,7 @@ body {
     background-attachment: fixed !important;
     position: relative;
     z-index: 0;
-    /* Remove fallback solid color, or keep as fallback only */
-    background-color: #000035;
+    background-color: var(--bg-dark);
 }
 
 /* Add global transitions */
@@ -262,10 +275,11 @@ select {
 .settings-header {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 0.75rem;
-    background: transparent;
-    border-bottom: none;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
     z-index: 1;
@@ -329,7 +343,9 @@ select {
 }
 
 .header-left {
-    display: none;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
 }
 
 .theme-toggle {
@@ -399,63 +415,95 @@ select {
 .update-notice-backdrop {
     position: fixed;
     inset: 0;
-    display: flex;
+    background: rgba(0,0,0,0.7);
+    display: none; /* controlled via script */
     align-items: center;
     justify-content: center;
-    background: rgba(0,0,0,0.55);
-    z-index: 12000;
+    z-index: 9999;
     padding: 20px;
+    animation: backdropFade 220ms ease-in;
 }
 .update-notice-dialog {
-    background: linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%);
-    color: #0b2545;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-    max-width: 560px;
+    background: linear-gradient(180deg,var(--bg-shell), #071427);
+    color: var(--text-primary);
     width: 100%;
-    padding: 22px 20px;
-    font-family: 'Roboto', Arial, sans-serif;
+    max-width: 560px;
+    border-radius: 12px;
+    box-shadow: 0 18px 40px rgba(2,6,23,0.6);
     position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.04);
 }
+.update-notice-body {
+    padding: 22px 24px 18px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+.update-header { display:flex; align-items:center; gap:12px; }
+.update-logo { width:44px; height:44px; max-width:44px; max-height:44px; display:block; border-radius:8px; }
+.update-title-block h2 { margin:0; color:var(--text-primary); font-size:18px; }
 .update-notice-dialog h2 {
-    margin: 0 0 8px 0;
-    color: #012a4a;
-    font-size: 1.25rem;
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.1;
 }
 .update-notice-dialog p {
-    margin: 0 0 16px 0;
-    color: #134e4a;
-    line-height: 1.4;
-}
-.update-notice-close {
-    position: absolute;
-    right: 10px;
-    top: 8px;
-    border: none;
-    background: transparent;
-    color: #3a3a3a;
-    font-size: 20px;
-    cursor: pointer;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 14px;
 }
 .update-notice-actions {
     display: flex;
     gap: 10px;
-    justify-content: flex-end;
-    margin-top: 8px;
+    margin-top: 6px;
+    width: 100%;
 }
-.btn {
-    padding: 8px 12px;
+.update-notice-actions .btn {
+    padding: 10px 16px;
     border-radius: 8px;
-    border: none;
     cursor: pointer;
     font-weight: 600;
 }
-.btn-primary {
-    background: linear-gradient(90deg, #00bfa5, #0077b6);
+.update-notice-actions .btn-primary {
+    background: linear-gradient(90deg,#6b7782,#4b5560);
     color: #fff;
+    border: none;
+    box-shadow: 0 8px 20px rgba(20,30,40,0.35);
 }
-.btn-primary:hover { filter: brightness(0.95); }
-/* .update-notice-settings removed (button removed) */
+.update-notice-actions .btn { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--text-muted); }
+.update-close {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: rgba(230,242,255,0.7);
+}
+.update-checkbox { font-size: 13px; color: #cfe9ff; display: flex; align-items: center; gap: 8px; }
+.update-checkbox input { transform: translateY(1px); }
+
+@media (max-width: 520px) {
+    .update-notice-dialog { max-width: 100%; border-radius: 10px; }
+    .update-notice-body { padding: 18px; }
+}
+
+@keyframes backdropFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes dialogSlideUp {
+    from { transform: translateY(8px) scale(0.995); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.update-notice-dialog { animation: dialogSlideUp 260ms cubic-bezier(.2,.9,.3,1) both; }
 
 /* Legal panel styles */
 .legal-grid {
@@ -523,34 +571,9 @@ select {
 }
 
 @media (max-width: 700px) {
-    .schedule-container {
-        display: none;
-    }
-    .container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-        padding: 10px;
-    }
-    .current-period {
-        text-align: center;
-        width: 100%;
-        position: static;
-        margin: 0;
-    }
-    #current-period-time {
-        font-size: 5em;
-        margin: 0;
-    }
-    #current-schedule-title {
-        font-size: 1.5em;
-        margin-bottom: 10px;
-    }
-    .legal-grid {
-        grid-template-columns: 1fr;
-    }
+    .schedule-container { width: 90%; left: 10px; bottom: 300px; }
+    #current-period-time { font-size: 6em; }
+    .legal-grid { grid-template-columns: 1fr; }
 }
 
 .settings-nav {
@@ -741,22 +764,24 @@ close-settings-sidebar:hover {
 
 @media (max-width: 600px) {
     .schedule-container {
-        width: 90%;
-        max-width: none;
-        margin: 20px auto;
-        position: relative;
+        width: 80%;
+        max-width: none; 
+        margin: 0 auto;
+        position: static;
     }
 
     .current-period {
+        position: relative;
+        bottom: 0;
+        left: 0;
         width: 100%;
         text-align: center;
-        margin: 20px auto;
     }
 }
 /* Media query for smaller screens */
 @media (max-width: 600px) {
     .schedule-container {
-        width: 90%; /* Adjust the width to 90% of the viewport */
+    width: 90%; /* Adjust the width to 90% of the viewport */
         max-width: none; /* Remove the max-width constraint */
         margin: 10px auto; /* Center the container */
         padding: 10px; /* Adjust padding for better spacing */
@@ -995,8 +1020,6 @@ close-settings-sidebar:hover {
     transform: translateY(-2px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
-
-/* ...existing code... */
 
 /* Improved Settings Sidebar Layout */
 .settings-sidebar {
@@ -1742,8 +1765,6 @@ input, select {
     color: #00bfa5;
 }
 
-/* ...existing code... */
-
 /* Extension Panel Styles */
 .color-controls {
     display: flex;
@@ -1978,6 +1999,22 @@ input, select {
 .grade-level-modal-info i {
     color: #00bfa5;
 }
+
+/* Terms page helpers to match settings theme */
+.terms-wrapper { padding: 40px 20px; min-height: 100vh; background: var(--bg-dark);
+    /* allow internal scrolling since global body may be overflow:hidden */
+    box-sizing: border-box;
+    max-height: 100vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.terms-card { max-width: 980px; margin: 0 auto; background: linear-gradient(180deg, var(--bg-shell), rgba(7,20,39,0.8)); padding: 28px; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 12px 30px rgba(2,6,23,0.6); }
+.terms-card h1 { color: var(--blue); text-align: center; margin-bottom: 18px; }
+.terms-card h2, .terms-card h3 { color: var(--blue); }
+.terms-card p, .terms-card li { color: var(--text-muted); }
+.terms-card a { color: var(--teal); font-weight:600 }
+.terms-card a:hover { color: var(--blue); }
+.terms-card .legal-grid { gap: 18px; margin-top: 12px; }
 
 .nav-item.active {
     background: #00bfa5;
@@ -2008,8 +2045,6 @@ input, select {
     color: #00bfa5;
 }
 
-/* ...existing code... */
-
 /* Extension Panel Styles */
 .color-controls {
     display: flex;
@@ -2243,4 +2278,283 @@ input, select {
 
 .grade-level-modal-info i {
     color: #00bfa5;
+}
+
+/* Terms page helpers to match settings theme */
+.terms-wrapper { padding: 40px 20px; min-height: 100vh; background: var(--bg-dark);
+    /* allow internal scrolling since global body may be overflow:hidden */
+    box-sizing: border-box;
+    max-height: 100vh;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+}
+.terms-card { max-width: 980px; margin: 0 auto; background: linear-gradient(180deg, var(--bg-shell), rgba(7,20,39,0.8)); padding: 28px; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 12px 30px rgba(2,6,23,0.6); }
+.terms-card h1 { color: var(--blue); text-align: center; margin-bottom: 18px; }
+.terms-card h2, .terms-card h3 { color: var(--blue); }
+.terms-card p, .terms-card li { color: var(--text-muted); }
+.terms-card a { color: var(--teal); font-weight:600 }
+.terms-card a:hover { color: var(--blue); }
+.terms-card .legal-grid { gap: 18px; margin-top: 12px; }
+
+.nav-item.active {
+    background: #00bfa5;
+    color: #fff;
+    position: relative;
+}
+
+.nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: #fff;
+}
+
+.settings-group h3 {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #333;
+}
+
+.settings-group h3 i {
+    margin-right: 10px;
+    color: #00bfa5;
+}
+
+/* Mobile-only optimizations (affects screens <= 700px) */
+/* Hide mobile-only topbar by default (desktop) */
+.mobile-topbar { display: none; }
+@media (max-width: 700px) {
+    /* Allow natural page height and enable scrolling on mobile */
+    body {
+        height: auto;
+        overflow: auto;
+        padding-bottom: 100px; /* space for fixed controls */
+    }
+
+    /* Tighter container padding for narrow screens */
+    .container {
+        max-width: 100%;
+        margin: 8px;
+        padding: 12px;
+    }
+
+    /* Hide the full schedule on mobile to maximize timer visibility */
+    .schedule-container {
+        display: none !important;
+    }
+
+    /* Mobile top bar (logo + settings) */
+    .mobile-topbar {
+        display: flex !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: rgba(17,17,17,0.85);
+        backdrop-filter: blur(6px);
+        z-index: 9998;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .mobile-topbar-inner {
+        width: 100%;
+        max-width: 1100px;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .mobile-logo { width: 36px; height: 36px; border-radius: 6px; }
+    .mobile-settings-btn {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 20px;
+        padding: 8px;
+        border-radius: 8px;
+    }
+
+    /* Current period more compact */
+    /* Pin the timer centered at the bottom of the viewport */
+    .current-period {
+        position: fixed !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 18px !important;
+        text-align: center !important;
+        margin: 0 !important;
+        z-index: 10000 !important; /* above the topbar and everything else */
+        pointer-events: none; /* let taps pass through unless buttons inside are targeted */
+    }
+    .current-period * { pointer-events: auto; }
+    #current-period-time {
+        font-size: 4.25rem !important;
+        line-height: 1 !important;
+        margin-top: 8px !important;
+    }
+
+    /* Larger, easier-to-tap settings button */
+    #settings-button {
+        right: 16px !important;
+        bottom: 18px !important;
+        width: 64px !important;
+        height: 64px !important;
+        font-size: 20px !important;
+        border-radius: 32px !important;
+    }
+
+    /* Make settings sidebar full-screen and scrollable on mobile */
+    /* Completely disable settings sidebar on mobile */
+    .settings-sidebar {
+        display: none !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    /* Hide all elements except timer and timer header on mobile */
+    .mobile-topbar,
+    #sign-in-button,
+    .schedule-container,
+    #settings-button,
+    .mobile-settings-btn,
+    .theme-toggle,
+    .settings-actions {
+        display: none !important;
+        pointer-events: none !important;
+    }
+
+    /* Center timer content on mobile */
+    .container {
+        margin: 0 auto;
+        padding: 40px 20px;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .main-content {
+        padding: 0;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .current-period {
+        text-align: center;
+        width: 100%;
+    }
+
+    #countdown-heading {
+        margin-bottom: 20px;
+    }
+
+    #current-period-time {
+        font-size: 4em;
+    }
+
+    .settings-header {
+        padding: 12px 14px !important;
+    }
+
+    /* Collapse nav into a horizontal, scrollable bar */
+    .settings-nav {
+        position: static !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 8px !important;
+        overflow-x: auto !important;
+        padding: 8px 0 !important;
+        border-right: none !important;
+        background: transparent !important;
+    }
+
+    .nav-item {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        padding: 10px 12px !important;
+        font-size: 15px !important;
+        border-radius: 10px !important;
+        margin-right: 6px !important;
+    }
+
+    /* Reduce inner padding for settings panels */
+    .settings-panels {
+        padding: 12px !important;
+    }
+    .settings-group {
+        padding: 12px !important;
+        margin: 0 0 14px 0 !important;
+    }
+
+    /* Make modal/dialogs full width and easy to read */
+    .update-notice-dialog,
+    .grade-level-modal-box,
+    .popup-box {
+        max-width: 98vw !important;
+        margin: 10px !important;
+        border-radius: 10px !important;
+    }
+    .update-notice-body {
+        padding: 14px !important;
+    }
+
+    /* Bigger buttons / touch targets */
+    .btn,
+    .btn-primary,
+    #save-schedule-button,
+    .grade-level-modal-btn {
+        padding: 12px 18px !important;
+        font-size: 16px !important;
+    }
+
+    /* Make dropdowns and inputs more touch-friendly */
+    .dropdown-toggle {
+        padding: 12px !important;
+    }
+    .dropdown-content {
+        padding: 12px !important;
+        max-height: 60vh !important;
+        overflow-y: auto !important;
+    }
+
+    /* Larger switches for fingers */
+    .switch {
+        width: 56px !important;
+        height: 32px !important;
+    }
+    .slider:before {
+        height: 24px !important;
+        width: 24px !important;
+        left: 4px !important;
+    }
+
+    /* Slightly bigger profile button */
+    .profile-button {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    /* Limit animations/transitions on mobile for smoother performance */
+    * {
+        transition: none !important;
+    }
+
+    /* Improve readability */
+    body, .settings-group, .dropdown-content {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 }
