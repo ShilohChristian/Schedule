@@ -589,7 +589,7 @@ select {
 
 .settings-panels {
     flex: 1;
-    padding: 2rem;
+    padding: 0; /* removed outer padding so settings are flush */
     overflow-y: auto;
 }
 
@@ -647,16 +647,25 @@ select {
 .settings-group {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 0.75rem;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    max-width: 800px;
-    margin: 0 auto 20px auto;
-    padding: 20px;
+    padding: 0; /* removed inner padding so group content is flush */
+    margin: 0 0 0 0; /* remove extra margins — panels will control spacing */
     width: 100%;
-    max-width: 800px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
     box-sizing: border-box;
+}
+
+/* Remove any accidental outer cyan border around the app/settings area
+   This overrides stray borders/outlines that may appear on html/body or the settings sidebar. */
+html, body, #settings-sidebar, .settings-sidebar, .container {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove any 1-3px solid cyan outlines on focused elements inside settings */
+#settings-sidebar *:focus {
+    outline: none !important;
+    box-shadow: none !important;
 }
 
 .settings-group h3 {
