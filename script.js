@@ -646,6 +646,26 @@ function populateRenamePeriods() {
 }
 window.populateRenamePeriods = populateRenamePeriods;
 
+// Initialize console capture globally so logs from page load are preserved
+(function initGlobalDevConsole(){
+    if (window.__devConsoleGlobalInit) return;
+    window.__devConsoleGlobalInit = true;
+    window.__devConsoleBuffer = window.__devConsoleBuffer || [];
+    window.__origConsole = window.__origConsole || {};
+    ['log','info','warn','error','debug'].forEach(level => {
+        try {
+            window.__origConsole[level] = console[level].bind(console);
+            console[level] = function(...args){
+                try {
+                    window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() });
+                    if (window.__devConsoleBuffer.length > 5000) window.__devConsoleBuffer.shift();
+                } catch (e) { }
+                try { window.__origConsole[level](...args); } catch (e) { }
+            };
+        } catch (e) { }
+    });
+})();
+
 // --- DEVTOOLS secret debug overlay ---
 // Shows a small overlay only when the user types the sequence 'DEVTOOLS'.
 (() => {
@@ -674,11 +694,13 @@ window.populateRenamePeriods = populateRenamePeriods;
         overlay.style.borderRadius = '8px';
         overlay.style.fontFamily = 'monospace';
         overlay.style.maxWidth = '420px';
-        overlay.style.maxHeight = '60vh';
+            overlay.style.maxWidth = '760px';
+            overlay.style.maxHeight = '80vh';
+            overlay.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
         overlay.style.overflow = 'auto';
     overlay.style.pointerEvents = 'auto';
 
-        // Header with title and button group so buttons don't overlap the title
+        // Header with title, tabs and button group so buttons don't overlap the title
         const header = document.createElement('div');
         header.style.display = 'flex';
         header.style.justifyContent = 'space-between';
@@ -686,9 +708,57 @@ window.populateRenamePeriods = populateRenamePeriods;
         header.style.gap = '12px';
         header.style.marginBottom = '8px';
 
+        const leftGroup = document.createElement('div');
+        leftGroup.style.display = 'flex';
+        leftGroup.style.flexDirection = 'column';
+
         const title = document.createElement('div');
         title.style.fontWeight = '700';
         title.textContent = 'DEVTOOLS Debug Overlay';
+
+        // Tabs: Debug | Console
+        const tabs = document.createElement('div');
+        tabs.style.display = 'flex';
+        tabs.style.gap = '6px';
+        tabs.style.marginTop = '8px';
+
+        const debugTab = document.createElement('button');
+        debugTab.textContent = 'Debug';
+        debugTab.setAttribute('role','tab');
+        debugTab.setAttribute('aria-pressed','true');
+        debugTab.tabIndex = 0;
+        debugTab.style.cursor = 'pointer';
+        debugTab.style.padding = '8px 14px';
+        debugTab.style.borderRadius = '8px';
+        debugTab.style.background = 'rgba(255,255,255,0.12)';
+        debugTab.style.border = '1px solid rgba(255,255,255,0.12)';
+        debugTab.style.color = '#ffffff';
+        debugTab.style.fontWeight = '600';
+        debugTab.style.minWidth = '68px';
+        debugTab.style.textAlign = 'center';
+        debugTab.dataset.tab = 'debug';
+
+        const consoleTab = document.createElement('button');
+        consoleTab.textContent = 'Console';
+        consoleTab.setAttribute('role','tab');
+        consoleTab.setAttribute('aria-pressed','false');
+        consoleTab.tabIndex = 0;
+        consoleTab.style.cursor = 'pointer';
+        consoleTab.style.padding = '8px 14px';
+        consoleTab.style.borderRadius = '8px';
+        consoleTab.style.background = 'transparent';
+        consoleTab.style.border = '1px solid rgba(255,255,255,0.06)';
+        consoleTab.style.color = 'rgba(255,255,255,0.9)';
+        consoleTab.style.fontWeight = '600';
+        consoleTab.style.minWidth = '68px';
+        consoleTab.style.textAlign = 'center';
+        consoleTab.dataset.tab = 'console';
+
+        tabs.appendChild(debugTab);
+        tabs.appendChild(consoleTab);
+
+        leftGroup.appendChild(title);
+        leftGroup.appendChild(tabs);
 
         const btnGroup = document.createElement('div');
         btnGroup.style.display = 'flex';
@@ -748,7 +818,7 @@ window.populateRenamePeriods = populateRenamePeriods;
         btnGroup.appendChild(clearBtn);
         btnGroup.appendChild(closeBtn);
 
-        header.appendChild(title);
+        header.appendChild(leftGroup);
         header.appendChild(btnGroup);
         overlay.appendChild(header);
 
@@ -759,16 +829,103 @@ window.populateRenamePeriods = populateRenamePeriods;
     status.style.opacity = '0.9';
     overlay.appendChild(status);
 
-    const content = document.createElement('pre');
-    content.id = 'devtools-debug-content';
-    content.style.whiteSpace = 'pre-wrap';
-    content.style.marginTop = '12px';
-    overlay.appendChild(content);
+    // Debug JSON content
+    const debugContent = document.createElement('pre');
+    debugContent.id = 'devtools-debug-content';
+    debugContent.style.whiteSpace = 'pre-wrap';
+    debugContent.style.marginTop = '12px';
+    debugContent.style.display = 'block';
+    debugContent.style.fontSize = '13px';
+    debugContent.style.lineHeight = '1.35';
+    debugContent.style.maxHeight = '58vh';
+    debugContent.style.overflow = 'auto';
+    overlay.appendChild(debugContent);
+
+    // Console content (hidden by default)
+    const consoleContent = document.createElement('div');
+    consoleContent.id = 'devtools-console-content';
+    consoleContent.style.marginTop = '12px';
+    consoleContent.style.display = 'none';
+    consoleContent.style.maxHeight = '60vh';
+    consoleContent.style.overflow = 'auto';
+    consoleContent.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
+    consoleContent.style.fontSize = '13px';
+    consoleContent.style.lineHeight = '1.35';
+    consoleContent.style.background = 'rgba(0,0,0,0.06)';
+    consoleContent.style.padding = '6px';
+    overlay.appendChild(consoleContent);
+
+    // Small console controls
+    const consoleControls = document.createElement('div');
+    consoleControls.style.display = 'none';
+    consoleControls.style.gap = '8px';
+    consoleControls.style.marginTop = '8px';
+    consoleControls.style.justifyContent = 'flex-end';
+    const clearConsoleBtn = document.createElement('button');
+    clearConsoleBtn.textContent = 'Clear Console';
+    clearConsoleBtn.style.cursor = 'pointer';
+    clearConsoleBtn.style.padding = '6px 10px';
+    clearConsoleBtn.style.borderRadius = '6px';
+    clearConsoleBtn.style.border = '1px solid rgba(255,255,255,0.08)';
+    clearConsoleBtn.style.background = 'transparent';
+    clearConsoleBtn.style.color = 'rgba(255,255,255,0.95)';
+    clearConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); window.__devConsoleBuffer = []; refreshConsoleOverlay(); });
+    const copyConsoleBtn = document.createElement('button');
+    copyConsoleBtn.textContent = 'Copy Logs';
+    copyConsoleBtn.style.cursor = 'pointer';
+    copyConsoleBtn.style.padding = '6px 10px';
+    copyConsoleBtn.style.borderRadius = '6px';
+    copyConsoleBtn.style.border = '1px solid rgba(255,255,255,0.08)';
+    copyConsoleBtn.style.background = 'transparent';
+    copyConsoleBtn.style.color = 'rgba(255,255,255,0.95)';
+    copyConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try { const text = window.__devConsoleBuffer.map(l=>`[${l.time}] ${l.level.toUpperCase()}: ${l.args.map(a=> (typeof a==='object'?JSON.stringify(a):String(a))).join(' ')}\n`).join(''); navigator.clipboard.writeText(text); alert('Copied console logs to clipboard'); } catch(e){ alert('Copy failed'); } });
+    consoleControls.appendChild(copyConsoleBtn);
+    consoleControls.appendChild(clearConsoleBtn);
+    overlay.appendChild(consoleControls);
 
         document.body.appendChild(overlay);
         // clicking backdrop closes overlay too
         backdrop.addEventListener('click', () => { overlay.remove(); backdrop.remove(); });
         refreshDebugOverlay();
+        refreshConsoleOverlay();
+
+        // Tab switching with accessible styles and aria states
+        function setActiveTab(tabName) {
+            if (tabName === 'debug') {
+                debugTab.style.background = 'rgba(255,255,255,0.12)';
+                debugTab.style.border = '1px solid rgba(255,255,255,0.18)';
+                debugTab.setAttribute('aria-pressed','true');
+                consoleTab.style.background = 'transparent';
+                consoleTab.style.border = '1px solid rgba(255,255,255,0.06)';
+                consoleTab.setAttribute('aria-pressed','false');
+                debugContent.style.display = 'block';
+                consoleContent.style.display = 'none';
+                consoleControls.style.display = 'none';
+            } else {
+                consoleTab.style.background = 'rgba(255,255,255,0.12)';
+                consoleTab.style.border = '1px solid rgba(255,255,255,0.18)';
+                consoleTab.setAttribute('aria-pressed','true');
+                debugTab.style.background = 'transparent';
+                debugTab.style.border = '1px solid rgba(255,255,255,0.06)';
+                debugTab.setAttribute('aria-pressed','false');
+                debugContent.style.display = 'none';
+                consoleContent.style.display = 'block';
+                consoleControls.style.display = 'flex';
+                refreshConsoleOverlay();
+            }
+            // maintain focus outline for keyboard users
+            try { (tabName === 'debug' ? debugTab : consoleTab).focus(); } catch(e){}
+        }
+
+        debugTab.addEventListener('click', (ev) => { ev.stopPropagation(); setActiveTab('debug'); });
+        consoleTab.addEventListener('click', (ev) => { ev.stopPropagation(); setActiveTab('console'); });
+
+        // Keyboard support: Enter or Space toggles tabs
+        debugTab.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setActiveTab('debug'); } });
+        consoleTab.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); setActiveTab('console'); } });
+
+        // Initialize default active tab
+        setActiveTab('debug');
     }
 
     function refreshDebugOverlay() {
@@ -806,6 +963,46 @@ window.populateRenamePeriods = populateRenamePeriods;
             intervals
         };
         content.textContent = JSON.stringify(debug, null, 2);
+    }
+
+    // Console capture and rendering
+    function ensureConsoleCapture() {
+        if (!window.__devConsoleBuffer) window.__devConsoleBuffer = [];
+        if (window.__devConsoleCaptured) return;
+        window.__devConsoleCaptured = true;
+        window.__originalConsole = window.__originalConsole || {};
+        ['log','info','warn','error','debug'].forEach(level => {
+            try {
+                window.__originalConsole[level] = console[level].bind(console);
+                console[level] = function(...args){
+                    try { window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() }); if (window.__devConsoleBuffer.length>2000) window.__devConsoleBuffer.shift(); } catch(e){}
+                    try { window.__originalConsole[level](...args); } catch(e){}
+                };
+            } catch(e){}
+        });
+    }
+
+    function refreshConsoleOverlay() {
+        ensureConsoleCapture();
+        const c = document.getElementById('devtools-console-content');
+        if (!c) return;
+        c.innerHTML = '';
+        const buf = window.__devConsoleBuffer || [];
+        buf.slice().reverse().forEach(entry => {
+            const row = document.createElement('div');
+            row.style.padding = '6px 8px';
+            row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+            const time = document.createElement('span'); time.style.opacity = '0.6'; time.textContent = `[${entry.time}] `;
+            const lvl = document.createElement('span'); lvl.textContent = entry.level.toUpperCase() + ': ';
+            if (entry.level === 'error') lvl.style.color = '#ff6b6b';
+            if (entry.level === 'warn') lvl.style.color = '#ffb86b';
+            const msg = document.createElement('span');
+            try { msg.textContent = entry.args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '); } catch(e){ msg.textContent = String(entry.args); }
+            row.appendChild(time); row.appendChild(lvl); row.appendChild(msg);
+            c.appendChild(row);
+        });
+        // expose a window hook so external code (or tests) can refresh the console view
+        try { window.__refreshDevConsoleOverlay = refreshConsoleOverlay; } catch (e) { }
     }
 
     // Normalization helper: attempt to fix malformed localStorage values
