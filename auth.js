@@ -220,7 +220,7 @@ class AuthManager {
                                 ? gradientSettings.stops
                                 : [
                                     { color: gradientSettings.startColor || '#000035', position: 0 },
-                                    { color: gradientSettings.endColor || '#00bfa5', position: 100 }
+                                    { color: gradientSettings.endColor || '#c4ad62', position: 100 }
                                 ];
                             window.gradientManager.updateUI();
                             window.gradientManager.applyGradient();
