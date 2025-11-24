@@ -1,42 +1,71 @@
 # Shiloh Christian Schedule
 
-A customizable schedule countdown website designed for students and faculty to track class periods in real time.
+A modern, customizable schedule countdown tool designed for students, faculty, and staff to track class periods in real time with a clean, branded interface.
+
+---
 
 ## Features
 
-### 📅 Schedule Management
-- Live countdown timer updating the current period and automatically switching schedules (Normal, Chapel, Late/Early Pep Rally, or Custom).
-- Rename periods and create custom schedules tailored to your needs.
-- Schedules are saved locally and synced using Firebase Firestore.
+### 📅 Dynamic Schedule Management
+- Live countdown timer that automatically updates as periods change  
+- Supports **Normal**, **Chapel**, **Pep Rally**, **Late Start**, and fully **custom** schedules  
+- Rename periods, adjust timings, and create personalized schedule sets  
+- All schedule data is saved locally and synced through Firebase Firestore  
+
+---
 
 ### 🎨 Background & Gradient Customization
-- Choose to display a background image or a customizable gradient.
-- Adjust gradient settings including colors, angle, and multiple color stops.
-- Seamlessly toggle between gradient and image backgrounds.
-- Chrome extension integration (Gradient Grabber) allows syncing custom gradient settings across devices.
+- Choose between a **background image** or a **custom gradient**  
+- Fine-tune gradient angle, color stops, and opacity  
+- Smoothly switch between gradient and image modes  
+- Chrome extension integration allows gradient styles to sync across devices  
 
-### 🔧 Visual Customization
-- Personalize the schedule box with custom background and text colors.
-- Fine-tune timer shadow effects and overall typography.
-- Real-time updates with persistence via localStorage and Firestore.
+---
 
-### 🔐 Secure Authentication & Settings Sync
-- Authentication via Google using Firebase.
-- User-specific settings (visual options, schedules, background, and gradient configurations) are securely stored and synced with Firestore.
+### 🔧 Visual Customization Tools
+- Customize the **schedule box** with your preferred background, opacity, and text color  
+- Adjust **timer shadow** settings including blur, distance, and angle  
+- Full typography controls including font selection and preview  
+- All changes apply instantly and persist using localStorage and Firestore  
+
+---
+
+### 🔐 Secure Authentication & Cloud Sync
+- Sign in with Google through Firebase Authentication  
+- User-specific preferences (schedules, backgrounds, gradients, UI settings) sync securely across devices via Firestore  
+
+---
+
+### 🧩 Chrome Extension Integration (Coming Soon)
+- The upcoming **Shiloh Schedule: Extension** will provide:
+  - Quick gradient adjustments  
+  - Automatic syncing to the main site  
+  - Background previews in new tabs  
+  - One-click visual customization  
+- Full release details coming soon  
+
+---
 
 ## Usage
-- Access the sidebar to modify schedule, background, gradient, and display settings.
-- Use the Gradient Grabber Chrome extension to easily update gradient styles.
-- Customizations persist across sessions and devices using Firebase.
+- Open the sidebar to manage schedules, backgrounds, gradients, and display settings  
+- Customize freely — changes save instantly and sync across sessions  
+- Use the upcoming Chrome extension for faster gradient updates and multi-device consistency  
+
+---
+
+## Development Notes
+- Fixed a runtime issue involving a missing `loadGradientDirection` function in `script2.js`  
+- Added `loadGradientDirection` and `updateGradientDirection` helpers to synchronize the gradient direction selector  
+- Added high-resolution `favicon.svg` (with PNG fallback) for improved branding across platforms  
+
+---
 
 ## License
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.
+
+---
 
 ## Acknowledgments
-- Developed by [Shiloh Christian](https://shilohchristian.github.io/Schedule/)
-- Inspired by modern school scheduling needs.
-
-Note: Fixed a runtime error where `loadGradientDirection` was missing from `script2.js` (added helper functions `loadGradientDirection` and `updateGradientDirection` to initialize and sync the gradient direction select control).
-
-Branding: Added a high-resolution `favicon.svg` (and a PNG fallback) to modernize the site iconography.
-
+- Developed by **Shiloh Christian**  
+- Inspired by modern school scheduling needs  
+- Designed with clarity, accessibility, and simplicity in mind  
