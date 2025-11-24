@@ -1,486 +1,933 @@
-// Defaults align to the logo gradient (#000035ff -> #c4ad62ff) with full opacity for picker compatibility.
-const DEFAULT_START_COLOR = '#000035';
-const DEFAULT_END_COLOR = '#c4ad62';
-const toPickerColor = (color) => (color?.length === 9 ? color.slice(0, 7) : color);
-
-class GradientManager {
-    constructor() {
-        if (window.gradientManager) return window.gradientManager;
-
-        // Only two stops: start and end
-        this.stops = [
-            { color: DEFAULT_START_COLOR, position: 0 },
-            { color: DEFAULT_END_COLOR, position: 100 }
-        ];
-        this.angle = 90;
-        this.enabled = true;
-        this.initialized = false;
-
-        // Set color pickers to default immediately
-        const startColorInput = document.getElementById('gradient-start-color');
-        if (startColorInput) startColorInput.value = toPickerColor(DEFAULT_START_COLOR);
-        const endColorInput = document.getElementById('gradient-end-color');
-        if (endColorInput) endColorInput.value = toPickerColor(DEFAULT_END_COLOR);
-
-        // Apply default gradient immediately if no background image
-        if (!localStorage.getItem('bgImage')) {
-            document.body.style.background = `linear-gradient(90deg, ${DEFAULT_START_COLOR} 0%, ${DEFAULT_END_COLOR} 100%)`;
-        }
-
-        window.gradientManager = this;
-        this.loadSavedGradient();
-    }
-
-    async init() {
-        try {
-            // First check for extension settings
-            if (chrome?.runtime?.sendMessage) {
-                const response = await new Promise((resolve) => {
-                    chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
-                        type: 'GET_GRADIENT'
-                    }, resolve);
-                });
-
-                if (response?.data?.gradientGrabber?.savedGradient) {
-                    const { angle, stops } = response.data.gradientGrabber.savedGradient;
-                    this.stops = stops;
-                    this.angle = angle;
-                    this.enabled = true;
-                    await this.applyGradient();
-                    return;
-                }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shiloh Schedule</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans&family=Roboto&family=Source+Sans+Pro&family=Inter&family=Montserrat&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="./styles.css">
+    <link rel="stylesheet" type="text/css" href="./styles2.css">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <!-- Fallback PNG for older browsers -->
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+    <!-- Add Firestore compat script -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Add Firebase Storage compat script to enable Storage APIs for uploads -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+    <script type="text/javascript" src="auth.js"></script>
+    <script defer src="./gradient.js"></script>
+    <script defer src="./script2.js"></script>
+    <script defer src="./script.js"></script>
+    <script>
+        // Add message handler before other scripts
+        window.addEventListener('message', (event) => {
+            if (event.origin !== window.location.origin) return;
+            
+            // Reload the page only if authentication was successful
+            if (event.data.type === 'AUTH_SUCCESS') {
+                window.location.reload();
             }
-
-            // Only load start/end colors and angle
-            const saved = localStorage.getItem('gradientSettings');
-            if (saved) {
-                const settings = JSON.parse(saved);
-                if (settings && settings.startColor && settings.endColor) {
-                    this.stops = [
-                        { color: settings.startColor, position: 0 },
-                        { color: settings.endColor, position: 100 }
-                    ];
-                    this.angle = settings.angle || 90;
-                    this.enabled = settings.enabled !== false;
-                    if (this.enabled) {
-                        await this.applyGradient();
-                    }
-                    return;
-                }
-            }
-            // Defaults
-            this.stops = [
-                { color: DEFAULT_START_COLOR, position: 0 },
-                { color: DEFAULT_END_COLOR, position: 100 }
-            ];
-            this.angle = 90;
-            this.enabled = true;
-            await this.applyGradient();
-            this.saveSettings();
-        } catch (error) {
-            console.error('Error initializing gradient manager:', error);
-            this.stops = [
-                { color: DEFAULT_START_COLOR, position: 0 },
-                { color: DEFAULT_END_COLOR, position: 100 }
-            ];
-            this.angle = 90;
-            this.enabled = true;
-            await this.applyGradient();
-            this.saveSettings();
-        }
-    }
-
-    setupManager() {
-        if (this.initialized) return;
-        
-        // Wait for required elements
-        const requiredElements = [
-            'gradient-stops',
-            'gradient-enabled',
-            'gradient-angle',
-            'add-stop',
-            'gradient-settings'
-        ];
-
-        if (!requiredElements.every(id => document.getElementById(id))) {
-            setTimeout(() => this.setupManager(), 100);
-            return;
-        }
-
-        this.loadSettings();
-
-        // Check for background image after settings are loaded
-        const hasBackgroundImage = localStorage.getItem('bgImage');
-        if (hasBackgroundImage) {
-            this.enabled = false;
-            document.body.style.backgroundImage = `url('${hasBackgroundImage}')`;
-        } else {
-            // Only apply gradient if no background image exists
-            this.enabled = true;
-            this.applyGradient();
-        }
-
-        this.initializeEventListeners();
-        this.initialized = true;
-        this.updateGradientSettingsVisibility();
-    }
-
-    initializeEventListeners() {
-        document.getElementById('gradient-enabled')?.addEventListener('change', () => this.toggleGradient());
-        document.getElementById('gradient-angle')?.addEventListener('input', (e) => this.updateAngle(e.target.value));
-
-        // Use the correct color picker IDs
-        const startColorInput = document.getElementById('gradient-start-color');
-        if (startColorInput) {
-            startColorInput.addEventListener('input', (e) => {
-                this.stops[0].color = e.target.value;
-                this.applyGradient();
-                this.saveSettings();
-                this.updateUI();
-            });
-        }
-        const endColorInput = document.getElementById('gradient-end-color');
-        if (endColorInput) {
-            endColorInput.addEventListener('input', (e) => {
-                this.stops[1].color = e.target.value;
-                this.applyGradient();
-                this.saveSettings();
-                this.updateUI();
-            });
-        }
-    }
-
-    loadSettings() {
-        const stored = localStorage.getItem('gradientSettings');
-        if (stored) {
-            try {
-                const settings = JSON.parse(stored);
-                if (settings && settings.startColor && settings.endColor) {
-                    this.stops = [
-                        { color: settings.startColor, position: 0 },
-                        { color: settings.endColor, position: 100 }
-                    ];
-                    this.angle = settings.angle || 90;
-                    this.enabled = settings.enabled !== false;
-                    this.updateUI();
-                    if (this.enabled) {
-                        requestAnimationFrame(() => this.applyGradient());
+        });
+    </script>
+    <script defer>
+        function initializeApplication() {
+            let attempts = 0;
+            const maxAttempts = 10;
+            const checkInterval = setInterval(() => {
+                if (typeof toggleSettingsSidebar === 'function' && typeof initializeApp === 'function') {
+                    clearInterval(checkInterval);
+                    initializeApp();
+                } else {
+                    attempts++;
+                    if (attempts >= maxAttempts) {
+                        clearInterval(checkInterval);
+                        console.error('Failed to initialize application after multiple attempts');
                     }
                 }
-            } catch (error) {
-                console.warn('Error parsing gradient settings:', error);
+            }, 100);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApplication);
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SST4P7CNRH"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-SST4P7CNRH');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-YS6FHHEGFZ"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-YS6FHHEGFZ');
+    </script>
+        <style>
+            /* Improved styling for Extension settings controls */
+            .settings-panel#extension-panel .controls { 
+                display:flex; flex-direction:column; gap:12px; padding:12px 0;
             }
-        }
+            .settings-panel#extension-panel .controls .color-controls { display:flex; gap:12px; align-items:center; }
+            .settings-panel#extension-panel .controls input[type="color"] {
+                -webkit-appearance: none; appearance: none; border: 2px solid rgba(0,0,0,0.12); height:36px; width:48px; border-radius:6px; padding:0;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+                cursor:pointer;
+            }
+            .settings-panel#extension-panel .controls label { font-size:13px; color:#dfe7ee; margin-right:6px; }
+            .settings-panel#extension-panel .controls .direction-controls { display:flex; align-items:center; gap:8px; }
+            .settings-panel#extension-panel .controls .direction-controls label { width:90px; }
+            .settings-panel#extension-panel .controls .direction-controls select { padding:6px 8px; border-radius:6px; background:#0f1720; color:#e6eef6; border:1px solid rgba(255,255,255,0.06); min-width:150px; }
+            .settings-panel#extension-panel .controls button#saveExtensionButton { background:#0ea5a4; color:#042028; padding:8px 10px; border-radius:8px; border:none; font-weight:600; box-shadow: 0 6px 16px rgba(14,165,164,0.14); }
+            .settings-panel#extension-panel .gradient-preview { height:150px; border-radius:8px; margin-top:8px; box-shadow: inset 0 -10px 40px rgba(0,0,0,0.25); }
+            .settings-panel#extension-panel .extension-placeholder { margin-top:10px; font-size:13px; color:#c7d2da; }
+            .settings-panel#extension-panel .extension-placeholder a { color:#9eead4; text-decoration:none; font-weight:600; }
+            .settings-panel#extension-panel .extension-placeholder a:hover { text-decoration:underline; }
+            /* Promo card styling */
+            .extension-promo {
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 80px;
+            }
+            .extension-promo > div { flex: 1; }
+            .extension-promo .install-btn {
+                background: #ffffff;
+                color: #0b1220;
+                padding: 8px 12px;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 700;
+                box-shadow: 0 8px 22px rgba(2,6,23,0.45);
+                border: none;
+                display: inline-block;
+                transition: transform 120ms ease, box-shadow 120ms ease;
+            }
+            .extension-promo .install-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(2,6,23,0.5); }
+            .extension-promo a.promo-link { color: rgba(255,255,255,0.95); text-decoration: underline; }
+
+            /* Make extension panel selects match site styling */
+            .settings-panel#extension-panel .controls .direction-controls select,
+            .settings-panel#test-panel .controls .direction-controls select {
+                padding: 8px 10px;
+                border-radius: 8px;
+                height: 36px;
+                border: 1px solid rgba(255,255,255,0.06);
+                background: #0f1720;
+                color: #e6eef6;
+                box-shadow: inset 0 -2px 8px rgba(0,0,0,0.35);
+                font-size: 14px;
+                min-width: 150px;
+            }
+            /* Overlay for extension panel when extension isn't public */
+            .settings-panel#extension-panel {
+                position: relative;
+                overflow: visible;
+            }
+            .extension-coming-soon-overlay {
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(14px) saturate(120%);
+                background: rgba(4,6,12,0.82);
+                border-radius: 20px;
+                box-shadow: inset 0 0 40px rgba(0,0,0,0.45);
+                z-index: 99999;
+                color: #ffffff !important;
+                text-align: center;
+                padding: 0;
+                pointer-events: auto;
+            }
+            .extension-coming-soon-overlay .overlay-card {
+                max-width: 460px;
+                background: linear-gradient(180deg, rgba(22,28,40,0.78), rgba(22,28,40,0.62));
+                border-radius: 12px;
+                padding: 20px 22px;
+                box-shadow: 0 18px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.08);
+            }
+            .extension-coming-soon-overlay h4 { margin:0 0 6px 0; font-size:18px; font-weight:800; }
+            .extension-coming-soon-overlay p { margin:0; opacity:1; color: #ffffff; }
+            /* When overlay is active, ensure underlying content does not accept pointer events */
+            .settings-panel#extension-panel.overlay-active *:not(.extension-coming-soon-overlay):not(.extension-coming-soon-overlay *) {
+                pointer-events: none !important;
+                user-select: none !important;
+            }
+        </style>
+</head>
+<body>
+    <!-- Mobile top bar (only shown on small screens) -->
+    <div class="mobile-topbar" role="banner" aria-hidden="false">
+        <div class="mobile-topbar-inner">
+            <img src="favicon.svg" alt="Shiloh Schedule" class="mobile-logo" />
+            <button class="mobile-settings-btn" aria-label="Open settings" onclick="toggleSettingsSidebar()">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+    </div>
+    <button id="sign-in-button" onclick="handleAuthButton()">
+        <i class="fas fa-user"></i>
+    </button>
+    <div class="container">
+        <div class="main-content">
+            <div class="schedule-container">
+                <h1 id="white-box-heading">Schedule</h1>
+                <div id="schedule"></div>
+            </div>
+            <div class="current-period">
+                <h2 id="countdown-heading" class="countdown-header">Normal Schedule ▸ Period 1</h2>
+                <div id="current-period-time">00:00</div>
+            </div>
+        </div>
+    </div>
+    <div id="settings-sidebar" class="settings-sidebar">
+        <div class="settings-header">
+            <div class="header-left">
+                <!-- use whatever logo you want here -->
+                <img src="favicon.svg" alt="Shiloh Schedule logo" class="settings-logo">
+            </div>
+
+            <h2 class="settings-title">Settings</h2>
+
+            <button class="close-settings" onclick="toggleSettingsSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
         
-        this.updateGradientSettingsVisibility();
-    }
+        <div class="settings-content">
+            <div class="settings-nav">
+                <button class="nav-item active" data-target="appearance">
+                    <i class="fas fa-paint-brush"></i> Appearance
+                </button>
+                <button class="nav-item" data-target="schedule">
+                    <i class="fas fa-calendar"></i> Schedule
+                </button>
+                <button class="nav-item" data-target="about">
+                    <i class="fas fa-info-circle"></i> About
+                </button>
+                <button class="nav-item" data-target="legal">
+                    <i class="fas fa-file-contract"></i> Privacy & Terms
+                </button>
+                <!-- Temporary: expose Extension panel for testing -->
+                <button class="nav-item" data-target="extension">
+                    <i class="fas fa-puzzle-piece"></i> Extension
+                </button>
+            </div>
+            
+            <div class="settings-panels">
+                <!-- Appearance Panel (merged) -->
+                <div class="settings-panel active" id="appearance-panel">
+                    <!-- Background Panel Content -->
+                    <div class="settings-group">
+                        <h3><i class="fas fa-image"></i> Background Image</h3>
+                        <div class="background-controls">
+                            <div class="image-upload-container">
+                                <input type="file" id="bg-image" accept="image/*">
+                                <div id="bg-image-drop-area">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <div class="upload-text">
+                                        <p class="main-text">Drop image here or click to upload · JPG, PNG, GIF · Max 5 MB</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="background-actions">
+                                <button id="remove-bg-button" class="text-btn" onclick="removeBackground()">
+                                    <i class="fas fa-trash-alt"></i>
+                                    Remove
+                                </button>
+                            </div>
+                            <div class="background-preview">
+                                <div class="preview-label" style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">Current background</div>
+                                <div id="bg-preview" aria-label="Current background preview"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <div class="card-header">
+                            <h3><i class="fas fa-gradient"></i> Gradient</h3>
+                            <div class="header-controls">
+                                <label class="switch" style="margin:0;">
+                                    <input type="checkbox" id="gradient-enabled">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="switch-text">Enable gradient</span>
+                            </div>
+                        </div>
+                            <div id="gradient-settings" class="gradient-controls">
+                            <div>
+                                <label for="gradient-angle">Angle:</label>
+                                <input type="range" id="gradient-angle" min="0" max="360" value="90">
+                                <span class="range-value">90°</span>
+                            </div>
+                            <div class="gradient-main-colors" style="display: flex; gap: 16px; margin-bottom: 12px;">
+                                <div class="gradient-stop">
+                                    <input type="color" id="gradient-start-color">
+                                    <div style="display:flex;flex-direction:column;font-size:13px;color:var(--text-muted);">
+                                        <span><strong>Start</strong></span>
+                                        <span style="font-size:12px;color:var(--text-muted);">0%</span>
+                                    </div>
+                                    <div class="hex-value" id="gradient-start-hex" style="margin-left:auto;color:var(--text-muted);font-size:13px;">#000000</div>
+                                </div>
+                                <div class="gradient-stop">
+                                    <input type="color" id="gradient-end-color">
+                                    <div style="display:flex;flex-direction:column;font-size:13px;color:var(--text-muted);">
+                                        <span><strong>End</strong></span>
+                                        <span style="font-size:12px;color:var(--text-muted);">100%</span>
+                                    </div>
+                                    <div class="hex-value" id="gradient-end-hex" style="margin-left:auto;color:var(--text-muted);font-size:13px;">#00BFA5</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Display Panel Content -->
+                    <div class="settings-group">
+                        <h3><i class="fas fa-box"></i> Schedule box</h3>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <div>
+                                <label for="white-box-color">Background color</label>
+                                <input type="color" id="white-box-color" onchange="updateWhiteBoxColor()">
+                            </div>
+                            <div>
+                                <label for="white-box-opacity">Opacity</label>
+                                <input type="range" id="white-box-opacity" min="0" max="100" value="90" onchange="updateWhiteBoxColor()">
+                                <span class="range-value">90%</span>
+                            </div>
+                            <div>
+                                <label for="white-box-text-color">Text color</label>
+                                <input type="color" id="white-box-text-color" onchange="updateWhiteBoxTextColor()">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-arrows-alt"></i> Progress Bar</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="progress-bar">Show Progress Bar</label>
+                            <label class="switch">
+                                <input type="checkbox" id="progress-bar" onchange="toggleProgressBar()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="progress-bar-settings">
+                            <div>
+                                <label for="progress-bar-color">Bar Color:</label>
+                                <input type="color" id="progress-bar-color" value="#00bfa5" onchange="updateProgressBarStyle()">
+                            </div>
+                            <div>
+                                <label for="progress-bar-opacity">Opacity:</label>
+                                <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
+                                <span class="range-value">20%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Timer Panel Content -->
+                    <div class="settings-group">
+                        <h3><i class="fas fa-clock"></i> Timer Display</h3>
+                        <div>
+                            <label for="countdown-color">Timer Color:</label>
+                            <input type="color" id="countdown-color" value="#ffffff" onchange="updateCountdownColor()">
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-font"></i> Text Effects</h3>
+                        <div class="switch-container">
+                            <label class="switch-label" for="timer-shadow">Timer Shadow</label>
+                            <label class="switch">
+                                <input type="checkbox" id="timer-shadow" onchange="updateTimerShadow()">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                        <div id="shadow-settings-content">
+                            <div id="shadow-preview">12:34</div>
+                            <div>
+                                <label for="shadow-color">Shadow Color:</label>
+                                <input type="color" id="shadow-color" value="#000000" onchange="updateTimerShadow()">
+                            </div>
+                            <div>
+                                <label for="shadow-opacity">Shadow Opacity:</label>
+                                <input type="range" id="shadow-opacity" min="0" max="100" value="50" onchange="updateTimerShadow()">
+                                <span class="range-value">50%</span>
+                            </div>
+                            <div>
+                                <label for="shadow-blur">Shadow Blur:</label>
+                                <input type="range" id="shadow-blur" min="0" max="20" value="4" onchange="updateTimerShadow()">
+                                <span class="range-value">4px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-distance">Shadow Distance:</label>
+                                <input type="range" id="shadow-distance" min="0" max="20" value="2" onchange="updateTimerShadow()">
+                                <span class="range-value">2px</span>
+                            </div>
+                            <div>
+                                <label for="shadow-angle">Shadow Angle:</label>
+                                <input type="range" id="shadow-angle" min="0" max="360" value="45" onchange="updateTimerShadow()">
+                                <span class="range-value">45°</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Colors & Fonts Panel Content -->
+                    <div class="settings-group">
+                        <h3><i class="fas fa-palette"></i> Colors</h3>
+                        <div>
+                            <label for="font-color">Timer Header Color:</label>
+                            <input type="color" id="font-color" value="#ffffff">
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-font"></i> Typography</h3>
+                        <div class="font-selector">
+                            <label for="font-family">Font:</label>
+                            <select id="font-family" onchange="updateFont()">
+                                <option value="Arial">Arial</option>
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="'Open Sans'">Open Sans</option>
+                                <option value="Roboto">Roboto</option>
+                                <option value="'Source Sans Pro'">Source Sans Pro</option>
+                                <option value="'SF Pro Text'">SF Pro</option>
+                                <option value="Inter">Inter</option>
+                                <option value="Montserrat">Montserrat</option>
+                                <option value="'Segoe UI'">Segoe UI</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <!-- Schedule Panel -->
+                <div class="settings-panel" id="schedule-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-user-graduate"></i> Grade Level</h3>
+                        <select id="grade-level-dropdown">
+                            <option value="highSchool">High School</option>
+                            <option value="middleSchool">Middle School</option>
+                        </select>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-calendar-alt"></i> Schedule Selection</h3>
+                        <div>
+                            <h3>Select Schedule:</h3>
+                            <select id="schedule-dropdown" onchange="switchSchedule(this.value)">
+                                <option value="normal">Normal Schedule</option>
+                                <option value="chapel">Chapel Bell Schedule</option>
+                                <option value="latePepRally">Late Pep Rally Schedule</option>
+                                <option value="earlyPepRally">Early Pep Rally Schedule</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3><i class="fas fa-edit"></i> Customize Periods</h3>
+                        <div id="rename-periods">
+                            <h3 id="rename-periods-toggle" class="dropdown-toggle">
+                                Rename Periods <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="rename-periods-content" class="dropdown-content">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="settings-group">
+                            <h3><i class="fas fa-clock"></i> Display Options</h3>
+                            <div class="switch-container">
+                                <label class="switch-label" for="show-period-times">Show period times next to names</label>
+                                <label class="switch">
+                                    <input type="checkbox" id="show-period-times" onchange="toggleShowPeriodTimes(this.checked)">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <p class="help-text" style="font-size:12px; color: #6b7c8a; margin-top:8px;">When enabled, each period will display its start and end time next to the period name.</p>
+                        </div>
+                    </div>
+                    <div class="settings-group" style="display:none">
+                        <h3><i class="fas fa-plus-circle"></i> Custom Schedule</h3>
+                        <div id="custom-schedule">
+                            <h3 id="custom-schedule-toggle" class="dropdown-toggle">
+                                Custom Schedule <span class="triangle">&#9662;</span>
+                            </h3>
+                            <div id="custom-schedule-content" class="dropdown-content">
+                                <label for="schedule-name">Schedule Name:</label>
+                                <input type="text" id="schedule-name" placeholder="Enter schedule name" />
+                                <label for="num-periods">Number of Periods:</label>
+                                <input type="number" id="num-periods" min="1" onchange="setupCustomSchedule()" />
+                                <div id="period-inputs"></div>
+                                <button id="save-schedule-button" onclick="saveCustomSchedule()">Save Schedule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-    saveSettings() {
-        try {
-            localStorage.setItem('gradientSettings', JSON.stringify({
-                enabled: this.enabled,
-                angle: this.angle,
-                startColor: this.stops[0].color,
-                endColor: this.stops[1].color
-            }));
-        } catch (error) {
-            console.error('Error saving gradient settings:', error);
-        }
-    }
+                <div class="settings-panel" id="about-panel">
+                    <div class="settings-group">
+                        <h3>About</h3>
+                        <div class="about-content">
+                            <h2>Shiloh Schedule</h2>
+                            <p>Shiloh Schedule is a fast, lightweight, browser-based scheduling and countdown tool designed for schools. It highlights the current period, displays a live countdown, and offers flexible schedule management with customizable visuals and saved user preferences.</p>
 
-    // Updated popup method: set the popup text color inline for better contrast
-    showBgRemovalPopup(callback) {
-        const overlay = document.createElement('div');
-        overlay.className = 'popup-overlay';
-        overlay.innerHTML = `
-            <div class="popup-box">
-                <p style="color: #000;">Enabling gradient will remove the background image. Do you want to proceed?</p>
-                <div class="popup-buttons">
-                    <button id="popup-no" class="popup-btn cancel">Cancel</button>
-                    <button id="popup-yes" class="popup-btn confirm">Yes, remove image</button>
+                            <h3>Key Features</h3>
+                            <ul class="feature-list">
+                                <li>Live countdown that automatically adjusts based on the selected schedule.</li>
+                                <li>Multiple schedule types including Normal, Chapel, Late Pep Rally, and Early Pep Rally. (Pep rally schedules coming soon for Middle School!)</li>
+                                <li>Visual customization with background images, gradient themes, color selections, gray panel mode, and timer shadow options.</li>
+                                <li>Optional period start/end times (Settings → Schedule) to display detailed bell information.</li>
+                                <li>Optional Google sign-in (via Firebase) for syncing settings across devices.</li>
+                                <li>Chrome extension support to sync visual themes when enabled.</li>
+                            </ul>
+
+                            <h3>Getting Started</h3>
+                            <ol>
+                                <li>Open <strong>Settings → Appearance</strong> to customize your background, colors, or theme.</li>
+                                <li>Use <strong>Settings → Schedule</strong> to switch schedules or show period times.</li>
+                                <li>Sign in with Google if you’d like your settings to sync across devices — completely optional.</li>
+                            </ol>
+
+                            <h3>Privacy</h3>
+                            <p>Shiloh Schedule uses personal data only for authentication and optional settings sync through Firebase. No data is sold or shared beyond this purpose. View the full <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a> for complete details.</p>
+
+                            <h3>Support</h3>
+                            <p>Questions, issues, or feedback? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a></p>
+
+                            <div class="contact-info">
+                                <p class="version-info">Version 3.0.0</p>
+                                <p class="creator-info">Created by Brady Blackwell</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="legal-panel">
+                    <div class="settings-group">
+                        <h3>Legal</h3>
+                        <div class="legal-grid">
+                            <div class="legal-card">
+                                <div class="legal-card-header">
+                                    <i class="fas fa-file-contract fa-2x"></i>
+                                    <div class="legal-card-title">Terms of Service</div>
+                                </div>
+                                <p class="legal-desc">Our Terms of Service explain the rules and responsibilities for using Shiloh Schedule. They cover permitted usage, account handling, and acceptable conduct.</p>
+                                <div class="legal-actions">
+                                    <a class="btn btn-primary" href="terms.html" target="_blank" rel="noopener">View Terms</a>
+                                    <span class="legal-updated">Last updated: Sep 21, 2025</span>
+                                </div>
+                            </div>
+
+                            <div class="legal-card">
+                                <div class="legal-card-header">
+                                    <i class="fas fa-user-secret fa-2x"></i>
+                                    <div class="legal-card-title">Privacy Policy</div>
+                                </div>
+                                <p class="legal-desc">This policy explains what personal data we collect, how it's used, and how we protect your privacy. We minimize data collection and respect user preferences.</p>
+                                <div class="legal-actions">
+                                    <a class="btn btn-primary" href="privacy.html" target="_blank" rel="noopener">View Privacy Policy</a>
+                                    <span class="legal-updated">Last updated: Nov 23, 2025</span>
+                                </div>
+                                <div style="margin-top:10px;">
+                                    <a class="btn btn-primary" href="extension-privacy.html" target="_blank" rel="noopener">Extension Privacy Policy</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="legal-footer">
+                            <p class="legal-note">By using Shiloh Schedule you agree to our Terms and acknowledge the Privacy Policy. For questions, contact <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="test-panel">
+                    <div class="settings-group">
+                        <h3>Extension Gradient Settings</h3>
+                        <p>Customize the gradient used in the application. Adjust the colors and direction to update the background gradient.</p>
+                        <div class="controls" style="margin: 20px 0;">
+                            <div class="color-controls">
+                                <label for="startColor">Start Color:</label>
+                                <input type="color" id="startColor" value="#e66465" onchange="updateExtensionPreview()">
+                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="endColor" value="#9198e5" onchange="updateExtensionPreview()">
+                            </div>
+                            <div class="direction-controls" style="margin-top: 15px;">
+                                <label for="gradientDirection">Direction:</label>
+                                <select id="gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right →</option>
+                                    <option value="0">To Top ↑</option>
+                                    <option value="180">To Bottom ↓</option>
+                                    <option value="45">To Top Right ↗</option>
+                                    <option value="135">To Bottom Right ↘</option>
+                                </select>
+                            </div>
+                            <button id="saveExtensionButton" style="margin-top: 15px;" onclick="saveExtensionGradient()">Save Gradient</button>
+                        </div>
+                        <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
+                        <script>
+                            // Load saved settings on init and prefer namespaced extension inputs
+                            document.addEventListener('DOMContentLoaded', () => {
+                                const savedSettings = localStorage.getItem('extensionGradientSettings');
+                                if (savedSettings) {
+                                    try {
+                                        const settings = JSON.parse(savedSettings);
+                                        const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                        const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                        const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                        if (startEl && settings.startColor) startEl.value = settings.startColor;
+                                        if (endEl && settings.endColor) endEl.value = settings.endColor;
+                                        if (dirEl && settings.angle !== undefined) dirEl.value = settings.angle;
+                                    } catch (error) {
+                                        console.error('Error loading saved settings:', error);
+                                    }
+                                }
+                                updateExtensionPreview();
+                            });
+
+                            function updateExtensionPreview() {
+                                const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                const start = startEl ? startEl.value : '#000035';
+                                const end = endEl ? endEl.value : '#c4ad62';
+                                const angle = dirEl ? dirEl.value : '90';
+                                const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
+                                const preview = document.getElementById('ext-extensionPreview') || document.getElementById('extensionPreview');
+                                if (preview) preview.style.background = gradient;
+                                
+                                const settings = {
+                                    startColor: start,
+                                    endColor: end,
+                                    angle: angle
+                                };
+                                localStorage.setItem('extensionGradientSettings', JSON.stringify(settings));
+                            }
+
+                            function saveExtensionGradient() {
+                                const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                const start = startEl ? startEl.value : '#000035';
+                                const end = endEl ? endEl.value : '#c4ad62';
+                                const angle = dirEl ? dirEl.value : '90';
+                                
+                                        const EXTENSION_ID = 'clghadjfdfgihdkemlipfndoelebcipg';
+                                
+                                if (chrome?.runtime?.sendMessage) {
+                                    try {
+                                        // Include current schedule metadata so the extension popup
+                                        // can show the correct period/countdown for the user's schedule.
+                                        const payload = {
+                                            type: 'UPDATE_GRADIENT',
+                                            settings: {
+                                                angle: parseInt(angle),
+                                                stops: [
+                                                    { color: start, position: 0 },
+                                                    { color: end, position: 100 }
+                                                ]
+                                            },
+                                            // Application-level schedule info (optional)
+                                            currentScheduleName: window.currentScheduleName || null,
+                                            schedules: null
+                                        };
+
+                                        try {
+                                            // Try to capture global `schedules` if present and serialize safely
+                                            if (window.schedules) payload.schedules = window.schedules;
+                                        } catch (e) {
+                                            console.warn('Could not include schedules in extension payload', e);
+                                        }
+
+                                        chrome.runtime.sendMessage(EXTENSION_ID, payload, response => {
+                                            if (chrome.runtime.lastError) {
+                                                console.error('Extension communication error:', chrome.runtime.lastError);
+                                                alert('Unable to communicate with the extension. Please make sure it is installed and enabled.');
+                                            } else if (response?.error) {
+                                                console.error('Extension response error:', response.error);
+                                                alert('Error updating gradient: ' + response.error);
+                                            } else {
+                                                // gradient updated successfully (user notified)
+                                                    alert('Gradient updated successfully!');
+                                            }
+                                        });
+                                    } catch (error) {
+                                        console.error('Error sending message to extension:', error);
+                                        alert('Error communicating with extension: ' + error.message);
+                                    }
+                                } else {
+                                    console.error('Chrome extension API not available');
+                                            alert('Extension API not available. Please make sure the Shiloh Schedule: Extension is installed.');
+                                }
+                            }
+                        </script>
+                        <script>
+                            // Set the placeholder Chrome Web Store links for the Extension settings
+                            try {
+                                const ids = ['installExtensionLink', 'installExtensionLinkPromo'];
+                                ids.forEach(id => {
+                                    const el = document.getElementById(id);
+                                        if (el) el.href = 'https://chrome.google.com/webstore/detail/clghadjfdfgihdkemlipfndoelebcipg';
+                                });
+                            } catch (e) { /* ignore */ }
+                        </script>
+                        <script>
+                            // Page-side extension installation detection using postMessage ping/pong with the content script.
+                            (function(){
+                                const statusElId = 'extensionStatus';
+                                // Ensure status span exists in the placeholder; create if missing
+                                function ensureStatusElement() {
+                                    let el = document.getElementById(statusElId);
+                                    if (!el) {
+                                        const placeholder = document.querySelector('.extension-placeholder');
+                                        if (!placeholder) return null;
+                                        el = document.createElement('span');
+                                        el.id = statusElId;
+                                        el.style.marginLeft = '8px';
+                                        el.style.fontWeight = '600';
+                                        placeholder.appendChild(el);
+                                    }
+                                    return el;
+                                }
+
+                                function setStatus(text, ok) {
+                                    const el = ensureStatusElement();
+                                    if (!el) return;
+                                    el.textContent = text;
+                                    el.style.color = ok ? '#9eead4' : '#fda4af';
+                                }
+
+                                function checkExtensionInstalled(timeoutMs = 1200) {
+                                    return new Promise((resolve) => {
+                                        const origin = window.location.origin;
+                                        let settled = false;
+                                        function onMessage(e) {
+                                            if (e.source !== window) return;
+                                            if (e.data && e.data.type === 'EXTENSION_PONG') {
+                                                settled = true;
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(true);
+                                            }
+                                            // Also accept EXTENSION_NOT_FOUND as negative signal
+                                            if (e.data && e.data.type === 'EXTENSION_NOT_FOUND') {
+                                                settled = true;
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(false);
+                                            }
+                                        }
+                                        window.addEventListener('message', onMessage);
+                                        try {
+                                            window.postMessage({ type: 'EXTENSION_PING' }, origin);
+                                        } catch (e) {
+                                            // if postMessage fails, treat as not installed
+                                            settled = true;
+                                            window.removeEventListener('message', onMessage);
+                                            resolve(false);
+                                        }
+                                        setTimeout(() => {
+                                            if (!settled) {
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(false);
+                                            }
+                                        }, timeoutMs);
+                                    });
+                                }
+
+                                document.addEventListener('DOMContentLoaded', async () => {
+                                    const installed = await checkExtensionInstalled();
+                                    if (installed) {
+                                        setStatus('Installed ✓', true);
+                                    } else {
+                                        setStatus('Not installed', false);
+                                    }
+                                });
+                            })();
+                        </script>
+                    </div>
+                </div>
+
+                <!-- Extension Panel -->
+                <div class="settings-panel" id="extension-panel">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-puzzle-piece"></i> Extension Settings</h3>
+                        <p>Customize the gradient used in the Chrome extension. Adjust the colors and direction to update the background gradient.</p>
+                        
+                        <div class="controls">
+                            <div class="color-controls">
+                                <label for="ext-startColor">Start Color:</label>
+                                <input type="color" id="ext-startColor" value="#000035" onchange="updateExtensionPreview()">
+                                
+                                <label for="ext-endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="ext-endColor" value="#c4ad62" onchange="updateExtensionPreview()">
+                            </div>
+                            
+                            <div class="direction-controls">
+                                <label for="ext-gradientDirection">Direction:</label>
+                                <select id="ext-gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right →</option>
+                                    <option value="0">To Top ↑</option>
+                                    <option value="180">To Bottom ↓</option>
+                                    <option value="45">To Top Right ↗</option>
+                                    <option value="135">To Bottom Right ↘</option>
+                                </select>
+                            </div>
+                            
+                            <button id="saveExtensionButton" onclick="saveExtensionGradient()">
+                                <i class="fas fa-save"></i> Save to Extension
+                            </button>
+                        </div>
+                        
+                        <div id="ext-extensionPreview" class="gradient-preview"></div>
+                            <div class="extension-promo" style="margin-top:12px; padding:12px; background: linear-gradient(90deg,#0b1220 0%, #c4ad62 100%); border-radius:10px; color:#ffffff;">
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <picture style="flex:0 0 auto;">
+                                    <source srcset="favicon.svg" type="image/svg+xml">
+                                    <img src="favicon.png" alt="Extension" style="width:56px;height:56px;border-radius:10px;object-fit:cover;box-shadow:0 10px 28px rgba(2,6,23,0.6);" />
+                                </picture>
+                                <div style="flex:1; color: #ffffff;">
+                                    <div style="font-weight:800; font-size:16px;">Shiloh Schedule: Extension</div>
+                                    <div style="font-size:13px; margin-top:6px; color:rgba(255,255,255,0.9);">Sync the site theme with your browser. Save gradients from the site and apply them instantly in the extension popup.</div>
+                                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+                                        <a id="installExtensionLinkPromo" class="btn btn-primary install-btn" href="#" target="_blank" rel="noopener">Install</a>
+                                        <a href="#" onclick="document.getElementById('saveExtensionButton')?.scrollIntoView(); return false;" class="promo-link" style="font-size:13px;">How it works →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Extension coming soon overlay (default visible until disabled) -->
+                        <div id="extensionComingSoonOverlay" class="extension-coming-soon-overlay" role="dialog" aria-modal="true" aria-label="Extension coming soon">
+                            <div class="overlay-card">
+                                <h4>Extension coming soon!</h4>
+                                <p>We're preparing the Shiloh Schedule: Extension for release.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-        `;
-        document.body.appendChild(overlay);
-        overlay.querySelector('#popup-yes').addEventListener('click', () => {
-            callback(true);
-            document.body.removeChild(overlay);
-        });
-        overlay.querySelector('#popup-no').addEventListener('click', () => {
-            callback(false);
-            document.body.removeChild(overlay);
-        });
-    }
+        </div>
+    </div>
+    <button id="settings-button" class="settings-button" onclick="toggleSettingsSidebar()" aria-label="Open Settings">
+        <i class="fas fa-cog"></i>
+    </button>
+    <div id="login-modal" class="login-modal">
+        <div class="login-container">
+            <h2>Sign In</h2>
+            <div class="login-content">
+                <p>Sign in with your Google account to continue</p>
+                <div id="google-signin"></div>
+            </div>
+        </div>
+    </div>
+    <!-- Update notice modal (v3 placeholder) -->
+    <div id="update-notice-backdrop" class="update-notice-backdrop" aria-hidden="true">
+        <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
+            <div class="update-notice-body">
+                <div class="update-header">
+                    <img src="favicon.svg" alt="Logo" class="update-logo" />
+                    <div class="update-title-block">
+                        <h2 id="update-notice-title">Update Notice: Version 3.0 Released!</h2>
+                    </div>
+                </div>
+                <p>We’ve introduced a comprehensive design refresh featuring:</p>
+                <p>• A cleaner, modernized interface</p>
+                <p>• Updated Navy + Gold visual theme</p>
+                <p>• Streamlined settings layout</p>
+                <p>• Improved background and gradient controls</p>
+                <p>• Enhanced performance and consistency throughout</p>
+                <p style="margin-top:6px;">A dedicated Shiloh Schedule browser extension is also nearing release!</p>
+                <p>Thank you for using Shiloh Schedule.</p>
+                <div class="update-notice-actions">
+                    <button id="update-notice-ok" class="btn btn-primary">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Overlay control and secret '/off' shortcut for testing (no persistence)
+        (function(){
+            const overlayId = 'extensionComingSoonOverlay';
+            const panelSelector = '#extension-panel';
 
-    // In toggleGradient we now ensure the gradient settings are saved after confirming.
-    toggleGradient() {
-        const checkbox = document.getElementById('gradient-enabled');
-        if (!checkbox) return;
+            function hideOverlay() {
+                const overlay = document.getElementById(overlayId);
+                const panel = document.querySelector(panelSelector);
+                if (!overlay || !panel) return;
+                overlay.style.display = 'none';
+                panel.classList.remove('overlay-active');
+            }
 
-        if (checkbox.checked) {
-            // When enabling gradient, show confirmation if there's a background
-            const bgImage = document.body.style.backgroundImage || localStorage.getItem('bgImage');
-            if (bgImage && bgImage !== 'none') {
-                this.showBgRemovalPopup((proceed) => {
-                    if (proceed) {
-                        document.body.style.backgroundImage = '';
-                        localStorage.removeItem('bgImage');
-                        this.enabled = true;
-                        const savedSettings = localStorage.getItem('gradientSettings');
-                        if (savedSettings) {
-                            const settings = JSON.parse(savedSettings);
-                            if (settings.startColor) this.stops[0].color = settings.startColor;
-                            if (settings.endColor) this.stops[1].color = settings.endColor;
-                            if (settings.angle) this.angle = settings.angle;
-                        }
-                        this.applyGradient();
-                    } else {
-                        checkbox.checked = false;
-                        this.enabled = false;
-                    }
-                    this.updateGradientSettingsVisibility();
-                    this.saveSettings();
+            function showOverlay() {
+                const overlay = document.getElementById(overlayId);
+                const panel = document.querySelector(panelSelector);
+                if (!overlay || !panel) return;
+                overlay.style.display = 'flex';
+                panel.classList.add('overlay-active');
+            }
+
+            document.addEventListener('DOMContentLoaded', function(){
+                // Ensure any previously stored hidden flag is removed (we do not persist hiding anymore)
+                try { localStorage.removeItem('extensionOverlayDisabled_v1'); } catch(e) {}
+                showOverlay();
+            });
+
+            // Secret key buffer to detect '/off' — hides overlay for current session only
+            let keyBuffer = '';
+            const maxBuffer = 6;
+            document.addEventListener('keydown', function(e){
+                // Ignore modifier-only presses
+                if (e.key.length > 1 && e.key !== 'Backspace') return;
+
+                if (e.key === 'Backspace') {
+                    keyBuffer = keyBuffer.slice(0, -1);
+                } else {
+                    keyBuffer += e.key;
+                }
+                if (keyBuffer.length > maxBuffer) keyBuffer = keyBuffer.slice(-maxBuffer);
+
+                if (keyBuffer.toLowerCase().endsWith('/off')) {
+                    hideOverlay();
+                    keyBuffer = '';
+                }
+            });
+        })();
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile visibility switch logic
+            const profileSwitch = document.getElementById('profile-visibility-toggle');
+            if (profileSwitch) {
+                // Set initial state from localStorage
+                profileSwitch.checked = localStorage.getItem('profileHidden') !== 'true';
+                profileSwitch.addEventListener('change', function() {
+                    window.authManager.toggleProfileVisibility();
                 });
-                return;
             }
-        }
-        this.enabled = checkbox.checked;
-        if (this.enabled) {
-            document.body.style.backgroundImage = '';
-            const savedSettings = localStorage.getItem('gradientSettings');
-            if (savedSettings) {
-                const settings = JSON.parse(savedSettings);
-                if (settings.startColor) this.stops[0].color = settings.startColor;
-                if (settings.endColor) this.stops[1].color = settings.endColor;
-                if (settings.angle) this.angle = settings.angle;
-            }
-            this.applyGradient();
-        } else {
-            document.body.style.background = 'none';
-        }
-        this.updateGradientSettingsVisibility();
-        this.saveSettings();
-    }
-
-    updateAngle(value) {
-        // Debounce rapid changes to the angle input: clear previous timeout
-        clearTimeout(this._updateAngleDebounce);
-        this._updateAngleDebounce = setTimeout(() => {
-            const newAngle = parseInt(value);
-            if (isNaN(newAngle)) {
-                console.warn('Invalid angle value:', value);
-                return;
-            }
-            this.angle = newAngle;
-            document.querySelector('#gradient-angle + .range-value').textContent = `${newAngle}°`;
-        
-            if (this.enabled) {
-                const gradientString = `linear-gradient(${this.angle}deg, ${this.stops[0].color} 0%, ${this.stops[1].color} 100%)`;
-                document.body.style.backgroundImage = gradientString;
-                document.body.style.backgroundSize = 'cover';
-                document.body.style.backgroundAttachment = 'fixed';
-                const preview = document.getElementById('gradient-preview');
-                if (preview) {
-                    preview.style.background = gradientString;
-                }
-            }
-            this.saveSettings();
-            this.updateUI();
-        }, 50); // 50ms debounce delay
-    }
-
-    async applyGradient() {
-        if (!this.enabled) return;
-        try {
-            // Build gradient string from current stops and angle
-            const gradientString = `linear-gradient(${this.angle}deg, ${
-                this.stops.map(stop => `${stop.color} ${stop.position}%`).join(', ')
-            })`;
-            document.body.style.background = gradientString;
-            // Update preview if it exists
-            const preview = document.getElementById('gradient-preview');
-            if (preview) {
-                preview.style.background = gradientString;
-            }
-            this.saveSettings();
-        } catch (error) {
-            console.error('Error applying gradient:', error);
-        }
-    }
-
-    resetToDefaults() {
-        this.stops = [
-            { color: DEFAULT_START_COLOR, position: 0 },
-            { color: DEFAULT_END_COLOR, position: 100 }
-        ];
-        this.angle = 90;
-        this.updateUI();
-        this.applyGradient();
-        this.saveSettings();
-    }
-
-    updateUI() {
-        // Safely set color pickers to current stop colors, or default if missing
-        const startColorInput = document.getElementById('gradient-start-color');
-        const endColorInput = document.getElementById('gradient-end-color');
-        let startColor = DEFAULT_START_COLOR;
-        let endColor = DEFAULT_END_COLOR;
-
-        if (Array.isArray(this.stops) && this.stops.length >= 2) {
-            startColor = this.stops[0]?.color || startColor;
-            endColor = this.stops[1]?.color || endColor;
-        }
-
-        if (startColorInput) startColorInput.value = toPickerColor(startColor);
-        if (endColorInput) endColorInput.value = toPickerColor(endColor);
-
-        // Hide gradient stops UI if present
-        const stopsContainer = document.getElementById('gradient-stops');
-        if (stopsContainer) stopsContainer.style.display = 'none';
-
-        // Hide add-stop button if present
-        const addStopBtn = document.getElementById('add-stop');
-        if (addStopBtn) addStopBtn.style.display = 'none';
-
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox) checkbox.checked = this.enabled;
-        const angleInput = document.getElementById('gradient-angle');
-        if (angleInput) {
-            angleInput.value = this.angle;
-            const angleDisplay = document.querySelector('#gradient-angle + .range-value');
-            if (angleDisplay) angleDisplay.textContent = `${this.angle}°`;
-        }
-    }
-
-    updateGradientSettingsVisibility() {
-        const settings = document.getElementById('gradient-settings');
-        if (settings) {
-            // Keep the settings visible but toggle a disabled state so an overlay message
-            // can be shown when gradients are turned off (or when a background image exists).
-            settings.style.display = 'block';
-            settings.classList.toggle('disabled', !this.enabled);
-            settings.setAttribute('aria-hidden', String(!this.enabled));
-        }
-        // Hide stops container always
-        const stopsContainer = document.getElementById('gradient-stops');
-        if (stopsContainer) stopsContainer.style.display = 'none';
-        // Hide add-stop button if present
-        const addStopBtn = document.getElementById('add-stop');
-        if (addStopBtn) addStopBtn.style.display = 'none';
-    }
-
-    loadSavedGradient() {
-        try {
-            const saved = localStorage.getItem('gradientSettings');
-            let settings;
-            if (saved) {
+                // Show redesigned update notice once per user (versioned localStorage key).
                 try {
-                    settings = JSON.parse(saved);
+                    const key = 'updateNoticeShown_v3';
+                    const backdrop = document.getElementById('update-notice-backdrop');
+                    if (backdrop && !localStorage.getItem(key)) {
+                        // reveal and keep visible until OK is clicked
+                        backdrop.style.display = 'flex';
+                        backdrop.setAttribute('aria-hidden', 'false');
+
+                        const okBtn = document.getElementById('update-notice-ok');
+                        if (okBtn) {
+                            okBtn.addEventListener('click', function() {
+                                try { localStorage.setItem(key, 'true'); } catch (e) {}
+                                try { okBtn.blur(); } catch (e) {}
+                                try {
+                                    const target = document.getElementById('settings-button') || document.getElementById('sign-in-button') || document.body;
+                                    if (target && typeof target.focus === 'function') target.focus();
+                                } catch (e) {}
+                                backdrop.style.display = 'none';
+                                backdrop.setAttribute('aria-hidden', 'true');
+                            });
+                        }
+                    }
                 } catch (e) {
-                    settings = null;
+                    // ignore storage or DOM failures
                 }
-            }
-            // Only use saved settings if valid and not black
-            if (
-                settings &&
-                settings.startColor &&
-                settings.endColor &&
-                settings.startColor !== '#000000' &&
-                settings.endColor !== '#000000'
-            ) {
-                this.stops = [
-                    { color: settings.startColor, position: 0 },
-                    { color: settings.endColor, position: 100 }
-                ];
-                this.angle = settings.angle || 90;
-                this.enabled = settings.enabled !== false;
-            } else {
-                // Always use defaults if missing or black
-                this.stops = [
-                    { color: DEFAULT_START_COLOR, position: 0 },
-                    { color: DEFAULT_END_COLOR, position: 100 }
-                ];
-                this.angle = 90;
-                this.enabled = true;
-                // Overwrite any bad settings in localStorage
-                localStorage.setItem('gradientSettings', JSON.stringify({
-                    enabled: true,
-                    angle: 90,
-                    startColor: DEFAULT_START_COLOR,
-                    endColor: DEFAULT_END_COLOR
-                }));
-            }
-        } catch (error) {
-            // Always use defaults on error
-            this.stops = [
-                { color: DEFAULT_START_COLOR, position: 0 },
-                { color: DEFAULT_END_COLOR, position: 100 }
-            ];
-            this.angle = 90;
-            this.enabled = true;
-            localStorage.setItem('gradientSettings', JSON.stringify({
-                enabled: true,
-                angle: 90,
-                startColor: DEFAULT_START_COLOR,
-                endColor: DEFAULT_END_COLOR
-            }));
-        }
-    }
-}
-
-// Initialize only once and ensure it's available globally
-if (!window.gradientManager) {
-    window.gradientManager = new GradientManager();
-    // Ensure the manager wires up UI listeners and applies saved settings
-    // `setupManager` waits for DOM elements if they aren't present yet.
-    try { window.gradientManager.setupManager(); } catch (e) { console.debug('setupManager call failed', e); }
-    try { window.gradientManager.init?.(); } catch (e) { console.debug('gradientManager.init failed', e); }
-}
-
-// Update handleBgImageUpload in script2.js to properly handle gradient toggle
-function handleBgImageUpload(file) {
-    // ...existing code...
-    if (window.gradientManager) {
-        window.gradientManager.enabled = false;
-        window.gradientManager.updateUI();
-        window.gradientManager.updateGradientSettingsVisibility();
-        window.gradientManager.saveSettings();
-    }
-    // ...existing code...
-}
-
-// Update removeBackground in script2.js
-function removeBackground() {
-    document.body.style.backgroundImage = '';
-    localStorage.removeItem('bgImage');
-    
-    // Enable gradient when background is removed
-    if (window.gradientManager) {
-        window.gradientManager.enabled = true;
-        const checkbox = document.getElementById('gradient-enabled');
-        if (checkbox) {
-            checkbox.checked = true;
-        }
-        window.gradientManager.updateUI();
-        window.gradientManager.applyGradient();
-        window.gradientManager.saveSettings();
-    }
-    
-    // Update preview
-    const preview = document.getElementById('bg-preview');
-    if (preview) {
-        preview.style.backgroundImage = 'none';
-        preview.style.background = `linear-gradient(90deg, ${DEFAULT_START_COLOR}, ${DEFAULT_END_COLOR})`;
-    }
-}
-
-// Guard clause added to applyGradient to prevent errors when settings or settings.values is undefined
-GradientManager.applyGradient = function(settings) {
-    if (!settings || !settings.values) {
-        console.error("GradientManager.applyGradient: settings or settings.values is undefined. Using default gradient.");
-        document.body.style.background = `linear-gradient(135deg, ${DEFAULT_START_COLOR} 0%, ${DEFAULT_END_COLOR} 100%)`;
-        return;
-    }
-    // ...existing code...
-    // (rest of applyGradient logic)
-}
+        });
+    </script>
+</body>
+</html>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>
