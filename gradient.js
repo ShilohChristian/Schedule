@@ -31,7 +31,7 @@ class GradientManager {
             // First check for extension settings
             if (chrome?.runtime?.sendMessage) {
                 const response = await new Promise((resolve) => {
-                    chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+                    chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
                         type: 'GET_GRADIENT'
                     }, resolve);
                 });
