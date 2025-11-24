@@ -765,7 +765,7 @@ html, body, #settings-sidebar, .settings-sidebar, .container {
     pointer-events: none;
 }
 
-.gradient-preview { position:relative; border-radius:8px; overflow:hidden; height:60px; border:1px solid rgba(2,6,23,0.06); background: linear-gradient(90deg,#000035 0%,#00bfa5 100%); }
+.gradient-preview { position:relative; border-radius:8px; overflow:hidden; height:60px; border:1px solid rgba(2,6,23,0.06); background: linear-gradient(90deg,#000035 0%,#c4ad62 100%); }
 .gradient-preview .preview-left, .gradient-preview .preview-right { display:none; }
 
 /* Switch label next to toggle */
@@ -1455,7 +1455,7 @@ input:checked + .slider:before {
     border-radius: 8px;
     margin-bottom: 16px;
     border: 1px solid rgba(2,6,23,0.06);
-    background: linear-gradient(90deg,#000035 0%,#00bfa5 100%);
+    background: linear-gradient(90deg,#000035 0%,#c4ad62 100%);
 }
 
 /* Scoped input/color styling for the white gradient card */
@@ -1479,7 +1479,7 @@ input:checked + .slider:before {
     height: 24px;
     border-radius: 4px;
     margin: 20px 0;
-    background: linear-gradient(to right, #000035, #00bfa5);
+    background: linear-gradient(to right, #000035, #c4ad62);
 }
 
 .gradient-stops-container {
