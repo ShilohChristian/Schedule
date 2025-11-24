@@ -216,6 +216,8 @@ document.addEventListener("DOMContentLoaded", async function() {
         document.getElementById('app').prepend(gradeDropdown);
     }
     gradeDropdown.value = gradeLevel;
+    // Ensure the schedule dropdown reflects the currently selected grade immediately
+    try { updateScheduleDropdown(); } catch (e) { console.debug('updateScheduleDropdown initial call failed', e); }
     gradeDropdown.addEventListener('change', function() {
         gradeLevel = this.value;
         localStorage.setItem('gradeLevel', gradeLevel); // Save selection
@@ -227,6 +229,8 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     initializeSettingsPanels();
+    // Ensure schedule dropdown reflects current grade after settings panels initialize
+    try { updateScheduleDropdown(); } catch (e) { console.debug('updateScheduleDropdown post-init call failed', e); }
     // Bind inline handlers safely (keeps existing onclick attributes but also ensures listeners exist)
     if (typeof bindInlineHandlers === 'function') bindInlineHandlers();
     // Show one-time update notice for returning users (not shown on first visit)
@@ -307,10 +311,17 @@ function initializeAppLogic() {
             switchSchedule('normal');
             console.debug('Wednesday detected - switched to normal schedule');
         } else {
-            // Load saved schedule for other days
+            // Load saved schedule for other days, but validate against active grade schedules
             const savedScheduleName = localStorage.getItem('currentScheduleName');
+            const activeSchedules = getActiveSchedules();
             if (savedScheduleName) {
-                switchSchedule(savedScheduleName);
+                if (activeSchedules && activeSchedules[savedScheduleName]) {
+                    switchSchedule(savedScheduleName);
+                } else {
+                    console.debug('Saved schedule not valid for current grade; clearing and defaulting to normal:', savedScheduleName);
+                    localStorage.removeItem('currentScheduleName');
+                    switchSchedule('normal');
+                }
             } else {
                 switchSchedule('normal');
             }
@@ -318,6 +329,15 @@ function initializeAppLogic() {
 
     updateScheduleDisplay();
     if (window.TimerManager) window.TimerManager.restart();
+    // Send current schedules/gradient to extension on app init so the extension
+    // reflects the active schedule immediately when the page is opened.
+    try {
+        if (typeof window.sendScheduleToExtension === 'function') {
+            window.sendScheduleToExtension();
+        }
+    } catch (e) {
+        console.debug('sendScheduleToExtension on init failed (ignored)', e);
+    }
     } catch (error) {
         console.error('Error initializing app:', error);
     }
@@ -495,6 +515,15 @@ function switchSchedule(scheduleName) {
         updateCountdowns();
     console.debug(`Switched to schedule: ${scheduleName}`);
             if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
+        // After switching schedules, notify the extension (if installed) so it can
+        // update its stored schedule/heading and countdown immediately.
+        try {
+            if (typeof sendScheduleToExtension === 'function') {
+                sendScheduleToExtension();
+            }
+        } catch (e) {
+            console.debug('sendScheduleToExtension failed (ignored)', e);
+        }
     } catch (error) {
         console.error('Error switching schedule:', error);
         currentSchedule = schedules[scheduleName] || schedules.normal;
@@ -592,6 +621,127 @@ function renamePeriod(periodNumber, newName) {
     if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
 }
 window.renamePeriod = renamePeriod; // ensure globally accessible
+
+// Send the current schedule and gradient settings to the Chrome extension (if installed).
+// This is intentionally defensive and will quietly noop if the extension API isn't present.
+function sendScheduleToExtension() {
+    const EXTENSION_ID = 'clghadjfdfgihdkemlipfndoelebcipg';
+    try {
+        // Try to reuse saved extension settings if available
+        let settings = null;
+        try {
+            const raw = localStorage.getItem('extensionGradientSettings');
+            if (raw) settings = JSON.parse(raw);
+        } catch (e) {
+            settings = null;
+        }
+
+        if (settings) {
+            // Normalize old shape to new {angle, stops}
+            if (settings.startColor && settings.endColor && !settings.stops) {
+                settings = {
+                    angle: parseInt(settings.angle || 90, 10),
+                    stops: [
+                        { color: settings.startColor, position: 0 },
+                        { color: settings.endColor, position: 100 }
+                    ]
+                };
+            }
+        } else {
+            // Fallback: read UI controls if present
+            const start = (document.getElementById('ext-startColor') || document.getElementById('gradient-start-color'))?.value || '#000035';
+            const end = (document.getElementById('ext-endColor') || document.getElementById('gradient-end-color'))?.value || '#00bfa5';
+            const angle = parseInt((document.getElementById('ext-gradientDirection') || document.getElementById('gradient-angle'))?.value || '90', 10);
+            settings = { angle: angle, stops: [{ color: start, position: 0 }, { color: end, position: 100 }] };
+        }
+
+        // Resolve currentScheduleName robustly: prefer in-memory value, then localStorage,
+        // then UI dropdown, then try a time-based detection across schedules.
+        let resolvedScheduleName = null;
+        try {
+            if (window.currentScheduleName) resolvedScheduleName = window.currentScheduleName;
+            if (!resolvedScheduleName) resolvedScheduleName = localStorage.getItem('currentScheduleName') || null;
+            if (!resolvedScheduleName) {
+                const dd = document.getElementById('schedule-dropdown');
+                if (dd && dd.value) resolvedScheduleName = dd.value;
+            }
+            // Final fallback: try to detect by matching current time to schedules
+            if (!resolvedScheduleName) {
+                try {
+                    const now = new Date();
+                    const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+                    let bestKey = null;
+                    let bestScore = Number.POSITIVE_INFINITY;
+                    const candidateSchedules = (typeof gradeLevel !== 'undefined' && gradeLevel === 'middleSchool') ? middleSchoolSchedules : schedules;
+                    for (const k of Object.keys(candidateSchedules)) {
+                        const arr = candidateSchedules[k];
+                        if (!Array.isArray(arr)) continue;
+                        let inPeriod = false;
+                        let minDist = Number.POSITIVE_INFINITY;
+                        for (const p of arr) {
+                            try {
+                                const [sh, sm] = p.start.split(':').map(Number);
+                                const [eh, em] = p.end.split(':').map(Number);
+                                const start = sh * 3600 + sm * 60;
+                                const end = eh * 3600 + em * 60;
+                                if (currentSeconds >= start && currentSeconds < end) { inPeriod = true; minDist = 0; break; }
+                                const dist = Math.min(Math.abs(currentSeconds - start), Math.abs(currentSeconds - end));
+                                if (dist < minDist) minDist = dist;
+                            } catch (e) { }
+                        }
+                        const score = inPeriod ? 0 : minDist;
+                        if (score < bestScore) { bestScore = score; bestKey = k; }
+                    }
+                    if (bestKey) resolvedScheduleName = bestKey;
+                } catch (e) { /* ignore */ }
+            }
+        } catch (e) {
+            console.debug('sendScheduleToExtension: schedule resolution failed', e);
+        }
+
+        const payload = {
+            type: 'UPDATE_GRADIENT',
+            settings: settings,
+            currentScheduleName: resolvedScheduleName || null,
+            schedules: null
+        };
+
+        try {
+            payload.schedules = (typeof gradeLevel !== 'undefined' && gradeLevel === 'middleSchool') ? middleSchoolSchedules : schedules;
+        } catch (e) {
+            // ignore if schedules not available
+        }
+
+        // (silent) outgoing payload prepared for extension
+
+        if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+            try {
+                chrome.runtime.sendMessage(EXTENSION_ID, payload, (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.error('sendScheduleToExtension: chrome.runtime.lastError', chrome.runtime.lastError);
+                    } else {
+                        console.debug('sendScheduleToExtension response', response);
+                    }
+                });
+            } catch (e) {
+                console.error('sendScheduleToExtension error', e);
+            }
+        } else {
+            // If direct runtime API isn't available (page context), try posting a
+            // window message that the extension's content script listens for.
+            try {
+                const msg = { type: 'SAVE_GRADIENT', gradient: settings, schedules: payload.schedules, currentScheduleName: payload.currentScheduleName };
+                // Use '*' so the content script reliably receives the message regardless of minor origin mismatches during testing
+                window.postMessage(msg, '*');
+            } catch (e) {
+                console.error('sendScheduleToExtension: postMessage failed', e);
+            }
+        }
+    } catch (e) {
+        console.debug('sendScheduleToExtension top-level error (ignored)', e);
+    }
+}
+window.sendScheduleToExtension = sendScheduleToExtension;
 
 // Replace populateRenamePeriods implementation with one that uses periodNum keys
 function populateRenamePeriods() {
@@ -1147,7 +1297,10 @@ window.populateRenamePeriods = populateRenamePeriods;
 
         const settingsButton = document.getElementById('settings-button');
         if (settingsButton && !settingsButton._bound) {
-            settingsButton.addEventListener('click', () => { if (typeof toggleSettingsSidebar === 'function') toggleSettingsSidebar(); });
+            settingsButton.addEventListener('click', () => {
+                try { updateScheduleDropdown(); } catch (e) { /* ignore */ }
+                if (typeof toggleSettingsSidebar === 'function') toggleSettingsSidebar();
+            });
             settingsButton._bound = true;
         }
 
@@ -1229,7 +1382,7 @@ window.populateRenamePeriods = populateRenamePeriods;
 // Remove any block like this:
 //
 // if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-//     chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+//     chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
 //         type: 'UPDATE_GRADIENT',
 //         settings: { angle: settings.angle, stops: settings.stops }
 //     }, function(response) {
