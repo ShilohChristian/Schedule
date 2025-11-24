@@ -92,8 +92,10 @@ class AuthManager {
             this.hideLoginModal();
             this.updateUI();
             
-            // Save user settings to Firestore if this is the first login
-            await this._maybeSaveUserSettings();
+            // Load or save user settings in Firestore (will load if present,
+            // otherwise save current local settings). Use the existing
+            // _maybeLoadUserSettings helper which handles both cases.
+            await this._maybeLoadUserSettings();
             
             console.info('Auth success - user data:', {
                 name: this.currentUser.displayName,
