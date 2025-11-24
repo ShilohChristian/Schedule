@@ -1,18 +1,21 @@
+
+
 /* Global Styles */
 :root{
-    /* Theme palette (dark slate + teal / blue accents) */
-    --bg-dark: #071427; /* deep navy background */
-    --bg-shell: #0b2540; /* shell / panel gradient end */
-    --panel: #393E46; /* card / panel background */
-    /* Neutral accents (gray theme) */
-    --accent: #6f7a84; /* muted gray accent */
-    --accent-2: #55606a;
-    --text-primary: #eaf6ff; /* main text */
-    --text-muted: #cfe9ff;
-    --muted-2: rgba(255,255,255,0.06);
-    --card-border: rgba(255,255,255,0.03);
-    --glass: rgba(0,0,0,0.2);
+    /* Light-mode as the default palette (app will be light by default) */
+    --bg-dark: #F3F4F6; /* very light */
+    --bg-shell: #FFFFFF; /* panel background */
+    --card-bg: #FFFFFF; /* card background */
+    --card-elev: #E5E7EB;
+    --teal: #1A213A; /* primary accent — replaced teal with navy */
+    --teal-rgb: 26,33,58;
+    --gold: #C4AD62; /* brand gold accent */
+    --text-primary: #111827; /* dark text */
+    --text-muted: #6B7280; /* muted gray */
+    --card-border: rgba(15,23,42,0.06);
+    --glass: rgba(255,255,255,0.75);
 }
+/* light-mode overrides moved to the theme block at the end of the file */
 body {
     margin: 0;
     font-family: 'Roboto', Arial, sans-serif;
@@ -38,9 +41,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 20px;
+    width: 100%;
+    max-width: none; /* allow full-bleed */
+    margin: 0; /* remove outer gap */
+    padding: 0; /* no side padding — full edge-to-edge */
 }
 
 .main-content {
@@ -264,12 +268,28 @@ select {
     color: #ffffff;
     z-index: 9999;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transform: translateY(-6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    will-change: opacity, transform;
 }
 
 .settings-sidebar.open {
     display: block;
     opacity: 1;
+    transform: translateY(0);
+}
+
+/* Soften the initial brightness shift by fading in the inner shell */
+#settings-sidebar .settings-header,
+#settings-sidebar .settings-nav,
+#settings-sidebar .settings-panels {
+    opacity: 1;
+    transition: opacity 0.25s ease;
+}
+#settings-sidebar:not(.open) .settings-header,
+#settings-sidebar:not(.open) .settings-nav,
+#settings-sidebar:not(.open) .settings-panels {
+    opacity: 0;
 }
 
 .settings-header {
@@ -325,14 +345,6 @@ select {
     font-size: 1.25rem;
 }
 
-.settings-sidebar.light-mode .settings-header {
-    background: rgba(255, 255, 255, 0.8);
-    border-bottom-color: rgba(0, 0, 0, 0.1);
-}
-
-.settings-sidebar.light-mode .close-settings:hover {
-    background: rgba(0, 0, 0, 0.05);
-}
 
 .settings-header {
     display: flex;
@@ -408,7 +420,7 @@ select {
 
 .settings-content {
     display: flex;
-    height: calc(100vh - 73px);
+    height: calc(100vh - 92px);
 }
 
 /* Update notice modal */
@@ -424,15 +436,15 @@ select {
     animation: backdropFade 220ms ease-in;
 }
 .update-notice-dialog {
-    background: linear-gradient(180deg,var(--bg-shell), #071427);
-    color: var(--text-primary);
+    background: linear-gradient(180deg, #0b1f3d 0%, #0b2f52 100%);
+    color: #e8eef7;
     width: 100%;
     max-width: 560px;
     border-radius: 12px;
-    box-shadow: 0 18px 40px rgba(2,6,23,0.6);
+    box-shadow: 0 16px 36px rgba(2,6,23,0.55);
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.05);
 }
 .update-notice-body {
     padding: 22px 24px 18px 24px;
@@ -443,7 +455,7 @@ select {
 }
 .update-header { display:flex; align-items:center; gap:12px; }
 .update-logo { width:44px; height:44px; max-width:44px; max-height:44px; display:block; border-radius:8px; }
-.update-title-block h2 { margin:0; color:var(--text-primary); font-size:18px; }
+.update-title-block h2 { margin:0; color:#f5f8ff; font-size:18px; }
 .update-notice-dialog h2 {
     margin: 0;
     font-size: 20px;
@@ -451,8 +463,9 @@ select {
 }
 .update-notice-dialog p {
     margin: 0;
-    color: var(--text-muted);
+    color: rgba(232,238,247,0.92);
     font-size: 14px;
+    line-height: 1.5;
 }
 .update-notice-actions {
     display: flex;
@@ -467,12 +480,12 @@ select {
     font-weight: 600;
 }
 .update-notice-actions .btn-primary {
-    background: linear-gradient(90deg,#6b7782,#4b5560);
+    background: linear-gradient(90deg,#0c2546 0%, #0b305a 100%);
     color: #fff;
-    border: none;
-    box-shadow: 0 8px 20px rgba(20,30,40,0.35);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 18px rgba(20,30,40,0.35);
 }
-.update-notice-actions .btn { background: transparent; border: 1px solid rgba(255,255,255,0.04); color: var(--text-muted); }
+.update-notice-actions .btn { background: transparent; border: 1px solid rgba(244,237,226,0.08); color: #E8EEF7; }
 .update-close {
     position: absolute;
     right: 8px;
@@ -508,65 +521,85 @@ select {
 /* Legal panel styles */
 .legal-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
-    margin-top: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 20px;
+    margin-top: 14px;
 }
 .legal-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
-    padding: 16px;
-    border-radius: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 18px;
+    border-radius: 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    box-shadow: 0 10px 26px rgba(0,0,0,0.10);
+    min-height: 180px;
 }
 .legal-card-header {
     display: flex;
     align-items: center;
     gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.legal-card-header .icon-circle {
+    background: rgba(0,0,0,0.05);
+    color: var(--teal);
+    padding: 8px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 .legal-card-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #00bfa5;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--brand-gold, var(--gold, #C4AD62));
 }
 .legal-desc {
-    color: rgba(255,255,255,0.85);
+    color: var(--text-muted);
     margin: 0;
-    line-height: 1.4;
+    line-height: 1.5;
 }
 .legal-actions {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-top: 8px;
+    margin-top: 6px;
 }
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 8px 12px;
-    border-radius: 6px;
+    padding: 9px 14px;
+    border-radius: 10px;
     text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .btn-primary {
-    background: linear-gradient(90deg, #00bfa5, #00a693);
-    color: #001;
+    background: linear-gradient(90deg, #000035 0%, #1B2455 55%, #C4AD62 100%);
+    color: #fff;
     border: none;
+    box-shadow: 0 10px 22px rgba(0,0,0,0.15);
+}
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px rgba(0,0,0,0.18);
 }
 .legal-updated {
-    color: rgba(255,255,255,0.6);
-    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
 }
 .legal-footer {
-    margin-top: 14px;
-    border-top: 1px solid rgba(255,255,255,0.03);
+    margin-top: 10px;
+    border-top: 1px solid rgba(0,0,0,0.04);
     padding-top: 12px;
+    color: var(--text-primary);
 }
 .legal-note {
-    color: rgba(255,255,255,0.75);
+    color: rgba(0,0,0,0.65);
     margin: 0;
 }
 
@@ -577,28 +610,47 @@ select {
 }
 
 .settings-nav {
+    /* Left navigation: tighter, menu-like */
     position: sticky;
-    top: 73px; /* Match header height */
-    background: rgba(255, 255, 255, 0.05);
-    border-right: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 1rem;
-    width: 240px;
-    min-width: 240px;
-    height: calc(100vh - 73px);
+    top: 0; /* sit flush under the header */
+    background: transparent;
+    border-right: 1px solid rgba(255,255,255,0.03);
+    padding: 0;
+    width: 160px;
+    min-width: 160px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-sizing: border-box;
 }
 
 .settings-panels {
     flex: 1;
-    padding: 0; /* removed outer padding so settings are flush */
+    padding: 20px 24px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .settings-group {
-    max-width: 800px;
-    margin: 0 auto 1.5rem auto;
+    max-width: 880px;
+    margin: 0 0 20px 0;
     width: 100%;
     box-sizing: border-box;
+    padding: 20px 22px;
+    background: var(--card-bg);
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 8px 22px rgba(2,6,23,0.32);
 }
+
+/* Small topbar inside the main panel for context */
+.settings-topbar { display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+.settings-topbar .breadcrumbs { display:flex; align-items:center; gap:6px; font-size:14px; color:var(--text-muted); letter-spacing:0.02em; }
+.settings-topbar .breadcrumbs .crumb.current { color:var(--text-primary); font-weight:600; }
+.settings-topbar .topbar-subtitle { font-size:13px; color:var(--text-muted); }
+.settings-topbar .topbar-actions { margin-left:auto; }
+.settings-topbar .reset-btn { background: transparent; border: none; color: var(--teal); font-weight:600; cursor:pointer; }
 
 .theme-toggle {
     position: fixed; /* Change to fixed */
@@ -674,38 +726,123 @@ html, body, #settings-sidebar, .settings-sidebar, .container {
     color: #00bfa5;
 }
 
+/* Card header and nav item refinements */
+.card-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.card-header h3 { color:var(--gold); font-weight:700; display:flex; align-items:center; gap:8px; }
+.card-header .header-controls { display:flex; align-items:center; gap:12px; }
+
+/* Make the card header visually separated with a full-width divider */
+.card-header {
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid rgba(2,6,23,0.06);
+}
+
+.settings-sidebar .nav-item { display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px; cursor:pointer; color:var(--text-primary); background:transparent; border:none; text-align:left; font-size:14px; }
+.settings-sidebar .nav-item i { font-size:16px; color:var(--gold); }
+.settings-sidebar .nav-item .nav-label { color:var(--text-primary); font-weight:600; }
+.settings-sidebar .nav-item .nav-desc { color:var(--text-muted); font-size:12px; display:block; }
+.settings-sidebar .nav-item.active { background: rgba(255,255,255,0.02); box-shadow: inset 4px 0 0 0 var(--teal); }
+.settings-sidebar .nav-item:hover { background: rgba(255,255,255,0.02); }
+
+/* Gradient disabled styling: show overlay message rather than hiding the whole card */
+.gradient-controls.disabled {
+    pointer-events: none;
+    filter: grayscale(20%) contrast(0.95) opacity(0.95);
+}
+.gradient-controls.disabled::after {
+    content: "Enable gradient to customize";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.92);
+    color: #0b1220;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+.gradient-preview { position:relative; border-radius:8px; overflow:hidden; height:60px; border:1px solid rgba(2,6,23,0.06); background: linear-gradient(90deg,#000035 0%,#00bfa5 100%); }
+.gradient-preview .preview-left, .gradient-preview .preview-right { display:none; }
+
+/* Switch label next to toggle */
+.header-controls .switch-text {
+    margin-left: 10px;
+    font-size: 14px;
+    color: #0b1220;
+    font-weight: 700;
+}
+
+/* Text-style secondary buttons */
+.text-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 8px; cursor: pointer; font-weight:600; }
+.text-btn i { margin-right:6px; color: var(--gold); }
+
+/* Schedule preview chip */
+.preview-chip { display:inline-block; padding:8px 12px; border-radius:8px; font-size:13px; box-shadow: 0 6px 18px rgba(2,6,23,0.3); color:var(--text-primary); background: rgba(255,255,255,0.02); }
+
+/* ======= User-requested overrides: tighter header, panel cards, nav pills, form grid, previews ======= */
+
+/* Tightened header / breadcrumb topbar inside the main panel */
+.settings-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; gap:12px; }
+.settings-topbar .breadcrumbs { font-size:14px; color:#9CA3AF; display:flex; align-items:center; gap:8px; }
+.settings-topbar .breadcrumbs .crumb { color:#9CA3AF; }
+.settings-topbar .breadcrumbs .crumb.current { color:#E5E7EB; font-weight:600; }
+.settings-topbar .topbar-subtitle { font-size:13px; color:var(--text-muted); margin-left:12px; }
+.settings-topbar .topbar-actions { margin-left:auto; }
+.reset-btn, .btn-reset { padding:6px 14px; border-radius:999px; font-size:13px; border:1px solid rgba(16,185,129,0.2); background:transparent; color:#34D399; cursor:pointer; transition:background 0.15s ease, transform 0.1s ease; }
+.reset-btn:hover, .btn-reset:hover { background: rgba(16,185,129,0.13); transform: translateY(-1px); }
+
+/* Stronger, consistent panel/card style for settings sections */
+.settings-card, .settings-group {
+    background: #111827; /* slightly lighter than page bg */
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    border: 1px solid #1F2937;
+}
+.settings-panel__title { font-size:14px; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; color:#4ADE80; margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+.settings-panel__title .settings-panel__title-icon { font-size:14px; }
+
+/* Controls alignment grid */
+.settings-field-group { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap:16px; margin-top:12px; }
+.settings-field { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#D1D5DB; }
+.settings-field label { font-size:12px; text-transform:uppercase; letter-spacing:0.05em; color:#9CA3AF; }
+.settings-field input[type="color"], .settings-field input[type="text"], .settings-field select { border-radius:8px; border:1px solid #374151; background:#020617; padding:6px 8px; color:#E5E7EB; }
+
+/* Subtle preview styling */
+.preview-frame { margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid #1F2937; background:#020617; }
+.preview-schedule { padding:10px 12px; font-size:12px; color:#E5E7EB; opacity:0.9; }
+
+/* Ensure these overrides take precedence */
+.settings-sidebar .nav-item, .settings-group, .settings-topbar, .settings-field-group { will-change: transform, opacity; }
+
+/* Responsive tweak: slightly reduce sidebar on small screens */
+@media (max-width: 900px) {
+    .settings-sidebar { width: 100%; padding: 12px; }
+}
+
+/* End overrides */
+
+/* Hide theme toggle UI — site is light-only now */
+.theme-toggle, .theme-toggle-text { display: none !important; }
+
+/* Small form tweaks */
+.gradient-main-colors .gradient-stop { display:flex; align-items:center; gap:8px; }
+.gradient-main-colors .gradient-stop input[type="color"] { width:44px; height:28px; padding:2px; }
+.range-value { font-size:13px; color:var(--text-muted); }
+
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
 /* Light theme modifications */
-.settings-sidebar.light-mode {
-    background: #ffffff;
-    color: #1a1a1a;
-}
 
-.settings-sidebar.light-mode .settings-nav {
-    background: #f5f5f5;
-    border-right-color: #e0e0e0;
-}
-
-.settings-sidebar.light-mode .settings-group {
-    background: #f5f5f5;
-}
-
-.settings-sidebar.light-mode .nav-item {
-    color: #1a1a1a;
-}
-
-.settings-sidebar.light-mode .nav-item:hover {
-    background: rgba(0, 0, 0, 0.05);
-}
-
-.settings-sidebar.light-mode .nav-item.active {
-    background: #00bfa5;
-    color: #ffffff;
-}
+/* Legacy light-mode rules removed — final theme lives at the end of the file */
 
 .dropdown-toggle:hover {
     background: rgba(0, 173, 181, 0.2);
@@ -1030,69 +1167,6 @@ close-settings-sidebar:hover {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Improved Settings Sidebar Layout */
-.settings-sidebar {
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100vh;
-    background: #222831;  /* Changed from rgba(0, 0, 53, 0.95) to solid color */
-    overflow-y: auto;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.settings-group {
-    max-width: 800px;
-    margin: 0 auto 20px auto;
-    padding: 15px;
-}
-
-/* Handle long content in dropdowns */
-.dropdown-content {
-    max-height: 400px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #00bfa5 rgba(255, 255, 255, 0.1);
-}
-
-.dropdown-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.dropdown-content::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
-}
-
-.dropdown-content::-webkit-scrollbar-thumb {
-    background: #00bfa5;
-    border-radius: 4px;
-}
-
-/* Fix inputs and labels from overflowing */
-.dropdown-content input[type="text"],
-.dropdown-content input[type="number"],
-.dropdown-content input[type="time"] {
-    width: calc(100% - 20px);
-    box-sizing: border-box;
-}
-
-#period-inputs > div {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-}
-
-@media (max-width: 600px) {
-    #period-inputs > div {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* ...existing code... */
 
 .timer-shadow {
@@ -1297,20 +1371,18 @@ input:checked + .slider:before {
 
 /* ...existing code... */
 
-#gradient-preview {
-    width: 100%;
-    height: 100px;
-    border-radius: 8px;
-    margin: 10px 0;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: linear-gradient(to right, #000035, #00bfa5);
-}
+/* Gradient preview removed — kept styles for reference in case it's reintroduced */
+/* #gradient-preview { ... } */
 
 .gradient-controls {
-    background: #393E46;
-    border-radius: 8px;
-    padding: 15px;
+    position: relative;
+    background: #ffffff;
+    color: #081426;
+    border-radius: 10px;
+    padding: 16px;
     margin-top: 10px;
+    border: 1px solid rgba(2,6,23,0.06);
+    box-shadow: 0 6px 18px rgba(2,6,23,0.06);
 }
 
 .gradient-opacity {
@@ -1379,11 +1451,20 @@ input:checked + .slider:before {
 
 .gradient-preview {
     width: 100%;
-    height: 100px;
+    height: 60px;
     border-radius: 8px;
-    margin-bottom: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 16px;
+    border: 1px solid rgba(2,6,23,0.06);
+    background: linear-gradient(90deg,#000035 0%,#00bfa5 100%);
 }
+
+/* Scoped input/color styling for the white gradient card */
+.gradient-controls label { color: #0b1220; }
+.gradient-controls input, .gradient-controls select, .gradient-controls button { color: #081426; }
+.gradient-controls input[type="color"] { border: 1px solid rgba(2,6,23,0.08); width:46px; height:34px; border-radius:6px; padding:0; background:transparent; }
+.gradient-controls input[type="number"] { background: #ffffff; border: 1px solid rgba(2,6,23,0.08); color:#081426; }
+.gradient-controls input[type="range"] { accent-color: #1A213A; }
+.gradient-controls .hex-value, .gradient-controls .range-value { color:#0b1220; font-weight:600; }
 
 .gradient-bar-container {
     position: relative;
@@ -2347,9 +2428,12 @@ input, select {
 
     /* Tighter container padding for narrow screens */
     .container {
-        max-width: 100%;
-        margin: 8px;
-        padding: 12px;
+        width: 100%;
+        margin: 0;
+        padding: 0; /* no side padding on mobile */
+        height: auto; /* allow natural page height */
+        justify-content: flex-start;
+        align-items: stretch;
     }
 
     /* Hide the full schedule on mobile to maximize timer visibility */
@@ -2442,7 +2526,7 @@ input, select {
     /* Center timer content on mobile */
     .container {
         margin: 0 auto;
-        padding: 40px 20px;
+        padding: 0; /* remove side padding for full-bleed layout */
         height: 100vh;
         display: flex;
         justify-content: center;
@@ -2566,4 +2650,1176 @@ input, select {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
+}
+
+
+/* ---------------------------------------
+   FINAL SOFT LIGHT MODE (logo-based)
+   Paste at bottom of styles.css
+----------------------------------------*/
+
+/* ✅ FINAL POLISHED LIGHT MODE (logo-based, easy on eyes) */
+body.light-mode {
+    --bg-dark: #F5F5F3;        /* warm soft cream-gray */
+    --bg-shell: #F5F5F3;
+    --card-bg: #FFFFFF;
+    --card-elev: #F0F0ED;      /* gentle elevation */
+    --text-primary: #1A213A;   /* navy but not harsh */
+    --text-muted: #6E758A;     /* soft navy-gray */
+    --card-border: rgba(0, 0, 35, 0.08);  /* navy-tinted border */
+    --glass: rgba(255, 255, 255, 0.55);
+    background: var(--bg-shell);
+    color: var(--text-primary);
+}
+
+/* MAIN SETTINGS WRAPPER */
+.settings-sidebar.light-mode .settings-content {
+    background: #F5F5F3 !important;
+}
+
+/* HEADER BAR */
+.settings-sidebar.light-mode .settings-header {
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(0, 0, 35, 0.08);
+}
+.settings-sidebar.light-mode .header-left h2 {
+    color: #1A213A;
+}
+
+/* BREADCRUMB + SUBTITLE */
+.settings-sidebar.light-mode .settings-breadcrumb,
+.settings-sidebar.light-mode .settings-subtitle {
+    color: #6E758A;
+}
+
+/* CARDS */
+.settings-sidebar.light-mode .settings-group {
+    background: #FFFFFF;
+    border: 1px solid rgba(0, 0, 35, 0.10);
+    border-radius: 16px;
+    padding: 18px 22px;
+    box-shadow: 0 10px 24px rgba(0, 0, 35, 0.06);
+}
+
+/* CARD TITLES */
+.settings-sidebar.light-mode .settings-group-title {
+    color: #1A213A;
+    font-weight: 600;
+}
+
+/* CARD DIVIDER */
+.settings-sidebar.light-mode .settings-group hr {
+    border: none;
+    border-top: 1px solid rgba(0, 0, 35, 0.08);
+}
+
+/* SIDEBAR NAV ITEMS */
+.settings-sidebar.light-mode .nav-item {
+    background: #FFFFFF;
+    color: #1A213A;
+    border: 1px solid rgba(0, 0, 35, 0.10);
+    border-radius: 999px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 10px rgba(0,0,35,0.06);
+}
+
+.settings-sidebar.light-mode .nav-item i {
+    color: #1A213A;
+}
+
+.settings-sidebar.light-mode .nav-item:hover {
+    background: #E7F8F4; /* soft teal tint */
+}
+
+/* ACTIVE NAV ITEM */
+.settings-sidebar.light-mode .nav-item.active {
+    background: #00BFA5;
+    border-color: #00BFA5;
+    color: #FFFFFF;
+    box-shadow: 0 12px 22px rgba(0,191,165,0.25);
+}
+.settings-sidebar.light-mode .nav-item.active i {
+    color: #FFFFFF;
+}
+
+/* DROPZONE */
+.settings-sidebar.light-mode .dropzone {
+    background: #F8F8F6;
+    border: 1px dashed rgba(0, 0, 35, 0.20);
+}
+
+/* RESET BUTTON */
+.settings-sidebar.light-mode .btn-reset {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,191,165,0.40);
+    color: #00A48B;
+}
+.settings-sidebar.light-mode .btn-reset:hover {
+    background: #E7F8F4;
+}
+
+/* SCHEDULE PREVIEW */
+.settings-sidebar.light-mode .preview-schedule {
+    background: #F0F0ED;
+    border: 1px solid rgba(0,0,35,0.12);
+    color: #1A213A;
+}
+
+/* SLIDER TINT */
+.settings-sidebar.light-mode input[type="range"]::-webkit-slider-thumb {
+    background: #00BFA5;
+}
+
+/* ---------------------------------------
+   Settings header: logo navy → gold bar
+----------------------------------------*/
+
+.settings-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 92px;                 /* slightly taller header */
+    padding: 0 2rem;              /* keep horizontal padding, vertical controlled by height */
+
+    /* logo navy to gold gradient */
+    background: linear-gradient(90deg, #000035 0%, #1B2455 45%, #C4AD62 100%);
+    color: #F4EDE2;
+
+    border-bottom: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* make sure light mode keeps the same gradient */
+.settings-sidebar.light-mode .settings-header {
+    background: linear-gradient(90deg, #000035 0%, #1B2455 45%, #C4AD62 100%);
+    border-bottom: none;
+}
+
+/* logo area – pinned to far left */
+.header-left {
+    position: absolute;
+    left: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* logo image */
+.settings-logo {
+    height: 32px;
+    width: auto;
+    border-radius: 6px; /* optional, remove if you want sharp edges */
+}
+
+/* centered title */
+.settings-title {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: 0.16em; /* refined spacing for readability */
+    text-transform: uppercase;
+    text-align: center;
+}
+
+/* close button pinned right */
+.close-settings {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 35, 0.12); /* match logo/navy tone */
+    color: var(--brand-text, #F4EDE2);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.18s ease, box-shadow 0.12s ease;
+}
+
+.close-settings:hover {
+    background: rgba(0, 0, 35, 0.18); /* slightly stronger navy on hover */
+    transform: translateY(-50%); /* keep aligned, no vertical drift */
+    box-shadow: 0 3px 10px rgba(0,0,0,0.18); /* smaller shadow to avoid visual drop */
+}
+
+/* Override any shared button hover lifts so the close button never shifts */
+#settings-sidebar .close-settings,
+#settings-sidebar .close-settings:hover {
+    transform: translateY(-50%) !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.18) !important;
+}
+
+/* Keep the hover effect subtle: small lift+scale without drifting position */
+#settings-sidebar .close-settings {
+    transition: background 0.18s ease, box-shadow 0.12s ease, transform 0.14s ease;
+}
+#settings-sidebar .close-settings:hover {
+    transform: translateY(-50%) scale(1.02) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.22) !important;
+}
+
+.close-settings i {
+    font-size: 1.15rem;
+}
+
+/* Tighter horizontal gutters for the settings shell */
+#settings-sidebar .settings-content {
+    padding: 0 !important; /* flush to edges */
+}
+#settings-sidebar .settings-panels {
+    padding: 14px 14px 22px !important; /* tighter gutter around cards */
+}
+#settings-sidebar .settings-nav {
+    padding: 12px 12px 16px !important; /* add breathing room around pills */
+    margin: 0 !important;
+    background: #EFEFEA;
+    border-right: 1px solid rgba(0,0,0,0.05);
+    box-sizing: border-box;
+    align-self: stretch;
+    box-shadow: 4px 0 14px rgba(0,0,0,0.08); /* subtle separation from content */
+}
+#settings-sidebar .settings-content {
+    align-items: stretch;
+}
+#settings-sidebar .settings-header {
+    padding: 0 !important; /* header bar flush to shell edges */
+    margin: 0 !important;
+}
+#settings-sidebar {
+    padding: 0 !important; /* remove outer padding that offsets header/nav */
+}
+
+/* Ensure nav hugs the header (override legacy offsets from styles2) */
+#settings-sidebar .settings-content {
+    padding-top: 0 !important;
+}
+#settings-sidebar .settings-nav {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 16px !important;
+}
+#settings-sidebar .settings-nav .nav-item:first-child {
+    margin-top: 0 !important;
+}
+
+
+/* ============================
+   Settings shell polish
+   (modern bright, not terminal dark)
+   ============================ */
+
+/* Whole slide-out panel background */
+#settings-sidebar.settings-sidebar {
+    background: #0F1118;
+}
+
+/* The content area that holds breadcrumb + cards */
+.settings-content {
+    background: #F3F3F0; /* soft cream/gray that matches your logo */
+}
+
+/* Card stack area */
+.settings-panels {
+    background: transparent;
+}
+
+/* Breadcrumb + subtitle contrast */
+.settings-topbar .breadcrumbs .crumb,
+.settings-topbar .breadcrumbs .sep,
+.settings-topbar .topbar-subtitle {
+    color: #6E758A;
+}
+
+/* Make card titles and text use your navy instead of pure black */
+.settings-group h3,
+.settings-group-title {
+    color: #1A213A;
+}
+
+/* === Text Effects card – preview panel === */
+
+#settings-sidebar .text-effects-preview,
+#settings-sidebar .shadow-preview,
+#settings-sidebar .text-shadow-preview {
+    background: #3C4250;              /* softer charcoal, not almost-black */
+    border-radius: 18px;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #F9FAFB;                   /* keep the 12:34 nice and bright */
+}
+
+
+/* === Slider labels & values (Shadow Opacity, Blur, etc.) === */
+
+/* Generic text inside control rows */
+#settings-sidebar .settings-group .control-row span,
+#settings-sidebar .settings-group .slider-value,
+#settings-sidebar .settings-group .range-value,
+#settings-sidebar .settings-group input[type="range"] + span {
+    color: #1A213A;   /* dark navy text */
+}
+
+/* Make the numeric labels underneath the sliders darker too */
+#settings-sidebar .settings-group .shadow-opacity-label,
+#settings-sidebar .settings-group .shadow-blur-label,
+#settings-sidebar .settings-group .shadow-distance-label,
+#settings-sidebar .settings-group .shadow-angle-label {
+    color: #1A213A;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+
+/* =========================================
+   SETTINGS THEME RESET – modern dark navy
+   ========================================= */
+
+:root {
+    /* brand colors (used only in settings overrides) */
+    --brand-navy: #000035;
+    --brand-navy-soft: #070B16;
+    --brand-panel: #101522;
+    --brand-gold: #C4AD62;
+    --brand-teal: #1A213A;
+    --brand-text: #F9FAFB;
+    --brand-muted: #9CA3AF;
+    --brand-border: #1F2937;
+}
+
+/* Whole slide-out shell */
+#settings-sidebar.settings-sidebar {
+    background: var(--brand-navy-soft);
+    color: var(--brand-text);
+}
+
+/* Header keeps your gradient, but matches new shell */
+#settings-sidebar .settings-header {
+    background: linear-gradient(90deg, #000035 0%, #1B2455 50%, #C4AD62 100%);
+    color: #F4EDE2;
+    border-bottom: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+
+/* Main content area behind cards */
+#settings-sidebar .settings-content {
+    background: var(--brand-navy-soft);
+}
+
+/* Card stack container */
+#settings-sidebar .settings-panels {
+    padding: 24px 28px 28px;
+}
+
+/* Cards */
+#settings-sidebar .settings-group {
+    background: var(--brand-panel);
+    border-radius: 16px;
+    border: 1px solid var(--brand-border);
+    box-shadow: 0 14px 34px rgba(0,0,0,0.65);
+    margin-bottom: 18px;
+    color: var(--brand-text);
+}
+
+/* Card headings */
+#settings-sidebar .settings-group h3 {
+    border-bottom: 1px solid rgba(148,163,184,0.35);
+    color: var(--brand-text);
+}
+#settings-sidebar .settings-group h3 i {
+    color: var(--brand-teal);
+}
+
+/* Breadcrumb / subtitle */
+#settings-sidebar .settings-topbar .breadcrumbs .crumb,
+#settings-sidebar .settings-topbar .breadcrumbs .sep,
+#settings-sidebar .settings-topbar .topbar-subtitle {
+    color: var(--brand-muted);
+}
+
+/* Sidebar nav items – dark pills, teal active */
+#settings-sidebar .settings-nav {
+    padding: 20px 16px;
+    border-right: 1px solid rgba(15,23,42,0.8);
+    background: #050810;
+}
+
+#settings-sidebar .settings-nav .nav-item {
+    background: transparent;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    color: var(--brand-muted);
+    padding: 8px 12px;
+    box-shadow: none;
+}
+
+#settings-sidebar .settings-nav .nav-item i {
+    color: var(--brand-gold);
+}
+
+#settings-sidebar .settings-nav .nav-item:hover {
+    background: rgba(148,163,184,0.12);
+    color: var(--brand-text);
+}
+
+#settings-sidebar .settings-nav .nav-item.active {
+    background: rgba(0,191,165,0.18);
+    border-color: var(--brand-teal);
+    color: var(--brand-text);
+    box-shadow: 0 0 0 1px rgba(0,191,165,0.6);
+}
+
+#settings-sidebar .settings-nav .nav-item.active i {
+    color: var(--brand-teal);
+}
+
+/* Dropzone matches dark cards */
+#settings-sidebar .dropzone {
+    background: #0B1220;
+    border-radius: 10px;
+    border: 1px dashed rgba(0,191,165,0.7);
+    color: var(--brand-muted);
+}
+
+/* Schedule preview block */
+#settings-sidebar .preview-schedule {
+    background: #0B1220;
+    border-radius: 10px;
+    border: 1px solid rgba(15,23,42,0.9);
+    color: var(--brand-text);
+}
+
+/* Sliders and toggles use your teal, not bright browser blue */
+#settings-sidebar input[type="range"]::-webkit-slider-runnable-track {
+    background: #1F2937;
+}
+#settings-sidebar input[type="range"]::-webkit-slider-thumb {
+    background: var(--brand-teal);
+}
+#settings-sidebar input[type="range"]::-moz-range-track {
+    background: #1F2937;
+}
+#settings-sidebar input[type="range"]::-moz-range-thumb {
+    background: var(--brand-teal);
+}
+
+/* Reset button – subtle teal outline on dark */
+#settings-sidebar .btn-reset {
+    background: transparent;
+    border-radius: 999px;
+    border: 1px solid rgba(0,191,165,0.5);
+    color: var(--brand-teal);
+}
+#settings-sidebar .btn-reset:hover {
+    background: rgba(0,191,165,0.12);
+}
+
+/* =======================================================
+   BRIGHT MODE (FINAL) – clean, modern, brand-aligned
+   ======================================================= */
+
+/* PAGE + SHELL BACKGROUND (not dark, not white) */
+#settings-sidebar.settings-sidebar {
+    background: #F4F4F1 !important; /* warm light cream */
+    color: #1A213A;
+}
+
+/* MAIN CONTENT AREA */
+#settings-sidebar .settings-content {
+    background: #F4F4F1 !important;
+}
+
+/* NAVY → GOLD HEADER */
+#settings-sidebar .settings-header {
+    background: linear-gradient(90deg, #000035 0%, #1B2455 45%, #C4AD62 100%);
+    color: #F4EDE2;
+    border-bottom: none !important;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+    padding: 0 !important;
+}
+
+/* SIDEBAR NAV */
+#settings-sidebar .settings-nav {
+    background: #EFEFEA; /* slightly darker than page */
+    padding: 12px 12px 16px !important; /* add breathing room around pills */
+    border-right: 1px solid rgba(0,0,0,0.05);
+    box-sizing: border-box;
+}
+
+/* NAV ITEMS (white pills) */
+#settings-sidebar .settings-nav .nav-item {
+    background: #FFFFFF;
+    border-radius: 999px;
+    padding: 10px 14px;
+    border: 1px solid rgba(0,0,0,0.08);
+    color: #1A213A;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+}
+#settings-sidebar .settings-nav .nav-item:hover {
+    background: #E7F8F4; /* soft teal tint */
+}
+#settings-sidebar .settings-nav .nav-item.active {
+    background: #00BFA5;
+    border-color: #00BFA5;
+    color: #FFFFFF;
+    box-shadow: 0 10px 20px rgba(0,191,165,0.24);
+}
+
+/* ICONS */
+#settings-sidebar .settings-nav .nav-item i {
+    color: inherit;
+}
+
+/* SETTINGS CARDS */
+#settings-sidebar .settings-group {
+    background: #FFFFFF;
+    border-radius: 20px !important;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
+    padding: 20px 24px;
+    color: #1A213A;
+}
+
+/* CARD TITLES */
+#settings-sidebar .settings-group h3,
+#settings-sidebar .settings-group-title {
+    color: #1A213A;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+/* Keep labels aligned with adjacent color pickers */
+#settings-sidebar input[type="color"] {
+    vertical-align: middle;
+    height: 32px;
+    width: 48px;
+    position: relative;
+    top: 6px; /* nudge picker downward for better label alignment */
+}
+#settings-sidebar label + input[type="color"],
+#settings-sidebar input[type="color"] + label {
+    vertical-align: middle;
+}
+#settings-sidebar label[for*="color"] {
+    display: inline-flex;
+    align-items: center;
+    line-height: 32px;
+    margin-right: 8px;
+}
+
+/* DIVIDERS */
+#settings-sidebar .settings-group hr {
+    border: none;
+    border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* DROPZONE */
+#settings-sidebar .dropzone {
+    background: #FAFAF7 !important;
+    border: 1px dashed rgba(0,0,0,0.20) !important;
+    color: #1A213A;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+#settings-sidebar .dropzone:hover {
+    background: #F1F1EC !important;
+    border-color: rgba(0,0,0,0.24) !important;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* PREVIEW BLOCKS */
+#settings-sidebar .preview-schedule {
+    background: #F2F2EF;
+    border: 1px solid rgba(0,0,0,0.12);
+    color: #1A213A;
+}
+
+/* RESET BUTTON (soft outline) */
+#settings-sidebar .btn-reset {
+    background: #FFFFFF;
+    border: 1px solid rgba(0,191,165,0.40);
+    border-radius: 999px;
+    color: #00A48B;
+}
+#settings-sidebar .btn-reset:hover {
+    background: #E7F8F4;
+}
+
+/* === Bright theme polish: sliders + schedule preview === */
+
+/* Range slider track: light neutral instead of dark navy */
+#settings-sidebar .settings-group input[type="range"]::-webkit-slider-runnable-track {
+    background: #E5E7EB;
+    height: 4px;
+    border-radius: 999px;
+}
+#settings-sidebar .settings-group input[type="range"]::-moz-range-track {
+    background: #E5E7EB;
+    height: 4px;
+    border-radius: 999px;
+}
+
+/* Range slider thumb: teal accent, small and clean */
+#settings-sidebar .settings-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #00BFA5;
+    border: 2px solid #FFFFFF;
+    margin-top: -6px; /* centers on 4px track */
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+}
+#settings-sidebar .settings-group input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #00BFA5;
+    border: 2px solid #FFFFFF;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.06);
+}
+
+/* Schedule preview chip: lighter, more in line with cards */
+#settings-sidebar .preview-schedule {
+    background: #F6F6F3;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    color: #1A213A;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+/* ========================================
+   ACTIVE SETTINGS PANEL (navy → gold)
+   ======================================== */
+
+#settings-sidebar .settings-group.active-group {
+    background: linear-gradient(
+        135deg,
+        #000035 0%,
+        #1B2455 40%,
+        #C4AD62 100%
+    );
+    color: #F4EDE2 !important;
+
+    border: none !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.20);
+    transform: translateY(-3px);
+    transition: all 0.25s ease;
+}
+
+/* Titles inside the active panel */
+#settings-sidebar .settings-group.active-group h3,
+#settings-sidebar .settings-group.active-group .settings-group-title {
+    color: #F4EDE2 !important;
+    border-color: rgba(255,255,255,0.25);
+}
+
+/* Labels, text, small subtitles */
+#settings-sidebar .settings-group.active-group label,
+#settings-sidebar .settings-group.active-group span,
+#settings-sidebar .settings-group.active-group p {
+    color: #F4EDE2 !important;
+}
+
+/* Inputs inside the gradient card stay readable */
+#settings-sidebar .settings-group.active-group input,
+#settings-sidebar .settings-group.active-group select,
+#settings-sidebar .settings-group.active-group textarea {
+    background: rgba(255,255,255,0.15) !important;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255,255,255,0.35) !important;
+}
+
+/* Sliders look unified on gradient bg */
+#settings-sidebar .settings-group.active-group input[type="range"]::-webkit-slider-runnable-track {
+    background: rgba(255,255,255,0.35) !important;
+}
+#settings-sidebar .settings-group.active-group input[type="range"]::-webkit-slider-thumb {
+    background: #00BFA5 !important;
+    border: 2px solid white !important;
+}
+
+/* Dropzones inside the active panel */
+#settings-sidebar .settings-group.active-group .dropzone {
+    background: rgba(255,255,255,0.10) !important;
+    border: 1px dashed rgba(255,255,255,0.5) !important;
+}
+
+/* ------------------------------------------------------------------
+   User request: Replace teal selected tab with navy->gold gradient
+   and remove the white vertical bar to the left of the active item.
+   This block is intentionally specific and placed at the end so it
+   overrides earlier conflicting rules.
+------------------------------------------------------------------ */
+
+/* Active nav pill: navy -> gold gradient */
+#settings-sidebar .settings-nav .nav-item.active,
+#settings-sidebar .settings-nav .nav-item.active.nav-item,
+#settings-sidebar .nav-item.active {
+    /* Extend gold to the very edge to avoid a sliver of navy at the far right */
+    background: linear-gradient(
+        90deg,
+        #000035ff 0%,
+        #0c1d48 35%,
+        #1b2455 55%,
+        #b08f3a 82%,
+        #c4ad62 100%
+    ) !important;
+    color: #F4EDE2 !important;
+    border: none !important;
+    background-clip: padding-box !important;
+    -webkit-background-clip: padding-box !important;
+    box-shadow: 0 10px 24px rgba(11,12,25,0.35) !important;
+    transform: translateY(-1px) !important;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.3s ease;
+    animation: pillFloat 2.4s ease-in-out infinite alternate;
+}
+
+/* Ensure icon/text inside active pill are readable (gold/navy theme) */
+#settings-sidebar .settings-nav .nav-item.active i,
+#settings-sidebar .settings-nav .nav-item.active .nav-label {
+    color: #F4EDE2 !important;
+    opacity: 0.8;
+}
+
+/* Remove any left-side accent bar (white line) that older rules added */
+#settings-sidebar .settings-nav .nav-item.active::before,
+#settings-sidebar .nav-item.active::before,
+.nav-item.active::before {
+    display: none !important;
+    width: 0 !important;
+    background: transparent !important;
+    border-left: none !important;
+}
+
+/* Also remove any inset left-border visual from less-specific rules */
+#settings-sidebar .settings-nav .nav-item.active {
+    box-shadow: 0 10px 24px rgba(11,12,25,0.35) !important;
+}
+
+@keyframes pillFloat {
+    0% { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(11,12,25,0.35); }
+    100% { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(11,12,25,0.32); }
+}
+
+/* ------------------------------------------------------------------
+   Final sweep: replace remaining teal accents with the new navy
+   and fix white-on-white nav/text issues. These overrides are
+   intentionally specific and placed at the end to take precedence.
+------------------------------------------------------------------ */
+
+/* Ensure nav item labels are readable on all tabs (avoid white-on-white) */
+#settings-sidebar .settings-nav .nav-item,
+#settings-sidebar .nav-item,
+#settings-sidebar .settings-nav .nav-item .nav-label {
+    color: var(--brand-text, #1A213A) !important;
+}
+
+#settings-sidebar .settings-nav .nav-item.active {
+    color: #F4EDE2 !important; /* keep active pill text light */
+}
+
+/* Switch / toggle overrides */
+.switch .slider {
+    background-color: #393E46 !important;
+    border: 2px solid var(--teal) !important;
+}
+.switch input:checked + .slider {
+    background-color: var(--teal) !important;
+}
+.switch input:checked + .slider:before {
+    background-color: #FFFFFF !important;
+}
+
+/* Dropdown borders and controls */
+.dropdown-toggle,
+.dropdown-content,
+.dropdown-content input,
+.dropdown-content select {
+    border-color: var(--teal) !important;
+}
+.dropdown-toggle {
+    color: #E5E7EB !important;
+}
+
+/* Range inputs / slider thumbs used in settings */
+#settings-sidebar input[type="range"]::-webkit-slider-thumb,
+#settings-sidebar .settings-group input[type="range"]::-webkit-slider-thumb {
+    background: var(--teal) !important;
+    border: 2px solid #FFFFFF !important;
+}
+#settings-sidebar input[type="range"]::-moz-range-thumb,
+#settings-sidebar .settings-group input[type="range"]::-moz-range-thumb {
+    background: var(--teal) !important;
+}
+
+/* Scrollbar accent */
+.dropdown-content {
+    scrollbar-color: var(--teal) rgba(255,255,255,0.08) !important;
+}
+
+/* Gradient preview and bars: replace teal stops with new navy
+    (preview element removed from DOM; rule kept commented for reference)
+*/
+/* #gradient-preview, .gradient-bar { background: linear-gradient(to right, #000035, var(--teal)) !important; } */
+
+/* Buttons and primary accents that used teal literals */
+.btn-primary,
+.gradient-save-btn,
+#save-schedule-button,
+#add-stop,
+.settings-sidebar .btn-primary,
+.settings-sidebar button {
+    background: var(--teal) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+/* Drop area and overlays */
+#bg-image-drop-area { border-color: var(--teal) !important; }
+.drop-overlay { background: rgba(26,33,58,0.06) !important; }
+
+/* Replace remaining common teal literal usages (safeguard) */
+.nav-item.active { background-image: none !important; }
+
+
+/* ------------------------------------------------------------------
+   Global teal-to-navy overrides
+   Ensure common controls that previously used teal use the new navy
+   accent. These are intentionally specific overrides and rely on the
+   `--teal` and `--teal-rgb` variables defined above.
+------------------------------------------------------------------ */
+
+:root {
+    --brand-teal-rgb: 26,33,58;
+}
+
+/* Buttons and controls that used teal */
+.btn-primary,
+.gradient-save-btn,
+#save-schedule-button,
+#add-stop,
+.gradient-save-btn,
+.settings-sidebar button,
+.settings-sidebar .btn-primary {
+    background: var(--teal) !important;
+    color: #fff !important;
+    border-color: transparent !important;
+}
+
+/* Outlines / borders that referenced teal tones */
+.btn-reset,
+.reset-btn,
+.close-settings-sidebar,
+.settings-sidebar .btn-reset {
+    border-color: rgba(var(--brand-teal-rgb),0.28) !important;
+    color: var(--teal) !important;
+}
+
+/* Drop overlay and drag areas */
+.drop-overlay { background: rgba(var(--brand-teal-rgb),0.08) !important; }
+#bg-image-drop-area { border-color: var(--teal) !important; }
+
+/* Hover/active accents tuned to navy */
+.gradient-save-btn:hover,
+.settings-sidebar button:hover,
+.btn-primary:hover {
+    background: rgba(var(--brand-teal-rgb),0.14) !important;
+}
+
+/* ------------------------------------------------------------------
+   Repeat: Text Effects + UI controls polish (placed at the very end)
+   This copy lives at the file end to ensure it overrides earlier
+   conflicting literal rules and provides final polish.
+------------------------------------------------------------------ */
+
+/* Make the preview panels match card styling (not an outlier dark box) */
+#settings-sidebar .text-effects-preview,
+#settings-sidebar .shadow-preview,
+#settings-sidebar .text-shadow-preview,
+.text-effects-preview,
+.shadow-preview,
+.text-shadow-preview {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 8px 18px rgba(2,6,23,0.06) !important;
+    border-radius: 12px !important;
+    padding: 18px !important;
+}
+
+/* If there is a large clock / time element inside the preview, keep it readable */
+#settings-sidebar .text-effects-preview .time,
+#settings-sidebar .text-effects-preview .big-time,
+.text-effects-preview .time,
+.text-effects-preview .big-time {
+    color: var(--text-primary) !important;
+    text-shadow: 0 6px 18px rgba(0,0,0,0.12) !important;
+}
+
+/* Dropdown and select borders — replace old teal with navy */
+.dropdown-toggle,
+.dropdown-content,
+select,
+.settings-group select,
+.dropdown-content input,
+.dropdown-content select {
+    border-color: var(--teal) !important;
+    color: var(--text-primary) !important;
+    background: #FFFFFF !important;
+}
+
+/* Ensure select caret / text are readable in nav cards */
+.settings-group select { background: #fff !important; }
+
+/* Range inputs / slider thumb overrides (global within settings) */
+input[type="range"]::-webkit-slider-runnable-track,
+.settings-group input[type="range"]::-webkit-slider-runnable-track {
+    background: #E5E7EB !important;
+    height: 6px !important;
+    border-radius: 999px !important;
+}
+input[type="range"]::-webkit-slider-thumb,
+.settings-group input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: var(--teal) !important;
+    border: 2px solid #FFFFFF !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18) !important;
+    margin-top: -5px !important; /* vertically center on 6px track */
+}
+input[type="range"]::-moz-range-track,
+input[type="range"]::-moz-range-thumb {
+    background: #E5E7EB !important;
+}
+input[type="range"]::-moz-range-thumb { background: var(--teal) !important; }
+
+/* Switch / toggle styling consistent with new accent */
+.switch .slider {
+    border: 2px solid var(--teal) !important;
+    background-color: #E6E9EB !important;
+}
+.switch input:checked + .slider {
+    background-color: var(--teal) !important;
+}
+.switch .slider:before { background: #FFFFFF !important; }
+
+/* Fix dropdown scrollbars if any still use the old teal */
+.dropdown-content { scrollbar-color: var(--teal) rgba(0,0,0,0.06) !important; }
+.dropdown-content::-webkit-scrollbar-thumb { background: var(--teal) !important; }
+
+/* Ensure chip/preview text contrast inside card areas */
+#settings-sidebar .preview-schedule,
+.preview-chip {
+    color: var(--text-primary) !important;
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+}
+
+/* For any remaining literal-teal backgrounds in small controls, fallback to new accent */
+.nav-item.active,
+.btn-primary,
+.gradient-save-btn,
+#save-schedule-button,
+#add-stop {
+    background: var(--teal) !important;
+    color: #fff !important;
+}
+
+/* Final settings-scoped overrides to catch remaining literal teal uses
+   and fix white-on-white nav labels. These are very specific and
+   scoped to `#settings-sidebar` to avoid changing other parts. */
+
+#settings-sidebar .settings-nav .nav-item:not(.active) {
+    color: var(--text-primary) !important;
+    background: #FFFFFF !important;
+    border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+#settings-sidebar .settings-nav .nav-item,
+#settings-sidebar .nav-item {
+    color: var(--text-primary) !important;
+}
+
+/* Dropdowns / selects inside settings */
+#settings-sidebar .dropdown-toggle,
+#settings-sidebar .dropdown-content,
+#settings-sidebar select,
+#settings-sidebar .settings-group select {
+    border-color: var(--teal) !important;
+    color: var(--text-primary) !important;
+    background: #FFFFFF !important;
+}
+
+#settings-sidebar select:focus,
+#settings-sidebar .dropdown-toggle:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(var(--teal-rgb),0.07) !important;
+}
+
+/* Switches & toggles inside settings */
+#settings-sidebar .switch .slider {
+    border: 2px solid var(--teal) !important;
+    background-color: #E6E9EB !important;
+}
+#settings-sidebar .switch input:checked + .slider {
+    background-color: var(--teal) !important;
+}
+
+/* Range thumbs inside settings (ensure no browser default blue) */
+#settings-sidebar input[type="range"]::-webkit-slider-thumb {
+    background: var(--teal) !important;
+    border: 2px solid #FFFFFF !important;
+}
+#settings-sidebar input[type="range"]::-moz-range-thumb { background: var(--teal) !important; }
+
+/* Force dropdown scrollbars / small accents to use navy */
+#settings-sidebar .dropdown-content { scrollbar-color: var(--teal) rgba(0,0,0,0.06) !important; }
+#settings-sidebar .dropdown-content::-webkit-scrollbar-thumb { background: var(--teal) !important; }
+
+/* -----------------------------
+   Shadow settings + progress bar fix
+   Make shadow settings preview and progress box match other cards (white)
+------------------------------ */
+
+/* Shadow settings content area (panel that holds shadow controls) */
+#shadow-settings-content,
+#shadow-preview,
+#settings-sidebar #shadow-settings-content,
+#settings-sidebar #shadow-preview {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 8px 22px rgba(2,6,23,0.06) !important;
+    border-radius: 12px !important;
+}
+
+/* Ensure text and labels inside the shadow box are dark (not white) */
+#shadow-settings-content *,
+#shadow-preview * {
+    color: var(--text-primary) !important;
+}
+
+/* Progress bar settings box — make white and match cards */
+#progress-bar-settings,
+#settings-sidebar #progress-bar-settings {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+    box-shadow: 0 8px 22px rgba(2,6,23,0.06) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+}
+
+/* -----------------------------------
+   Settings panels: contrast fixes
+   ----------------------------------- */
+#settings-sidebar #legal-panel .legal-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+    color: var(--text-primary) !important;
+}
+#settings-sidebar #legal-panel .legal-card-title { color: var(--teal) !important; }
+#settings-sidebar #legal-panel .legal-desc,
+#settings-sidebar #legal-panel .legal-updated,
+#settings-sidebar #legal-panel .legal-footer,
+#settings-sidebar #legal-panel .legal-note {
+    color: var(--text-primary) !important;
+}
+
+#settings-sidebar #extension-panel .controls input[type="color"] {
+    border: 1px solid var(--card-border) !important;
+    box-shadow: none !important;
+}
+#settings-sidebar #extension-panel .controls .direction-controls select {
+    background: var(--card-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+}
+#settings-sidebar #extension-panel p,
+#settings-sidebar #extension-panel label,
+#settings-sidebar #extension-panel .extension-placeholder {
+    color: var(--text-primary) !important;
+}
+#settings-sidebar #extension-panel .extension-placeholder,
+#settings-sidebar #extension-panel .extension-placeholder a {
+    color: var(--text-primary) !important;
+}
+#settings-sidebar #extension-panel .extension-promo {
+    background: linear-gradient(90deg,#0b1220 0%, #c4ad62 100%) !important;
+    color: #fff !important;
+    border: 1px solid var(--card-border) !important;
+}
+#settings-sidebar #extension-panel .extension-promo .install-btn {
+    background: var(--teal) !important;
+    color: #fff !important;
+}
+#settings-sidebar #extension-panel .extension-coming-soon-overlay,
+#settings-sidebar #extension-panel .extension-coming-soon-overlay *,
+#settings-sidebar #extension-panel .extension-coming-soon-overlay p {
+    color: #fff !important;
+}
+
+#settings-sidebar #schedule-panel,
+#settings-sidebar #schedule-panel * {
+    color: var(--text-primary) !important;
+}
+#settings-sidebar #schedule-panel .dropdown-toggle,
+#settings-sidebar #schedule-panel .dropdown-content {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--card-border) !important;
+}
+#settings-sidebar #schedule-panel .dropdown-content input {
+    background: #fff !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--card-border) !important;
+}
+ /* Nicer color pickers in settings */
+
+#settings-sidebar input[type="color"] {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  width: 44px;
+  height: 26px;
+  border-radius: 999px;
+  padding: 0;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+/* Remove default inner padding/square swatch */
+#settings-sidebar input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 999px;
+}
+#settings-sidebar input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
+
+#settings-sidebar input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
+
+/* Focus state */
+#settings-sidebar input[type="color"]:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 0, 53, 0.15);
+  border-color: rgba(0, 0, 53, 0.35);
 }
