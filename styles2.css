@@ -1,17 +1,10 @@
-/* Remove all gradient-related CSS classes */
-/* ...existing code... */
-
-/* Remove these classes and their related styles */
-.gradient-preview,
-.gradient-controls,
-.gradient-options,
-.gradient-bar-container,
-.gradient-stops,
-.gradient-editor,
-.gradient-bar,
-.gradient-confirm-dialog {
-    display: none !important;
-}
+/* Legacy: gradient UI removal rules (kept for reference). */
+/* The previous build hid gradient UI by setting `display:none !important` here,
+   which prevented the gradient controls from appearing. Those rules were
+   intentionally removed so the gradient editor is visible and interactive.
+   If you need to hide the editor in the future, prefer toggling a class
+   (e.g. `.hidden`) on the container rather than using a global override.
+*/
 
 /* ...existing code... */
 
@@ -201,13 +194,13 @@
     margin-top: 15px;
 }
 
-#gradient-preview {
+/* #gradient-preview {
     width: 100%;
     height: 80px;
     border-radius: 8px;
     margin-bottom: 15px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-}
+} */
 
 #gradient-stops,
 #add-stop {
@@ -319,20 +312,6 @@
 }
 
 /* Update settings nav to accommodate fixed auth button */
-.settings-nav {
-    position: relative !important;
-    padding-bottom: 80px !important;
-}
-
-/* Move the settings nav bar up to be flush with the header */
-.settings-nav {
-    margin-top: -93px !important;
-    padding-top: 0;
-}
-
-.settings-nav button:first-child {
-    margin-top: 20px;
-}
 
 /* ...existing code... */
 
@@ -882,6 +861,7 @@ button.profile-button {
     text-align: center;
 }
 
+
 .input-group {
     margin-bottom: 1rem;
 }
@@ -1221,14 +1201,14 @@ button.profile-button {
 
 /* ...existing code... */
 
-/* Update About page styling: teal headers, white body text */
+/* Update About page styling: teal headers, body text inherits card color */
 .about-content {
-    color: #ffffff; /* normal text should be white */
+    color: inherit; /* follow the card theme (dark or light) */
 }
 .about-content h2,
 .about-content h3,
 .about-content h4 {
-    color: #00bfa5; /* teal accent for About headings */
+    color: var(--brand-gold, var(--gold, #C4AD62)); /* use logo gold accent */
     margin-top: 0.6rem;
 }
 .about-content h2 {
@@ -1238,10 +1218,13 @@ button.profile-button {
 .about-content p,
 .about-content ul.feature-list,
 .about-content ul.feature-list li {
-    color: #ffffff; /* ensure high contrast */
+    color: inherit; /* keep readable in both bright and dark settings themes */
 }
 .about-content a {
-    color: #00bfa5; /* teal links in About */
+    color: var(--brand-gold, var(--gold, #C4AD62)); /* logo gold links */
+}
+.about-content a:hover {
+    color: #1B2455; /* deep navy from logo for hover */
 }
 
 .profile-visibility-control {
