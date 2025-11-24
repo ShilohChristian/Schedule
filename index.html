@@ -67,6 +67,100 @@
       gtag('js', new Date());
       gtag('config', 'G-YS6FHHEGFZ');
     </script>
+        <style>
+            /* Improved styling for Extension settings controls */
+            .settings-panel#extension-panel .controls { 
+                display:flex; flex-direction:column; gap:12px; padding:12px 0;
+            }
+            .settings-panel#extension-panel .controls .color-controls { display:flex; gap:12px; align-items:center; }
+            .settings-panel#extension-panel .controls input[type="color"] {
+                -webkit-appearance: none; appearance: none; border: 2px solid rgba(0,0,0,0.12); height:36px; width:48px; border-radius:6px; padding:0;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+                cursor:pointer;
+            }
+            .settings-panel#extension-panel .controls label { font-size:13px; color:#dfe7ee; margin-right:6px; }
+            .settings-panel#extension-panel .controls .direction-controls { display:flex; align-items:center; gap:8px; }
+            .settings-panel#extension-panel .controls .direction-controls label { width:90px; }
+            .settings-panel#extension-panel .controls .direction-controls select { padding:6px 8px; border-radius:6px; background:#0f1720; color:#e6eef6; border:1px solid rgba(255,255,255,0.06); min-width:150px; }
+            .settings-panel#extension-panel .controls button#saveExtensionButton { background:#0ea5a4; color:#042028; padding:8px 10px; border-radius:8px; border:none; font-weight:600; box-shadow: 0 6px 16px rgba(14,165,164,0.14); }
+            .settings-panel#extension-panel .gradient-preview { height:150px; border-radius:8px; margin-top:8px; box-shadow: inset 0 -10px 40px rgba(0,0,0,0.25); }
+            .settings-panel#extension-panel .extension-placeholder { margin-top:10px; font-size:13px; color:#c7d2da; }
+            .settings-panel#extension-panel .extension-placeholder a { color:#9eead4; text-decoration:none; font-weight:600; }
+            .settings-panel#extension-panel .extension-placeholder a:hover { text-decoration:underline; }
+            /* Promo card styling */
+            .extension-promo {
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                min-height: 80px;
+            }
+            .extension-promo > div { flex: 1; }
+            .extension-promo .install-btn {
+                background: #ffffff;
+                color: #0b1220;
+                padding: 8px 12px;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 700;
+                box-shadow: 0 8px 22px rgba(2,6,23,0.45);
+                border: none;
+                display: inline-block;
+                transition: transform 120ms ease, box-shadow 120ms ease;
+            }
+            .extension-promo .install-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(2,6,23,0.5); }
+            .extension-promo a.promo-link { color: rgba(255,255,255,0.95); text-decoration: underline; }
+
+            /* Make extension panel selects match site styling */
+            .settings-panel#extension-panel .controls .direction-controls select,
+            .settings-panel#test-panel .controls .direction-controls select {
+                padding: 8px 10px;
+                border-radius: 8px;
+                height: 36px;
+                border: 1px solid rgba(255,255,255,0.06);
+                background: #0f1720;
+                color: #e6eef6;
+                box-shadow: inset 0 -2px 8px rgba(0,0,0,0.35);
+                font-size: 14px;
+                min-width: 150px;
+            }
+            /* Overlay for extension panel when extension isn't public */
+            .settings-panel#extension-panel {
+                position: relative;
+                overflow: visible;
+            }
+            .extension-coming-soon-overlay {
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(4,6,12,0.82);
+                backdrop-filter: blur(8px) saturate(120%);
+                z-index: 99999;
+                color: #ffffff;
+                text-align: center;
+                padding: 0;
+                pointer-events: auto;
+            }
+            .extension-coming-soon-overlay .overlay-card {
+                max-width: 460px;
+                background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+                border-radius: 10px;
+                padding: 18px;
+                box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+                border: 1px solid rgba(255,255,255,0.04);
+            }
+            .extension-coming-soon-overlay h4 { margin:0 0 6px 0; font-size:18px; font-weight:800; }
+            .extension-coming-soon-overlay p { margin:0; opacity:0.95; color: rgba(255,255,255,0.9); }
+            /* When overlay is active, ensure underlying content does not accept pointer events */
+            .settings-panel#extension-panel.overlay-active *:not(.extension-coming-soon-overlay):not(.extension-coming-soon-overlay *) {
+                pointer-events: none !important;
+                user-select: none !important;
+            }
+        </style>
 </head>
 <body>
     <!-- Mobile top bar (only shown on small screens) -->
@@ -117,6 +211,10 @@
                 </button>
                 <button class="nav-item" data-target="legal">
                     <i class="fas fa-gavel"></i> Legal
+                </button>
+                <!-- Temporary: expose Extension panel for testing -->
+                <button class="nav-item" data-target="extension">
+                    <i class="fas fa-puzzle-piece"></i> Extension
                 </button>
             </div>
             
@@ -410,7 +508,10 @@
                                 <p class="legal-desc">This policy explains what personal data we collect, how it's used, and how we protect your privacy. We minimize data collection and respect user preferences.</p>
                                 <div class="legal-actions">
                                     <a class="btn btn-primary" href="privacy.html" target="_blank" rel="noopener">View Privacy Policy</a>
-                                    <span class="legal-updated">Last updated: Sep 21, 2025</span>
+                                    <span class="legal-updated">Last updated: Nov 23, 2025</span>
+                                </div>
+                                <div style="margin-top:10px;">
+                                    <a class="btn btn-primary" href="extension-privacy.html" target="_blank" rel="noopener">Extension Privacy Policy</a>
                                 </div>
                             </div>
                         </div>
@@ -434,26 +535,29 @@
                             <div class="direction-controls" style="margin-top: 15px;">
                                 <label for="gradientDirection">Direction:</label>
                                 <select id="gradientDirection" onchange="updateExtensionPreview()">
-                                    <option value="90">To Right</option>
-                                    <option value="0">To Top</option>
-                                    <option value="180">To Bottom</option>
-                                    <option value="45">To Top Right</option>
-                                    <option value="135">To Bottom Right</option>
+                                    <option value="90">To Right →</option>
+                                    <option value="0">To Top ↑</option>
+                                    <option value="180">To Bottom ↓</option>
+                                    <option value="45">To Top Right ↗</option>
+                                    <option value="135">To Bottom Right ↘</option>
                                 </select>
                             </div>
                             <button id="saveExtensionButton" style="margin-top: 15px;" onclick="saveExtensionGradient()">Save Gradient</button>
                         </div>
                         <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
                         <script>
-                            // Load saved settings on init
+                            // Load saved settings on init and prefer namespaced extension inputs
                             document.addEventListener('DOMContentLoaded', () => {
                                 const savedSettings = localStorage.getItem('extensionGradientSettings');
                                 if (savedSettings) {
                                     try {
                                         const settings = JSON.parse(savedSettings);
-                                        document.getElementById('startColor').value = settings.startColor;
-                                        document.getElementById('endColor').value = settings.endColor;
-                                        document.getElementById('gradientDirection').value = settings.angle;
+                                        const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                        const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                        const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                        if (startEl && settings.startColor) startEl.value = settings.startColor;
+                                        if (endEl && settings.endColor) endEl.value = settings.endColor;
+                                        if (dirEl && settings.angle !== undefined) dirEl.value = settings.angle;
                                     } catch (error) {
                                         console.error('Error loading saved settings:', error);
                                     }
@@ -462,11 +566,15 @@
                             });
 
                             function updateExtensionPreview() {
-                                const start = document.getElementById('startColor').value;
-                                const end = document.getElementById('endColor').value;
-                                const angle = document.getElementById('gradientDirection').value;
+                                const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                const start = startEl ? startEl.value : '#000035';
+                                const end = endEl ? endEl.value : '#00bfa5';
+                                const angle = dirEl ? dirEl.value : '90';
                                 const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
-                                document.getElementById('extensionPreview').style.background = gradient;
+                                const preview = document.getElementById('ext-extensionPreview') || document.getElementById('extensionPreview');
+                                if (preview) preview.style.background = gradient;
                                 
                                 const settings = {
                                     startColor: start,
@@ -475,26 +583,43 @@
                                 };
                                 localStorage.setItem('extensionGradientSettings', JSON.stringify(settings));
                             }
-                            
+
                             function saveExtensionGradient() {
-                                const start = document.getElementById('startColor').value;
-                                const end = document.getElementById('endColor').value;
-                                const angle = document.getElementById('gradientDirection').value;
+                                const startEl = document.getElementById('ext-startColor') || document.getElementById('startColor');
+                                const endEl = document.getElementById('ext-endColor') || document.getElementById('endColor');
+                                const dirEl = document.getElementById('ext-gradientDirection') || document.getElementById('gradientDirection');
+                                const start = startEl ? startEl.value : '#000035';
+                                const end = endEl ? endEl.value : '#00bfa5';
+                                const angle = dirEl ? dirEl.value : '90';
                                 
-                                const EXTENSION_ID = 'jloifnaccjamlflmemenepkmgklmfnmc';
+                                        const EXTENSION_ID = 'clghadjfdfgihdkemlipfndoelebcipg';
                                 
                                 if (chrome?.runtime?.sendMessage) {
                                     try {
-                                        chrome.runtime.sendMessage(EXTENSION_ID, { 
-                                            type: 'UPDATE_GRADIENT', 
-                                            settings: { 
+                                        // Include current schedule metadata so the extension popup
+                                        // can show the correct period/countdown for the user's schedule.
+                                        const payload = {
+                                            type: 'UPDATE_GRADIENT',
+                                            settings: {
                                                 angle: parseInt(angle),
                                                 stops: [
-                                                    { color: start, position: 0 }, 
+                                                    { color: start, position: 0 },
                                                     { color: end, position: 100 }
-                                                ] 
-                                            }
-                                        }, response => {
+                                                ]
+                                            },
+                                            // Application-level schedule info (optional)
+                                            currentScheduleName: window.currentScheduleName || null,
+                                            schedules: null
+                                        };
+
+                                        try {
+                                            // Try to capture global `schedules` if present and serialize safely
+                                            if (window.schedules) payload.schedules = window.schedules;
+                                        } catch (e) {
+                                            console.warn('Could not include schedules in extension payload', e);
+                                        }
+
+                                        chrome.runtime.sendMessage(EXTENSION_ID, payload, response => {
                                             if (chrome.runtime.lastError) {
                                                 console.error('Extension communication error:', chrome.runtime.lastError);
                                                 alert('Unable to communicate with the extension. Please make sure it is installed and enabled.');
@@ -502,8 +627,8 @@
                                                 console.error('Extension response error:', response.error);
                                                 alert('Error updating gradient: ' + response.error);
                                             } else {
-                                                console.log('Gradient updated successfully:', response);
-                                                alert('Gradient updated successfully!');
+                                                // gradient updated successfully (user notified)
+                                                    alert('Gradient updated successfully!');
                                             }
                                         });
                                     } catch (error) {
@@ -512,9 +637,91 @@
                                     }
                                 } else {
                                     console.error('Chrome extension API not available');
-                                    alert('Extension API not available. Please make sure the Gradient Grabber extension is installed.');
+                                            alert('Extension API not available. Please make sure the Shiloh Schedule: Extension is installed.');
                                 }
                             }
+                        </script>
+                        <script>
+                            // Set the placeholder Chrome Web Store links for the Extension settings
+                            try {
+                                const ids = ['installExtensionLink', 'installExtensionLinkPromo'];
+                                ids.forEach(id => {
+                                    const el = document.getElementById(id);
+                                        if (el) el.href = 'https://chrome.google.com/webstore/detail/clghadjfdfgihdkemlipfndoelebcipg';
+                                });
+                            } catch (e) { /* ignore */ }
+                        </script>
+                        <script>
+                            // Page-side extension installation detection using postMessage ping/pong with the content script.
+                            (function(){
+                                const statusElId = 'extensionStatus';
+                                // Ensure status span exists in the placeholder; create if missing
+                                function ensureStatusElement() {
+                                    let el = document.getElementById(statusElId);
+                                    if (!el) {
+                                        const placeholder = document.querySelector('.extension-placeholder');
+                                        if (!placeholder) return null;
+                                        el = document.createElement('span');
+                                        el.id = statusElId;
+                                        el.style.marginLeft = '8px';
+                                        el.style.fontWeight = '600';
+                                        placeholder.appendChild(el);
+                                    }
+                                    return el;
+                                }
+
+                                function setStatus(text, ok) {
+                                    const el = ensureStatusElement();
+                                    if (!el) return;
+                                    el.textContent = text;
+                                    el.style.color = ok ? '#9eead4' : '#fda4af';
+                                }
+
+                                function checkExtensionInstalled(timeoutMs = 1200) {
+                                    return new Promise((resolve) => {
+                                        const origin = window.location.origin;
+                                        let settled = false;
+                                        function onMessage(e) {
+                                            if (e.source !== window) return;
+                                            if (e.data && e.data.type === 'EXTENSION_PONG') {
+                                                settled = true;
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(true);
+                                            }
+                                            // Also accept EXTENSION_NOT_FOUND as negative signal
+                                            if (e.data && e.data.type === 'EXTENSION_NOT_FOUND') {
+                                                settled = true;
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(false);
+                                            }
+                                        }
+                                        window.addEventListener('message', onMessage);
+                                        try {
+                                            window.postMessage({ type: 'EXTENSION_PING' }, origin);
+                                        } catch (e) {
+                                            // if postMessage fails, treat as not installed
+                                            settled = true;
+                                            window.removeEventListener('message', onMessage);
+                                            resolve(false);
+                                        }
+                                        setTimeout(() => {
+                                            if (!settled) {
+                                                window.removeEventListener('message', onMessage);
+                                                resolve(false);
+                                            }
+                                        }, timeoutMs);
+                                    });
+                                }
+
+                                document.addEventListener('DOMContentLoaded', async () => {
+                                    const installed = await checkExtensionInstalled();
+                                    if (installed) {
+                                        setStatus('Installed ✓', true);
+                                    } else {
+                                        setStatus('Not installed', false);
+                                    }
+                                });
+                            })();
                         </script>
                     </div>
                 </div>
@@ -527,21 +734,21 @@
                         
                         <div class="controls">
                             <div class="color-controls">
-                                <label for="startColor">Start Color:</label>
-                                <input type="color" id="startColor" value="#000035" onchange="updateExtensionPreview()">
+                                <label for="ext-startColor">Start Color:</label>
+                                <input type="color" id="ext-startColor" value="#000035" onchange="updateExtensionPreview()">
                                 
-                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
-                                <input type="color" id="endColor" value="#00bfa5" onchange="updateExtensionPreview()">
+                                <label for="ext-endColor" style="margin-left: 10px;">End Color:</label>
+                                <input type="color" id="ext-endColor" value="#00bfa5" onchange="updateExtensionPreview()">
                             </div>
                             
                             <div class="direction-controls">
-                                <label for="gradientDirection">Direction:</label>
-                                <select id="gradientDirection" onchange="updateExtensionPreview()">
-                                    <option value="90">To Right</option>
-                                    <option value="0">To Top</option>
-                                    <option value="180">To Bottom</option>
-                                    <option value="45">To Top Right</option>
-                                    <option value="135">To Bottom Right</option>
+                                <label for="ext-gradientDirection">Direction:</label>
+                                <select id="ext-gradientDirection" onchange="updateExtensionPreview()">
+                                    <option value="90">To Right →</option>
+                                    <option value="0">To Top ↑</option>
+                                    <option value="180">To Bottom ↓</option>
+                                    <option value="45">To Top Right ↗</option>
+                                    <option value="135">To Bottom Right ↘</option>
                                 </select>
                             </div>
                             
@@ -550,7 +757,30 @@
                             </button>
                         </div>
                         
-                        <div id="extensionPreview" class="gradient-preview"></div>
+                        <div id="ext-extensionPreview" class="gradient-preview"></div>
+                            <div class="extension-promo" style="margin-top:12px; padding:12px; background: linear-gradient(90deg,#0b1220 0%, #c4ad62 100%); border-radius:10px; color:#ffffff;">
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <picture style="flex:0 0 auto;">
+                                    <source srcset="favicon.svg" type="image/svg+xml">
+                                    <img src="favicon.png" alt="Extension" style="width:56px;height:56px;border-radius:10px;object-fit:cover;box-shadow:0 10px 28px rgba(2,6,23,0.6);" />
+                                </picture>
+                                <div style="flex:1; color: #ffffff;">
+                                    <div style="font-weight:800; font-size:16px;">Shiloh Schedule: Extension</div>
+                                    <div style="font-size:13px; margin-top:6px; color:rgba(255,255,255,0.9);">Sync the site theme with your browser. Save gradients from the site and apply them instantly in the extension popup.</div>
+                                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+                                        <a id="installExtensionLinkPromo" class="btn btn-primary install-btn" href="#" target="_blank" rel="noopener">Install</a>
+                                        <a href="#" onclick="document.getElementById('saveExtensionButton')?.scrollIntoView(); return false;" class="promo-link" style="font-size:13px;">How it works →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Extension coming soon overlay (default visible until disabled) -->
+                        <div id="extensionComingSoonOverlay" class="extension-coming-soon-overlay" role="dialog" aria-modal="true" aria-label="Extension coming soon">
+                            <div class="overlay-card">
+                                <h4>Extension coming soon!</h4>
+                                <p>We're preparing the Shiloh Schedule: Extension for release.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -586,6 +816,55 @@
         </div>
     </div>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script>
+        // Overlay control and secret '/off' shortcut for testing (no persistence)
+        (function(){
+            const overlayId = 'extensionComingSoonOverlay';
+            const panelSelector = '#extension-panel';
+
+            function hideOverlay() {
+                const overlay = document.getElementById(overlayId);
+                const panel = document.querySelector(panelSelector);
+                if (!overlay || !panel) return;
+                overlay.style.display = 'none';
+                panel.classList.remove('overlay-active');
+            }
+
+            function showOverlay() {
+                const overlay = document.getElementById(overlayId);
+                const panel = document.querySelector(panelSelector);
+                if (!overlay || !panel) return;
+                overlay.style.display = 'flex';
+                panel.classList.add('overlay-active');
+            }
+
+            document.addEventListener('DOMContentLoaded', function(){
+                // Ensure any previously stored hidden flag is removed (we do not persist hiding anymore)
+                try { localStorage.removeItem('extensionOverlayDisabled_v1'); } catch(e) {}
+                showOverlay();
+            });
+
+            // Secret key buffer to detect '/off' — hides overlay for current session only
+            let keyBuffer = '';
+            const maxBuffer = 6;
+            document.addEventListener('keydown', function(e){
+                // Ignore modifier-only presses
+                if (e.key.length > 1 && e.key !== 'Backspace') return;
+
+                if (e.key === 'Backspace') {
+                    keyBuffer = keyBuffer.slice(0, -1);
+                } else {
+                    keyBuffer += e.key;
+                }
+                if (keyBuffer.length > maxBuffer) keyBuffer = keyBuffer.slice(-maxBuffer);
+
+                if (keyBuffer.toLowerCase().endsWith('/off')) {
+                    hideOverlay();
+                    keyBuffer = '';
+                }
+            });
+        })();
+    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Profile visibility switch logic
