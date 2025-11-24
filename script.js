@@ -650,7 +650,7 @@ function sendScheduleToExtension() {
         } else {
             // Fallback: read UI controls if present
             const start = (document.getElementById('ext-startColor') || document.getElementById('gradient-start-color'))?.value || '#000035';
-            const end = (document.getElementById('ext-endColor') || document.getElementById('gradient-end-color'))?.value || '#00bfa5';
+            const end = (document.getElementById('ext-endColor') || document.getElementById('gradient-end-color'))?.value || '#c4ad62';
             const angle = parseInt((document.getElementById('ext-gradientDirection') || document.getElementById('gradient-angle'))?.value || '90', 10);
             settings = { angle: angle, stops: [{ color: start, position: 0 }, { color: end, position: 100 }] };
         }
