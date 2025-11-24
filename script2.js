@@ -38,6 +38,16 @@ function toggleSettingsSidebar() {
     // Save settings when closing the sidebar
     if (!sidebar.classList.contains("open")) {
         saveSettings();
+        try {
+            if (window.sendScheduleToExtension && typeof window.sendScheduleToExtension === 'function') {
+                // Delay slightly to ensure saveSettings persisted any changes
+                setTimeout(() => {
+                    try { window.sendScheduleToExtension(); } catch (e) { console.debug('sendScheduleToExtension from toggleSettingsSidebar failed', e); }
+                }, 120);
+            }
+        } catch (e) {
+            console.debug('toggleSettingsSidebar sendScheduleToExtension guard failed', e);
+        }
     }
 }
 
@@ -1879,13 +1889,19 @@ function applyGradient() {
         
         // Send settings to Chrome extension if it exists
         if (chrome?.runtime?.sendMessage) {
-            chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
-                type: 'UPDATE_GRADIENT',
-                settings: {
-                    angle: this.angle,
-                    stops: this.stops
-                }
-            });
+            try {
+                chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
+                    type: 'UPDATE_GRADIENT',
+                    settings: {
+                        angle: this.angle,
+                        stops: this.stops
+                    },
+                    currentScheduleName: window.currentScheduleName || null,
+                    schedules: (typeof window.schedules !== 'undefined') ? window.schedules : null
+                });
+            } catch (e) {
+                console.warn('Failed to send gradient update to extension:', e);
+            }
         }
     } catch (error) {
         console.error('Error applying gradient:', error);
@@ -1932,7 +1948,7 @@ function initializePopupGradientControls() {
     // Send to extension if available
     if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
         const extId = chrome.runtime.id; // Ensure an extension ID is provided
-        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+        chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
             type: 'UPDATE_GRADIENT',
             settings: {
                 angle: settings.angle,
@@ -1981,7 +1997,7 @@ function updatePopupGradient(index, color, position) {
     updatePopupGradientPreview(settings);
 
     if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage("jloifnaccjamlflmemenepkmgklmfnmc", {
+        chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
             type: 'UPDATE_GRADIENT',
             settings: { angle: settings.angle, stops: settings.stops }
         }, function(response) {
