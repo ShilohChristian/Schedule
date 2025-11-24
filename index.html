@@ -137,24 +137,26 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                backdrop-filter: blur(14px) saturate(120%);
                 background: rgba(4,6,12,0.82);
-                backdrop-filter: blur(8px) saturate(120%);
+                border-radius: 20px;
+                box-shadow: inset 0 0 40px rgba(0,0,0,0.45);
                 z-index: 99999;
-                color: #ffffff;
+                color: #ffffff !important;
                 text-align: center;
                 padding: 0;
                 pointer-events: auto;
             }
             .extension-coming-soon-overlay .overlay-card {
                 max-width: 460px;
-                background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-                border-radius: 10px;
-                padding: 18px;
-                box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-                border: 1px solid rgba(255,255,255,0.04);
+                background: linear-gradient(180deg, rgba(22,28,40,0.78), rgba(22,28,40,0.62));
+                border-radius: 12px;
+                padding: 20px 22px;
+                box-shadow: 0 18px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.05);
+                border: 1px solid rgba(255,255,255,0.08);
             }
             .extension-coming-soon-overlay h4 { margin:0 0 6px 0; font-size:18px; font-weight:800; }
-            .extension-coming-soon-overlay p { margin:0; opacity:0.95; color: rgba(255,255,255,0.9); }
+            .extension-coming-soon-overlay p { margin:0; opacity:1; color: #ffffff; }
             /* When overlay is active, ensure underlying content does not accept pointer events */
             .settings-panel#extension-panel.overlay-active *:not(.extension-coming-soon-overlay):not(.extension-coming-soon-overlay *) {
                 pointer-events: none !important;
@@ -190,10 +192,13 @@
     <div id="settings-sidebar" class="settings-sidebar">
         <div class="settings-header">
             <div class="header-left">
-                <i class="fas fa-sliders-h"></i>
-                <h2>Settings</h2>
+                <!-- use whatever logo you want here -->
+                <img src="favicon.svg" alt="Shiloh Schedule logo" class="settings-logo">
             </div>
-            <button class="close-settings" onclick="toggleSettingsSidebar()" title="Close settings">
+
+            <h2 class="settings-title">Settings</h2>
+
+            <button class="close-settings" onclick="toggleSettingsSidebar()">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -210,7 +215,7 @@
                     <i class="fas fa-info-circle"></i> About
                 </button>
                 <button class="nav-item" data-target="legal">
-                    <i class="fas fa-gavel"></i> Legal
+                    <i class="fas fa-file-contract"></i> Privacy & Terms
                 </button>
                 <!-- Temporary: expose Extension panel for testing -->
                 <button class="nav-item" data-target="extension">
@@ -230,34 +235,34 @@
                                 <div id="bg-image-drop-area">
                                     <i class="fas fa-cloud-upload-alt"></i>
                                     <div class="upload-text">
-                                        <p class="main-text">Drop image here or click to upload</p>
-                                        <p class="sub-text">Supports JPG, PNG, GIF • Max 5MB</p>
+                                        <p class="main-text">Drop image here or click to upload · JPG, PNG, GIF · Max 5 MB</p>
                                     </div>
                                 </div>
                             </div>
                             <div class="background-actions">
-                                <button id="remove-bg-button" onclick="removeBackground()">
+                                <button id="remove-bg-button" class="text-btn" onclick="removeBackground()">
                                     <i class="fas fa-trash-alt"></i>
-                                    <span>Remove Background</span>
+                                    Remove
                                 </button>
                             </div>
                             <div class="background-preview">
-                                <div class="preview-label">Current Background</div>
-                                <div id="bg-preview"></div>
+                                <div class="preview-label" style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">Current background</div>
+                                <div id="bg-preview" aria-label="Current background preview"></div>
                             </div>
                         </div>
                     </div>
                     <div class="settings-group">
-                        <h3><i class="fas fa-gradient"></i> Gradient</h3>
-                        <div class="switch-container">
-                            <label class="switch-label" for="gradient-enabled">Enable Gradient</label>
-                            <label class="switch">
-                                <input type="checkbox" id="gradient-enabled">
-                                <span class="slider"></span>
-                            </label>
+                        <div class="card-header">
+                            <h3><i class="fas fa-gradient"></i> Gradient</h3>
+                            <div class="header-controls">
+                                <label class="switch" style="margin:0;">
+                                    <input type="checkbox" id="gradient-enabled">
+                                    <span class="slider"></span>
+                                </label>
+                                <span class="switch-text">Enable gradient</span>
+                            </div>
                         </div>
-                        <div id="gradient-settings">
-                            <div id="gradient-preview"></div>
+                            <div id="gradient-settings" class="gradient-controls">
                             <div>
                                 <label for="gradient-angle">Angle:</label>
                                 <input type="range" id="gradient-angle" min="0" max="360" value="90">
@@ -265,31 +270,39 @@
                             </div>
                             <div class="gradient-main-colors" style="display: flex; gap: 16px; margin-bottom: 12px;">
                                 <div class="gradient-stop">
-                                    <label for="gradient-start-color">Start Color</label>
                                     <input type="color" id="gradient-start-color">
-                                    <span>0%</span>
+                                    <div style="display:flex;flex-direction:column;font-size:13px;color:var(--text-muted);">
+                                        <span><strong>Start</strong></span>
+                                        <span style="font-size:12px;color:var(--text-muted);">0%</span>
+                                    </div>
+                                    <div class="hex-value" id="gradient-start-hex" style="margin-left:auto;color:var(--text-muted);font-size:13px;">#000000</div>
                                 </div>
                                 <div class="gradient-stop">
-                                    <label for="gradient-end-color">End Color</label>
                                     <input type="color" id="gradient-end-color">
-                                    <span>100%</span>
+                                    <div style="display:flex;flex-direction:column;font-size:13px;color:var(--text-muted);">
+                                        <span><strong>End</strong></span>
+                                        <span style="font-size:12px;color:var(--text-muted);">100%</span>
+                                    </div>
+                                    <div class="hex-value" id="gradient-end-hex" style="margin-left:auto;color:var(--text-muted);font-size:13px;">#00BFA5</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- Display Panel Content -->
                     <div class="settings-group">
-                        <h3><i class="fas fa-box"></i> Schedule Box</h3>
-                        <div>
-                            <label for="white-box-color">Background Color:</label>
-                            <input type="color" id="white-box-color" onchange="updateWhiteBoxColor()">
+                        <h3><i class="fas fa-box"></i> Schedule box</h3>
+                        <div style="display:flex;flex-direction:column;gap:10px;">
                             <div>
-                                <label for="white-box-opacity">Opacity:</label>
+                                <label for="white-box-color">Background color</label>
+                                <input type="color" id="white-box-color" onchange="updateWhiteBoxColor()">
+                            </div>
+                            <div>
+                                <label for="white-box-opacity">Opacity</label>
                                 <input type="range" id="white-box-opacity" min="0" max="100" value="90" onchange="updateWhiteBoxColor()">
                                 <span class="range-value">90%</span>
                             </div>
                             <div>
-                                <label for="white-box-text-color">Text Color:</label>
+                                <label for="white-box-text-color">Text color</label>
                                 <input type="color" id="white-box-text-color" onchange="updateWhiteBoxTextColor()">
                             </div>
                         </div>
@@ -457,7 +470,7 @@
                             <h3>Key Features</h3>
                             <ul class="feature-list">
                                 <li>Live countdown that automatically adjusts based on the selected schedule.</li>
-                                <li>Multiple schedule types including Normal, Chapel, Pep Rally, and Custom — all renamable and savable.</li>
+                                <li>Multiple schedule types including Normal, Chapel, Late Pep Rally, and Early Pep Rally. (Pep rally schedules coming soon for Middle School!)</li>
                                 <li>Visual customization with background images, gradient themes, color selections, gray panel mode, and timer shadow options.</li>
                                 <li>Optional period start/end times (Settings → Schedule) to display detailed bell information.</li>
                                 <li>Optional Google sign-in (via Firebase) for syncing settings across devices.</li>
@@ -478,7 +491,7 @@
                             <p>Questions, issues, or feedback? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a></p>
 
                             <div class="contact-info">
-                                <p class="version-info">Version 2.7.5</p>
+                                <p class="version-info">Version 3.0.0</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
                             </div>
                         </div>
@@ -798,17 +811,24 @@
             </div>
         </div>
     </div>
-    <!-- Redesigned update notice modal (shows once) -->
+    <!-- Update notice modal (v3 placeholder) -->
     <div id="update-notice-backdrop" class="update-notice-backdrop" aria-hidden="true">
         <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
             <div class="update-notice-body">
                 <div class="update-header">
                     <img src="favicon.svg" alt="Logo" class="update-logo" />
                     <div class="update-title-block">
-                        <h2 id="update-notice-title">Update — Bug fixes & new option</h2>
+                        <h2 id="update-notice-title">Update Notice: Version 3.0 Released!</h2>
                     </div>
                 </div>
-                <p>We've fixed a number of bugs related to background images, gradient handling, and settings persistence. We've also added a new <strong>"Show Period Times"</strong> option in Settings → Appearance so you can display each period's start and end time next to its name.</p>
+                <p>We’ve introduced a comprehensive design refresh featuring:</p>
+                <p>• A cleaner, modernized interface</p>
+                <p>• Updated Navy + Gold visual theme</p>
+                <p>• Streamlined settings layout</p>
+                <p>• Improved background and gradient controls</p>
+                <p>• Enhanced performance and consistency throughout</p>
+                <p style="margin-top:6px;">A dedicated Shiloh Schedule browser extension is also nearing release!</p>
+                <p>Thank you for using Shiloh Schedule.</p>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -876,9 +896,9 @@
                     window.authManager.toggleProfileVisibility();
                 });
             }
-                // Show redesigned update notice once (versioned key). Only OK will dismiss.
+                // Show redesigned update notice once per user (versioned localStorage key).
                 try {
-                    const key = 'updateNoticeShown_v1';
+                    const key = 'updateNoticeShown_v3';
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
@@ -886,25 +906,21 @@
                         backdrop.setAttribute('aria-hidden', 'false');
 
                         const okBtn = document.getElementById('update-notice-ok');
-
-                        // OK: mark shown permanently and close (move focus first to avoid aria-hidden on focused element)
-                        okBtn.addEventListener('click', function() {
-                            try { localStorage.setItem(key, 'true'); } catch (e) {}
-                            try {
-                                // remove focus from the button to avoid hiding a focused element
-                                okBtn.blur();
-                            } catch (e) {}
-                            try {
-                                // move focus to a sensible, focusable element outside the backdrop
-                                const target = document.getElementById('settings-button') || document.getElementById('sign-in-button') || document.body;
-                                if (target && typeof target.focus === 'function') target.focus();
-                            } catch (e) {}
-                            backdrop.style.display = 'none';
-                            backdrop.setAttribute('aria-hidden', 'true');
-                        });
+                        if (okBtn) {
+                            okBtn.addEventListener('click', function() {
+                                try { localStorage.setItem(key, 'true'); } catch (e) {}
+                                try { okBtn.blur(); } catch (e) {}
+                                try {
+                                    const target = document.getElementById('settings-button') || document.getElementById('sign-in-button') || document.body;
+                                    if (target && typeof target.focus === 'function') target.focus();
+                                } catch (e) {}
+                                backdrop.style.display = 'none';
+                                backdrop.setAttribute('aria-hidden', 'true');
+                            });
+                        }
                     }
                 } catch (e) {
-                    // ignore storage failures
+                    // ignore storage or DOM failures
                 }
         });
     </script>
