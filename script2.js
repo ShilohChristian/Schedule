@@ -488,7 +488,7 @@ function removeBackground() {
             if (!Array.isArray(window.gradientManager.stops) || window.gradientManager.stops.length === 0) {
                 window.gradientManager.stops = [
                     { color: '#000035', position: 0 },
-                    { color: '#00bfa5', position: 100 }
+                    { color: '#c4ad62', position: 100 }
                 ];
             }
 
@@ -501,7 +501,7 @@ function removeBackground() {
         const preview = document.getElementById('bg-preview');
         if (preview) {
             preview.style.backgroundImage = 'none';
-            preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
+            preview.style.background = 'linear-gradient(90deg, #000035, #c4ad62)';
         }
     }, 50);
 }
@@ -964,7 +964,7 @@ function updateGradientDirection(angle) {
 
         // Update app gradient settings as well
         const appRaw = localStorage.getItem('gradientSettings');
-        let app = appRaw ? JSON.parse(appRaw) : { enabled: true, angle: parsed, startColor: '#000035', endColor: '#00bfa5' };
+        let app = appRaw ? JSON.parse(appRaw) : { enabled: true, angle: parsed, startColor: '#000035', endColor: '#c4ad62' };
         app.angle = parsed;
         localStorage.setItem('gradientSettings', JSON.stringify(app));
 
@@ -976,7 +976,7 @@ function updateGradientDirection(angle) {
             GradientManager.applyGradient(app);
         } else {
             // As a last resort, set body background using the two-color gradient
-            const gradientString = `linear-gradient(${parsed}deg, ${app.startColor || '#000035'}, ${app.endColor || '#00bfa5'})`;
+            const gradientString = `linear-gradient(${parsed}deg, ${app.startColor || '#000035'}, ${app.endColor || '#c4ad62'})`;
             document.body.style.background = gradientString;
             const preview = document.querySelector('.gradient-preview');
             if (preview) preview.style.background = gradientString;
@@ -1485,7 +1485,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.resetToDefaults = function() {
             try {
                 if (startColor) startColor.value = '#000035';
-                if (endColor) endColor.value = '#00bfa5';
+                if (endColor) endColor.value = '#c4ad62';
                 if (document.getElementById('gradient-angle')) document.getElementById('gradient-angle').value = 90;
                 if (whiteBoxColor) whiteBoxColor.value = '#ffffff';
                 if (whiteBoxOpacity) whiteBoxOpacity.value = 90;
@@ -1750,7 +1750,7 @@ function initializeGradientControls() {
     stopsContainer.innerHTML = ''; // Clear existing stops
     const defaultStops = [
         { color: '#000035', position: 0 },
-        { color: '#00bfa5', position: 100 }
+        { color: '#c4ad62', position: 100 }
     ];
 
     defaultStops.forEach(stop => {
@@ -1868,7 +1868,7 @@ function updateGradient(save = true) {
     const enabled = document.getElementById('gradient-enabled')?.checked || false;
     // Use the correct color picker IDs
     const startColor = document.getElementById('gradient-start-color')?.value || '#000035';
-    const endColor = document.getElementById('gradient-end-color')?.value || '#00bfa5';
+    const endColor = document.getElementById('gradient-end-color')?.value || '#c4ad62';
     const angle = document.getElementById('gradient-angle')?.value || '90';
 
     if (enabled) {
@@ -1910,7 +1910,7 @@ function loadGradientSettings() {
         angle: 90,
         stops: [
             { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
+            { color: '#c4ad62', position: 100 }
         ]
     };
 
@@ -1922,8 +1922,10 @@ function loadGradientSettings() {
     const gradientControls = document.querySelector('.gradient-controls');
 
     if (gradientEnabled) gradientEnabled.checked = savedSettings.enabled;
-    if (gradientStart) gradientStart.value = savedSettings.startColor;
-    if (gradientEnd) gradientEnd.value = savedSettings.endColor;
+    const startValue = savedSettings.startColor || savedSettings.stops?.[0]?.color || '#000035';
+    const endValue = savedSettings.endColor || savedSettings.stops?.[1]?.color || '#c4ad62';
+    if (gradientStart) gradientStart.value = startValue;
+    if (gradientEnd) gradientEnd.value = endValue;
     if (gradientAngle) gradientAngle.value = savedSettings.angle;
     
     // Show controls if enabled
@@ -2045,7 +2047,7 @@ function initializePopupGradientControls() {
         angle: 90,
         stops: [
             { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
+            { color: '#c4ad62', position: 100 }
         ]
     };
 
@@ -2103,7 +2105,7 @@ function updatePopupGradient(index, color, position) {
     const savedSettings = JSON.parse(localStorage.getItem('popupGradientSettings') || '{}');
     const stops = savedSettings.stops || [
         { color: '#000035', position: 0 },
-        { color: '#00bfa5', position: 100 }
+        { color: '#c4ad62', position: 100 }
     ];
 
     stops[index] = { color, position: parseInt(position) };
