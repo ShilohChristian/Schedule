@@ -108,6 +108,35 @@ function loadBackground() {
     }
 }
 
+// Sync the countdown color input to reflect the current timer color on the page
+function syncCountdownColorInput() {
+    try {
+        const timerElement = document.getElementById('current-period-time');
+        const colorInput = document.getElementById('countdown-color');
+        if (!timerElement || !colorInput) return;
+        
+        // Get the computed color from the timer element
+        const computedColor = window.getComputedStyle(timerElement).color;
+        
+        // Convert RGB to hex if needed
+        if (computedColor && computedColor.startsWith('rgb')) {
+            const rgbMatch = computedColor.match(/\d+/g);
+            if (rgbMatch && rgbMatch.length >= 3) {
+                const [r, g, b] = rgbMatch.slice(0, 3).map(Number);
+                const hex = '#' + [r, g, b].map(x => {
+                    const hexVal = x.toString(16);
+                    return hexVal.length === 1 ? '0' + hexVal : hexVal;
+                }).join('').toUpperCase();
+                colorInput.value = hex;
+            }
+        } else if (computedColor) {
+            colorInput.value = computedColor;
+        }
+    } catch (e) {
+        console.debug('Error syncing countdown color input:', e);
+    }
+}
+
 // Modify your loadSettings function
 async function loadSettings() {
     try {
@@ -141,6 +170,9 @@ async function loadSettings() {
         await loadShadowSettings();
         loadProgressBarSettings();
         loadWhiteBoxSettings();
+        
+        // Sync the countdown color input to always reflect the current timer color
+        syncCountdownColorInput();
         
     } catch (error) {
         console.error('Error loading settings:', error);
@@ -552,6 +584,10 @@ function updateTimerShadow() {
         angle: document.getElementById("shadow-angle")?.value || 45
     };
 
+    // Sync preview text color to current timer color
+    const timerColor = window.getComputedStyle(timerElement).color;
+    previewElement.style.color = timerColor;
+
     // Toggle content visibility
     content.classList.toggle("show", settings.enabled);
 
@@ -645,6 +681,16 @@ function loadShadowSettings() {
         // Update shadow if enabled
         if (savedSettings.enabled) {
             updateTimerShadow();
+        }
+        
+        // Always sync shadow preview color to current timer color
+        const previewElement = document.getElementById("shadow-preview");
+        if (previewElement) {
+            const timerElement = document.getElementById("current-period-time");
+            if (timerElement) {
+                const timerColor = window.getComputedStyle(timerElement).color;
+                previewElement.style.color = timerColor;
+            }
         }
     } catch (error) {
         console.error('Error loading shadow settings:', error);
@@ -782,13 +828,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Load saved theme preference
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'light') {
-        document.getElementById('settings-sidebar').classList.add('light-mode');
+    // Force light mode — this app is light-only now
+    try {
+        localStorage.setItem('theme', 'light');
+    } catch (e) {}
+    const sidebar = document.getElementById('settings-sidebar');
+    if (sidebar) sidebar.classList.add('light-mode');
+    document.body.classList.add('light-mode');
+    try {
         const icon = document.querySelector('.theme-toggle i');
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-    }
+        const text = document.querySelector('.theme-toggle-text');
+        if (icon) {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+        if (text) text.textContent = 'Light Mode';
+    } catch (e) {}
 
     // Add event listeners for progress bar inputs
     document.getElementById('progress-bar-color')?.addEventListener('input', updateProgressBarStyle);
@@ -1299,30 +1354,11 @@ function updateFont() {
 }
 
 function toggleTheme() {
+    // Theme toggle is disabled — site is forced to light mode.
+    try { localStorage.setItem('theme', 'light'); } catch (e) {}
     const sidebar = document.getElementById('settings-sidebar');
-    const icon = document.querySelector('.theme-toggle i');
-    const text = document.querySelector('.theme-toggle-text');
-    
-    sidebar.classList.toggle('light-mode');
-    
-    // Update icon, text and save preference
-    if (sidebar.classList.contains('light-mode')) {
-        icon.classList.remove('fa-moon');
-        icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
-        localStorage.setItem('theme', 'light');
-    } else {
-        icon.classList.remove('fa-sun');
-        icon.classList.add('fa-moon');
-        text.textContent = 'Dark Mode';
-        localStorage.setItem('theme', 'dark');
-    }
-
-    // Add smooth transition effect
-    icon.style.transform = 'rotate(360deg)';
-    setTimeout(() => {
-        icon.style.transform = '';
-    }, 300);
+    if (sidebar) sidebar.classList.add('light-mode');
+    document.body.classList.add('light-mode');
 }
 
 // Add the new navigation functionality
@@ -1349,15 +1385,19 @@ function initializeSettingsPanels() {
 document.addEventListener('DOMContentLoaded', () => {
     const savedTheme = localStorage.getItem('theme');
     const sidebar = document.getElementById('settings-sidebar');
+    const body = document.body;
     const icon = document.querySelector('.theme-toggle i');
     const text = document.querySelector('.theme-toggle-text');
     
-    if (savedTheme === 'light') {
-        sidebar.classList.add('light-mode');
+    // Force light mode regardless of saved setting
+    try { localStorage.setItem('theme', 'light'); } catch (e) {}
+    if (sidebar) sidebar.classList.add('light-mode');
+    body.classList.add('light-mode');
+    if (icon) {
         icon.classList.remove('fa-moon');
         icon.classList.add('fa-sun');
-        text.textContent = 'Light Mode';
     }
+    if (text) text.textContent = 'Light Mode';
 });
 
 // ...existing code...
@@ -1375,6 +1415,88 @@ window.addEventListener('beforeunload', function (e) {
     const whiteBoxTextColor = document.getElementById("white-box-heading").style.color;
     localStorage.setItem("whiteBoxColor", whiteBoxColor);
     localStorage.setItem("whiteBoxTextColor", whiteBoxTextColor);
+});
+
+// UI bindings for appearance controls (gradient toggle, color hex displays, schedule preview)
+document.addEventListener('DOMContentLoaded', () => {
+    try {
+        const gradientToggle = document.getElementById('gradient-enabled');
+        const gradientSettings = document.getElementById('gradient-settings');
+        const startColor = document.getElementById('gradient-start-color');
+        const endColor = document.getElementById('gradient-end-color');
+        const startHex = document.getElementById('gradient-start-hex');
+        const endHex = document.getElementById('gradient-end-hex');
+
+        function updateGradientState() {
+            const enabled = gradientToggle ? gradientToggle.checked : true;
+            if (gradientSettings) {
+                if (!enabled) {
+                    gradientSettings.classList.add('disabled');
+                    gradientSettings.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+                } else {
+                    gradientSettings.classList.remove('disabled');
+                    gradientSettings.querySelectorAll('input, select, button').forEach(el => el.disabled = false);
+                }
+            }
+        }
+
+        if (gradientToggle) {
+            gradientToggle.addEventListener('change', updateGradientState);
+            updateGradientState();
+        }
+
+        function formatHex(el, out) {
+            if (!el || !out) return;
+            out.textContent = el.value ? el.value.toUpperCase() : el.value;
+        }
+
+        if (startColor && startHex) {
+            startColor.addEventListener('input', () => formatHex(startColor, startHex));
+            formatHex(startColor, startHex);
+        }
+        if (endColor && endHex) {
+            endColor.addEventListener('input', () => formatHex(endColor, endHex));
+            formatHex(endColor, endHex);
+        }
+
+        // Schedule preview updates
+        const whiteBoxColor = document.getElementById('white-box-color');
+        const whiteBoxOpacity = document.getElementById('white-box-opacity');
+        const whiteBoxTextColor = document.getElementById('white-box-text-color');
+        const schedulePreview = document.getElementById('schedule-preview');
+
+        function updateSchedulePreview() {
+            if (!schedulePreview) return;
+            const bg = whiteBoxColor ? whiteBoxColor.value : '#ffffff';
+            const opacity = whiteBoxOpacity ? Number(whiteBoxOpacity.value) : 100;
+            const txt = whiteBoxTextColor ? whiteBoxTextColor.value : '#000000';
+            schedulePreview.style.background = bg;
+            schedulePreview.style.color = txt;
+            schedulePreview.style.opacity = (opacity/100).toString();
+            schedulePreview.textContent = 'Preview';
+        }
+
+        if (whiteBoxColor) whiteBoxColor.addEventListener('input', updateSchedulePreview);
+        if (whiteBoxOpacity) whiteBoxOpacity.addEventListener('input', updateSchedulePreview);
+        if (whiteBoxTextColor) whiteBoxTextColor.addEventListener('input', updateSchedulePreview);
+        updateSchedulePreview();
+
+        // Reset handler (simple reset example)
+        window.resetToDefaults = function() {
+            try {
+                if (startColor) startColor.value = '#000035';
+                if (endColor) endColor.value = '#00bfa5';
+                if (document.getElementById('gradient-angle')) document.getElementById('gradient-angle').value = 90;
+                if (whiteBoxColor) whiteBoxColor.value = '#ffffff';
+                if (whiteBoxOpacity) whiteBoxOpacity.value = 90;
+                if (whiteBoxTextColor) whiteBoxTextColor.value = '#000000';
+                updateSchedulePreview();
+                if (typeof updateGradientPreview === 'function') updateGradientPreview();
+            } catch (e) { console.error('resetToDefaults failed', e); }
+        };
+    } catch (err) {
+        console.error('Appearance UI bindings failed', err);
+    }
 });
 
 // ...existing code...
@@ -2052,6 +2174,14 @@ function loadCountdownColor() {
     const countdownElement = document.getElementById("current-period-time");
     if (countdownElement) {
         countdownElement.style.color = countdownColor;
+    }
+    
+    // Sync shadow preview color to the actual current timer color on the page
+    const previewElement = document.getElementById("shadow-preview");
+    if (previewElement && countdownElement) {
+        // Read the computed color from the timer element to get the actual current color
+        const timerColor = window.getComputedStyle(countdownElement).color;
+        previewElement.style.color = timerColor;
     }
 }
 
