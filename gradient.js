@@ -350,7 +350,11 @@ class GradientManager {
     updateGradientSettingsVisibility() {
         const settings = document.getElementById('gradient-settings');
         if (settings) {
-            settings.style.display = this.enabled ? 'block' : 'none';
+            // Keep the settings visible but toggle a disabled state so an overlay message
+            // can be shown when gradients are turned off (or when a background image exists).
+            settings.style.display = 'block';
+            settings.classList.toggle('disabled', !this.enabled);
+            settings.setAttribute('aria-hidden', String(!this.enabled));
         }
         // Hide stops container always
         const stopsContainer = document.getElementById('gradient-stops');
@@ -422,6 +426,10 @@ class GradientManager {
 // Initialize only once and ensure it's available globally
 if (!window.gradientManager) {
     window.gradientManager = new GradientManager();
+    // Ensure the manager wires up UI listeners and applies saved settings
+    // `setupManager` waits for DOM elements if they aren't present yet.
+    try { window.gradientManager.setupManager(); } catch (e) { console.debug('setupManager call failed', e); }
+    try { window.gradientManager.init?.(); } catch (e) { console.debug('gradientManager.init failed', e); }
 }
 
 // Update handleBgImageUpload in script2.js to properly handle gradient toggle
