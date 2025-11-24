@@ -1,11 +1,16 @@
+// Defaults align to the logo gradient (#000035ff -> #c4ad62ff) with full opacity for picker compatibility.
+const DEFAULT_START_COLOR = '#000035';
+const DEFAULT_END_COLOR = '#c4ad62';
+const toPickerColor = (color) => (color?.length === 9 ? color.slice(0, 7) : color);
+
 class GradientManager {
     constructor() {
         if (window.gradientManager) return window.gradientManager;
 
         // Only two stops: start and end
         this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
+            { color: DEFAULT_START_COLOR, position: 0 },
+            { color: DEFAULT_END_COLOR, position: 100 }
         ];
         this.angle = 90;
         this.enabled = true;
@@ -13,13 +18,13 @@ class GradientManager {
 
         // Set color pickers to default immediately
         const startColorInput = document.getElementById('gradient-start-color');
-        if (startColorInput) startColorInput.value = '#000035';
+        if (startColorInput) startColorInput.value = toPickerColor(DEFAULT_START_COLOR);
         const endColorInput = document.getElementById('gradient-end-color');
-        if (endColorInput) endColorInput.value = '#00bfa5';
+        if (endColorInput) endColorInput.value = toPickerColor(DEFAULT_END_COLOR);
 
         // Apply default gradient immediately if no background image
         if (!localStorage.getItem('bgImage')) {
-            document.body.style.background = 'linear-gradient(90deg, #000035 0%, #00bfa5 100%)';
+            document.body.style.background = `linear-gradient(90deg, ${DEFAULT_START_COLOR} 0%, ${DEFAULT_END_COLOR} 100%)`;
         }
 
         window.gradientManager = this;
@@ -65,8 +70,8 @@ class GradientManager {
             }
             // Defaults
             this.stops = [
-                { color: '#000035', position: 0 },
-                { color: '#00bfa5', position: 100 }
+                { color: DEFAULT_START_COLOR, position: 0 },
+                { color: DEFAULT_END_COLOR, position: 100 }
             ];
             this.angle = 90;
             this.enabled = true;
@@ -75,8 +80,8 @@ class GradientManager {
         } catch (error) {
             console.error('Error initializing gradient manager:', error);
             this.stops = [
-                { color: '#000035', position: 0 },
-                { color: '#00bfa5', position: 100 }
+                { color: DEFAULT_START_COLOR, position: 0 },
+                { color: DEFAULT_END_COLOR, position: 100 }
             ];
             this.angle = 90;
             this.enabled = true;
@@ -305,8 +310,8 @@ class GradientManager {
 
     resetToDefaults() {
         this.stops = [
-            { color: '#000035', position: 0 },
-            { color: '#00bfa5', position: 100 }
+            { color: DEFAULT_START_COLOR, position: 0 },
+            { color: DEFAULT_END_COLOR, position: 100 }
         ];
         this.angle = 90;
         this.updateUI();
@@ -318,16 +323,16 @@ class GradientManager {
         // Safely set color pickers to current stop colors, or default if missing
         const startColorInput = document.getElementById('gradient-start-color');
         const endColorInput = document.getElementById('gradient-end-color');
-        let startColor = '#000035';
-        let endColor = '#00bfa5';
+        let startColor = DEFAULT_START_COLOR;
+        let endColor = DEFAULT_END_COLOR;
 
         if (Array.isArray(this.stops) && this.stops.length >= 2) {
             startColor = this.stops[0]?.color || startColor;
             endColor = this.stops[1]?.color || endColor;
         }
 
-        if (startColorInput) startColorInput.value = startColor;
-        if (endColorInput) endColorInput.value = endColor;
+        if (startColorInput) startColorInput.value = toPickerColor(startColor);
+        if (endColorInput) endColorInput.value = toPickerColor(endColor);
 
         // Hide gradient stops UI if present
         const stopsContainer = document.getElementById('gradient-stops');
@@ -392,8 +397,8 @@ class GradientManager {
             } else {
                 // Always use defaults if missing or black
                 this.stops = [
-                    { color: '#000035', position: 0 },
-                    { color: '#00bfa5', position: 100 }
+                    { color: DEFAULT_START_COLOR, position: 0 },
+                    { color: DEFAULT_END_COLOR, position: 100 }
                 ];
                 this.angle = 90;
                 this.enabled = true;
@@ -401,23 +406,23 @@ class GradientManager {
                 localStorage.setItem('gradientSettings', JSON.stringify({
                     enabled: true,
                     angle: 90,
-                    startColor: '#000035',
-                    endColor: '#00bfa5'
+                    startColor: DEFAULT_START_COLOR,
+                    endColor: DEFAULT_END_COLOR
                 }));
             }
         } catch (error) {
             // Always use defaults on error
             this.stops = [
-                { color: '#000035', position: 0 },
-                { color: '#00bfa5', position: 100 }
+                { color: DEFAULT_START_COLOR, position: 0 },
+                { color: DEFAULT_END_COLOR, position: 100 }
             ];
             this.angle = 90;
             this.enabled = true;
             localStorage.setItem('gradientSettings', JSON.stringify({
                 enabled: true,
                 angle: 90,
-                startColor: '#000035',
-                endColor: '#00bfa5'
+                startColor: DEFAULT_START_COLOR,
+                endColor: DEFAULT_END_COLOR
             }));
         }
     }
@@ -465,7 +470,7 @@ function removeBackground() {
     const preview = document.getElementById('bg-preview');
     if (preview) {
         preview.style.backgroundImage = 'none';
-        preview.style.background = 'linear-gradient(90deg, #000035, #00bfa5)';
+        preview.style.background = `linear-gradient(90deg, ${DEFAULT_START_COLOR}, ${DEFAULT_END_COLOR})`;
     }
 }
 
@@ -473,7 +478,7 @@ function removeBackground() {
 GradientManager.applyGradient = function(settings) {
     if (!settings || !settings.values) {
         console.error("GradientManager.applyGradient: settings or settings.values is undefined. Using default gradient.");
-        document.body.style.background = "linear-gradient(135deg, #00bfa5 0%, #00796b 100%)";
+        document.body.style.background = `linear-gradient(135deg, ${DEFAULT_START_COLOR} 0%, ${DEFAULT_END_COLOR} 100%)`;
         return;
     }
     // ...existing code...
