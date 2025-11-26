@@ -133,20 +133,18 @@ const middleSchoolSchedules = {
     ],
     chapel: [
         { name: "Homeroom", start: "08:10", end: "08:15" },
-        { name: "Passing", start: "08:15", end: "08:18" },
-        { name: "Period 1", start: "08:18", end: "08:55" },
+        { name: "Chapel", start: "08:15", end: "08:55" },
         { name: "Passing", start: "08:55", end: "09:00" },
-        { name: "Period 2", start: "09:00", end: "09:40" },
+        { name: "Period 1", start: "09:00", end: "09:40" },
         { name: "Passing", start: "09:40", end: "09:45" },
-        { name: "Period 3", start: "09:45", end: "10:25" },
+        { name: "Period 2", start: "09:45", end: "10:25" },
         { name: "Passing", start: "10:25", end: "10:30" },
-        { name: "Chapel", start: "10:30", end: "11:10" },
+        { name: "Period 3", start: "10:30", end: "11:10" },
         { name: "Passing", start: "11:10", end: "11:13" },
         { name: "Lunch", start: "11:13", end: "11:43" },
         { name: "Passing", start: "11:43", end: "11:47" },
         { name: "Chapel Debrief", start: "11:47", end: "12:07" },
-        { name: "Passing", start: "12:07", end: "12:10" },
-        { name: "Period 4", start: "12:10", end: "12:45" },
+        { name: "Period 4", start: "12:07", end: "12:45" },
         { name: "Passing", start: "12:45", end: "12:49" },
         { name: "Period 5", start: "12:49", end: "13:27" },
         { name: "Passing", start: "13:27", end: "13:31" },
@@ -658,6 +656,7 @@ function sendScheduleToExtension() {
         // Resolve currentScheduleName robustly: prefer in-memory value, then localStorage,
         // then UI dropdown, then try a time-based detection across schedules.
         let resolvedScheduleName = null;
+        const activeSchedules = getActiveSchedules();
         try {
             if (window.currentScheduleName) resolvedScheduleName = window.currentScheduleName;
             if (!resolvedScheduleName) resolvedScheduleName = localStorage.getItem('currentScheduleName') || null;
@@ -672,9 +671,8 @@ function sendScheduleToExtension() {
                     const currentSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
                     let bestKey = null;
                     let bestScore = Number.POSITIVE_INFINITY;
-                    const candidateSchedules = (typeof gradeLevel !== 'undefined' && gradeLevel === 'middleSchool') ? middleSchoolSchedules : schedules;
-                    for (const k of Object.keys(candidateSchedules)) {
-                        const arr = candidateSchedules[k];
+                    for (const k of Object.keys(activeSchedules || {})) {
+                        const arr = activeSchedules[k];
                         if (!Array.isArray(arr)) continue;
                         let inPeriod = false;
                         let minDist = Number.POSITIVE_INFINITY;
@@ -703,11 +701,12 @@ function sendScheduleToExtension() {
             type: 'UPDATE_GRADIENT',
             settings: settings,
             currentScheduleName: resolvedScheduleName || null,
-            schedules: null
+            schedules: null,
+            gradeLevel: gradeLevel || 'highSchool'
         };
 
         try {
-            payload.schedules = (typeof gradeLevel !== 'undefined' && gradeLevel === 'middleSchool') ? middleSchoolSchedules : schedules;
+            payload.schedules = JSON.parse(JSON.stringify(activeSchedules || {}));
         } catch (e) {
             // ignore if schedules not available
         }
