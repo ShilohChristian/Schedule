@@ -828,24 +828,25 @@ window.populateRenamePeriods = populateRenamePeriods;
     backdrop.style.position = 'fixed';
     backdrop.style.inset = '0';
     backdrop.style.zIndex = 2147483646;
-    backdrop.style.background = 'transparent';
+    backdrop.style.background = 'radial-gradient(circle at 20% 20%, rgba(16,185,129,0.08), transparent 35%), radial-gradient(circle at 80% 0%, rgba(196,173,98,0.14), transparent 40%), rgba(7,10,26,0.6)';
     document.body.appendChild(backdrop);
 
     const overlay = document.createElement('div');
     overlay.id = 'devtools-debug-overlay';
     overlay.style.position = 'fixed';
-        overlay.style.right = '12px';
-        overlay.style.bottom = '12px';
+        overlay.style.right = '16px';
+        overlay.style.bottom = '16px';
         overlay.style.zIndex = 2147483647;
-        overlay.style.background = 'rgba(0,0,0,0.85)';
-        overlay.style.color = '#fff';
-        overlay.style.padding = '12px';
-        overlay.style.borderRadius = '8px';
-        overlay.style.fontFamily = 'monospace';
-        overlay.style.maxWidth = '420px';
-            overlay.style.maxWidth = '760px';
-            overlay.style.maxHeight = '80vh';
-            overlay.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+        overlay.style.background = 'linear-gradient(135deg, rgba(7,10,26,0.92), rgba(8,17,44,0.9))';
+        overlay.style.color = '#E8ECF7';
+        overlay.style.padding = '16px 18px';
+        overlay.style.borderRadius = '18px';
+        overlay.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
+        overlay.style.maxWidth = '760px';
+        overlay.style.maxHeight = '80vh';
+        overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)';
+        overlay.style.backdropFilter = 'blur(12px) saturate(140%)';
+        overlay.style.border = '1px solid rgba(255,255,255,0.08)';
         overlay.style.overflow = 'auto';
     overlay.style.pointerEvents = 'auto';
 
@@ -855,21 +856,23 @@ window.populateRenamePeriods = populateRenamePeriods;
         header.style.justifyContent = 'space-between';
         header.style.alignItems = 'center';
         header.style.gap = '12px';
-        header.style.marginBottom = '8px';
+        header.style.marginBottom = '12px';
 
         const leftGroup = document.createElement('div');
         leftGroup.style.display = 'flex';
         leftGroup.style.flexDirection = 'column';
 
         const title = document.createElement('div');
-        title.style.fontWeight = '700';
-        title.textContent = 'DEVTOOLS Debug Overlay';
+        title.style.fontWeight = '800';
+        title.style.letterSpacing = '0.02em';
+        title.style.fontSize = '16px';
+        title.textContent = 'DEVTOOLS · Debug Overlay';
 
         // Tabs: Debug | Console
         const tabs = document.createElement('div');
         tabs.style.display = 'flex';
-        tabs.style.gap = '6px';
-        tabs.style.marginTop = '8px';
+        tabs.style.gap = '8px';
+        tabs.style.marginTop = '10px';
 
         const debugTab = document.createElement('button');
         debugTab.textContent = 'Debug';
@@ -877,13 +880,13 @@ window.populateRenamePeriods = populateRenamePeriods;
         debugTab.setAttribute('aria-pressed','true');
         debugTab.tabIndex = 0;
         debugTab.style.cursor = 'pointer';
-        debugTab.style.padding = '8px 14px';
-        debugTab.style.borderRadius = '8px';
-        debugTab.style.background = 'rgba(255,255,255,0.12)';
-        debugTab.style.border = '1px solid rgba(255,255,255,0.12)';
-        debugTab.style.color = '#ffffff';
-        debugTab.style.fontWeight = '600';
-        debugTab.style.minWidth = '68px';
+        debugTab.style.padding = '10px 16px';
+        debugTab.style.borderRadius = '999px';
+        debugTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
+        debugTab.style.border = '1px solid rgba(255,255,255,0.18)';
+        debugTab.style.color = '#E8ECF7';
+        debugTab.style.fontWeight = '700';
+        debugTab.style.minWidth = '80px';
         debugTab.style.textAlign = 'center';
         debugTab.dataset.tab = 'debug';
 
@@ -893,13 +896,13 @@ window.populateRenamePeriods = populateRenamePeriods;
         consoleTab.setAttribute('aria-pressed','false');
         consoleTab.tabIndex = 0;
         consoleTab.style.cursor = 'pointer';
-        consoleTab.style.padding = '8px 14px';
-        consoleTab.style.borderRadius = '8px';
+        consoleTab.style.padding = '10px 16px';
+        consoleTab.style.borderRadius = '999px';
         consoleTab.style.background = 'transparent';
-        consoleTab.style.border = '1px solid rgba(255,255,255,0.06)';
-        consoleTab.style.color = 'rgba(255,255,255,0.9)';
-        consoleTab.style.fontWeight = '600';
-        consoleTab.style.minWidth = '68px';
+        consoleTab.style.border = '1px solid rgba(255,255,255,0.08)';
+        consoleTab.style.color = 'rgba(232,236,247,0.88)';
+        consoleTab.style.fontWeight = '700';
+        consoleTab.style.minWidth = '80px';
         consoleTab.style.textAlign = 'center';
         consoleTab.dataset.tab = 'console';
 
@@ -916,6 +919,12 @@ window.populateRenamePeriods = populateRenamePeriods;
         const cleanBtn = document.createElement('button');
         cleanBtn.textContent = 'Clean/Normalize localStorage';
         cleanBtn.style.cursor = 'pointer';
+        cleanBtn.style.padding = '10px 12px';
+        cleanBtn.style.borderRadius = '10px';
+        cleanBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        cleanBtn.style.background = 'rgba(78,227,186,0.1)';
+        cleanBtn.style.color = '#8ff7d8';
+        cleanBtn.style.fontWeight = '700';
         cleanBtn.addEventListener('click', async (ev) => {
             ev.stopPropagation();
             cleanBtn.disabled = true;
@@ -940,6 +949,11 @@ window.populateRenamePeriods = populateRenamePeriods;
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
         closeBtn.style.cursor = 'pointer';
+        closeBtn.style.padding = '10px 12px';
+        closeBtn.style.borderRadius = '10px';
+        closeBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        closeBtn.style.background = 'rgba(255,255,255,0.08)';
+        closeBtn.style.color = '#E8ECF7';
         closeBtn.addEventListener('click', (ev) => { ev.stopPropagation(); overlay.remove(); const bd = document.getElementById('devtools-debug-backdrop'); if (bd) bd.remove(); });
         
         // Add Clear localStorage button (with snapshot so Undo can restore)
@@ -947,6 +961,11 @@ window.populateRenamePeriods = populateRenamePeriods;
         clearBtn.textContent = 'Clear localStorage';
         clearBtn.style.cursor = 'pointer';
         clearBtn.style.marginLeft = '8px';
+        clearBtn.style.padding = '10px 12px';
+        clearBtn.style.borderRadius = '10px';
+        clearBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        clearBtn.style.background = 'rgba(255,107,107,0.14)';
+        clearBtn.style.color = '#ffdede';
         clearBtn.addEventListener('click', (ev) => {
             ev.stopPropagation();
             const ok = confirm('Clear all localStorage? This will remove all saved settings. You can undo via the "Undo Clean" button in this panel if needed. Continue?');
@@ -973,21 +992,28 @@ window.populateRenamePeriods = populateRenamePeriods;
 
     const status = document.createElement('div');
     status.id = 'devtools-clean-status';
-    status.style.marginTop = '8px';
+    status.style.marginTop = '10px';
     status.style.fontSize = '12px';
     status.style.opacity = '0.9';
+    status.style.padding = '8px 10px';
+    status.style.borderRadius = '10px';
+    status.style.background = 'rgba(255,255,255,0.06)';
     overlay.appendChild(status);
 
     // Debug JSON content
     const debugContent = document.createElement('pre');
     debugContent.id = 'devtools-debug-content';
     debugContent.style.whiteSpace = 'pre-wrap';
-    debugContent.style.marginTop = '12px';
+    debugContent.style.marginTop = '14px';
     debugContent.style.display = 'block';
     debugContent.style.fontSize = '13px';
-    debugContent.style.lineHeight = '1.35';
+    debugContent.style.lineHeight = '1.45';
     debugContent.style.maxHeight = '58vh';
     debugContent.style.overflow = 'auto';
+    debugContent.style.padding = '14px';
+    debugContent.style.borderRadius = '12px';
+    debugContent.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.04))';
+    debugContent.style.border = '1px solid rgba(255,255,255,0.06)';
     overlay.appendChild(debugContent);
 
     // Console content (hidden by default)
@@ -999,34 +1025,36 @@ window.populateRenamePeriods = populateRenamePeriods;
     consoleContent.style.overflow = 'auto';
     consoleContent.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
     consoleContent.style.fontSize = '13px';
-    consoleContent.style.lineHeight = '1.35';
-    consoleContent.style.background = 'rgba(0,0,0,0.06)';
-    consoleContent.style.padding = '6px';
+    consoleContent.style.lineHeight = '1.4';
+    consoleContent.style.background = 'rgba(4,7,18,0.6)';
+    consoleContent.style.padding = '10px';
+    consoleContent.style.borderRadius = '12px';
+    consoleContent.style.border = '1px solid rgba(255,255,255,0.06)';
     overlay.appendChild(consoleContent);
 
     // Small console controls
     const consoleControls = document.createElement('div');
     consoleControls.style.display = 'none';
     consoleControls.style.gap = '8px';
-    consoleControls.style.marginTop = '8px';
+    consoleControls.style.marginTop = '10px';
     consoleControls.style.justifyContent = 'flex-end';
     const clearConsoleBtn = document.createElement('button');
     clearConsoleBtn.textContent = 'Clear Console';
     clearConsoleBtn.style.cursor = 'pointer';
-    clearConsoleBtn.style.padding = '6px 10px';
-    clearConsoleBtn.style.borderRadius = '6px';
-    clearConsoleBtn.style.border = '1px solid rgba(255,255,255,0.08)';
-    clearConsoleBtn.style.background = 'transparent';
-    clearConsoleBtn.style.color = 'rgba(255,255,255,0.95)';
+    clearConsoleBtn.style.padding = '8px 12px';
+    clearConsoleBtn.style.borderRadius = '999px';
+    clearConsoleBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    clearConsoleBtn.style.background = 'rgba(255,255,255,0.06)';
+    clearConsoleBtn.style.color = '#E8ECF7';
     clearConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); window.__devConsoleBuffer = []; refreshConsoleOverlay(); });
     const copyConsoleBtn = document.createElement('button');
     copyConsoleBtn.textContent = 'Copy Logs';
     copyConsoleBtn.style.cursor = 'pointer';
-    copyConsoleBtn.style.padding = '6px 10px';
-    copyConsoleBtn.style.borderRadius = '6px';
-    copyConsoleBtn.style.border = '1px solid rgba(255,255,255,0.08)';
-    copyConsoleBtn.style.background = 'transparent';
-    copyConsoleBtn.style.color = 'rgba(255,255,255,0.95)';
+    copyConsoleBtn.style.padding = '8px 12px';
+    copyConsoleBtn.style.borderRadius = '999px';
+    copyConsoleBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    copyConsoleBtn.style.background = 'rgba(196,173,98,0.12)';
+    copyConsoleBtn.style.color = '#f8f3e3';
     copyConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try { const text = window.__devConsoleBuffer.map(l=>`[${l.time}] ${l.level.toUpperCase()}: ${l.args.map(a=> (typeof a==='object'?JSON.stringify(a):String(a))).join(' ')}\n`).join(''); navigator.clipboard.writeText(text); alert('Copied console logs to clipboard'); } catch(e){ alert('Copy failed'); } });
     consoleControls.appendChild(copyConsoleBtn);
     consoleControls.appendChild(clearConsoleBtn);
@@ -1034,28 +1062,28 @@ window.populateRenamePeriods = populateRenamePeriods;
 
         document.body.appendChild(overlay);
         // clicking backdrop closes overlay too
-        backdrop.addEventListener('click', () => { overlay.remove(); backdrop.remove(); });
+    backdrop.addEventListener('click', () => { overlay.remove(); backdrop.remove(); });
         refreshDebugOverlay();
         refreshConsoleOverlay();
 
         // Tab switching with accessible styles and aria states
         function setActiveTab(tabName) {
             if (tabName === 'debug') {
-                debugTab.style.background = 'rgba(255,255,255,0.12)';
-                debugTab.style.border = '1px solid rgba(255,255,255,0.18)';
+                debugTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
+                debugTab.style.border = '1px solid rgba(255,255,255,0.2)';
                 debugTab.setAttribute('aria-pressed','true');
                 consoleTab.style.background = 'transparent';
-                consoleTab.style.border = '1px solid rgba(255,255,255,0.06)';
+                consoleTab.style.border = '1px solid rgba(255,255,255,0.08)';
                 consoleTab.setAttribute('aria-pressed','false');
                 debugContent.style.display = 'block';
                 consoleContent.style.display = 'none';
                 consoleControls.style.display = 'none';
             } else {
-                consoleTab.style.background = 'rgba(255,255,255,0.12)';
-                consoleTab.style.border = '1px solid rgba(255,255,255,0.18)';
+                consoleTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
+                consoleTab.style.border = '1px solid rgba(255,255,255,0.2)';
                 consoleTab.setAttribute('aria-pressed','true');
                 debugTab.style.background = 'transparent';
-                debugTab.style.border = '1px solid rgba(255,255,255,0.06)';
+                debugTab.style.border = '1px solid rgba(255,255,255,0.08)';
                 debugTab.setAttribute('aria-pressed','false');
                 debugContent.style.display = 'none';
                 consoleContent.style.display = 'block';
@@ -1137,14 +1165,19 @@ window.populateRenamePeriods = populateRenamePeriods;
         if (!c) return;
         c.innerHTML = '';
         const buf = window.__devConsoleBuffer || [];
-        buf.slice().reverse().forEach(entry => {
+        buf.slice().reverse().forEach((entry, idx) => {
             const row = document.createElement('div');
-            row.style.padding = '6px 8px';
-            row.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+            row.style.padding = '8px 10px';
+            row.style.borderRadius = '10px';
+            row.style.marginBottom = '6px';
+            row.style.border = '1px solid rgba(255,255,255,0.05)';
+            row.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.02)';
             const time = document.createElement('span'); time.style.opacity = '0.6'; time.textContent = `[${entry.time}] `;
             const lvl = document.createElement('span'); lvl.textContent = entry.level.toUpperCase() + ': ';
-            if (entry.level === 'error') lvl.style.color = '#ff6b6b';
-            if (entry.level === 'warn') lvl.style.color = '#ffb86b';
+            if (entry.level === 'error') lvl.style.color = '#ff7676';
+            if (entry.level === 'warn') lvl.style.color = '#fbbf77';
+            if (entry.level === 'info') lvl.style.color = '#7ad0ff';
+            if (entry.level === 'debug') lvl.style.color = '#9eead4';
             const msg = document.createElement('span');
             try { msg.textContent = entry.args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' '); } catch(e){ msg.textContent = String(entry.args); }
             row.appendChild(time); row.appendChild(lvl); row.appendChild(msg);
@@ -1674,23 +1707,24 @@ function promptForGradeLevelIfFirstTime() {
     // Create modal overlay
     const modal = document.createElement('div');
     modal.id = 'grade-level-modal';
-    modal.style.position = 'fixed';
-    modal.style.inset = '0';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.background = 'rgba(0,0,0,0.6)';
-    modal.style.zIndex = '11000';
+    modal.className = 'grade-modal-backdrop';
 
     modal.innerHTML = `
-        <div class="grade-level-modal-box" style="background:#fff;color:#222;padding:24px;border-radius:12px;min-width:280px;text-align:center;">
-            <h2 style="margin:0 0 12px 0;color:#00bfa5;">Welcome!</h2>
-            <p style="margin:0 0 16px 0;">What school level are you in?</p>
-            <div style="display:flex;gap:12px;justify-content:center;margin-bottom:12px;">
-                <button id="choose-highschool" style="padding:10px 16px;border-radius:8px;border:none;background:#00bfa5;color:#fff;cursor:pointer;">High School</button>
-                <button id="choose-middleschool" style="padding:10px 16px;border-radius:8px;border:none;background:#393E46;color:#fff;cursor:pointer;">Middle School</button>
+        <div class="welcome-modal-wrapper">
+            <div class="grade-modal-card welcome-modal" role="dialog" aria-modal="true" aria-labelledby="grade-modal-title">
+                <div class="welcome-header">
+                    <div class="welcome-icon"><img src="favicon.svg" alt=""></div>
+                    <div>
+                        <h2 id="grade-modal-title" class="welcome-title">Welcome</h2>
+                        <p class="grade-modal-sub welcome-subtitle">What school level are you in?</p>
+                    </div>
+                </div>
+                <div class="grade-modal-actions">
+                    <button id="choose-highschool" class="grade-choice primary welcome-option-btn">High School</button>
+                    <button id="choose-middleschool" class="grade-choice welcome-option-btn">Middle School</button>
+                </div>
+                <div class="grade-modal-note">You can change this anytime in Settings.</div>
             </div>
-            <div style="font-size:12px;color:#666;">You can change this anytime in Settings.</div>
         </div>
     `;
 
@@ -1702,6 +1736,7 @@ function promptForGradeLevelIfFirstTime() {
     const cleanup = () => {
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
         updateScheduleDropdown();
+        try { document.dispatchEvent(new Event('gradeLevelChosen')); } catch (e) {}
     };
 
     if (chooseHigh) {
@@ -1729,7 +1764,16 @@ function promptForGradeLevelIfFirstTime() {
 function showUpdateNoticeOnce() {
     try {
         // Don't show on first visit (when gradeLevel is not set)
-        if (!localStorage.getItem('gradeLevel')) return;
+        if (!localStorage.getItem('gradeLevel')) {
+            // Defer until after grade selection happens
+            const handler = () => {
+                document.removeEventListener('gradeLevelChosen', handler);
+                // small delay to avoid stacking
+                setTimeout(showUpdateNoticeOnce, 120);
+            };
+            document.addEventListener('gradeLevelChosen', handler);
+            return;
+        }
         // If user already saw the notice, skip
         if (localStorage.getItem('sawUpdateNotice') === 'true') return;
 
@@ -1819,6 +1863,34 @@ document.addEventListener("DOMContentLoaded", () => {
     // ...existing code...
     initializeSettingsPanels();
 });
+
+(function() {
+    function setRangeFill(input) {
+        const min = Number(input.min || 0);
+        const max = Number(input.max || 100);
+        const val = Number(input.value || 0);
+        const pct = max === min ? 0 : ((val - min) / (max - min)) * 100;
+        input.style.setProperty('--range-fill', `${Math.max(0, Math.min(100, pct))}%`);
+    }
+    function initSliderRows() {
+        const inputs = Array.from(document.querySelectorAll('.slider-row input[type="range"]'));
+        const refreshAll = () => inputs.forEach(setRangeFill);
+        inputs.forEach(input => {
+            setRangeFill(input);
+            input.addEventListener('input', () => setRangeFill(input));
+        });
+        // Re-run shortly after load so programmatic value updates are reflected
+        setTimeout(refreshAll, 120);
+        setTimeout(refreshAll, 520);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSliderRows);
+    } else {
+        initSliderRows();
+    }
+})();
+
+
 
 // { 
 // 	// Removed duplicate implementations of renamePeriod(...) and populateRenamePeriods(...)
