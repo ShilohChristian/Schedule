@@ -69,61 +69,144 @@
     </script>
         <style>
             /* Improved styling for Extension settings controls */
-            .settings-panel#extension-panel .controls { 
-                display:flex; flex-direction:column; gap:12px; padding:12px 0;
+            #extension-panel .settings-group {
+                padding: 22px 26px;
+                background: #FFFFFF;
+                border: 1px solid rgba(0,0,0,0.06);
+                box-shadow: 0 12px 30px rgba(15,23,42,0.08);
+                color: #1A213A;
             }
-            .settings-panel#extension-panel .controls .color-controls { display:flex; gap:12px; align-items:center; }
-            .settings-panel#extension-panel .controls input[type="color"] {
-                -webkit-appearance: none; appearance: none; border: 2px solid rgba(0,0,0,0.12); height:36px; width:48px; border-radius:6px; padding:0;
+            #extension-panel .settings-group h3,
+            #extension-panel .settings-group p { color: #1A213A; }
+            .extension-form-row { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 20px; }
+            .extension-form-group { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
+            .extension-form-group.flex-1 { flex: 1; }
+            .extension-label { font-size: 14px; font-weight: 500; color: #1A213A; }
+            .extension-form-group input[type="color"] {
+                -webkit-appearance: none; appearance: none; border: 2px solid rgba(0,0,0,0.12); height:36px; width:48px; border-radius:10px; padding:0;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.25);
                 cursor:pointer;
             }
-            .settings-panel#extension-panel .controls label { font-size:13px; color:#dfe7ee; margin-right:6px; }
-            .settings-panel#extension-panel .controls .direction-controls { display:flex; align-items:center; gap:8px; }
-            .settings-panel#extension-panel .controls .direction-controls label { width:90px; }
-            .settings-panel#extension-panel .controls .direction-controls select { padding:6px 8px; border-radius:6px; background:#0f1720; color:#e6eef6; border:1px solid rgba(255,255,255,0.06); min-width:150px; }
-            .settings-panel#extension-panel .controls button#saveExtensionButton { background:#0ea5a4; color:#042028; padding:8px 10px; border-radius:8px; border:none; font-weight:600; box-shadow: 0 6px 16px rgba(14,165,164,0.14); }
-            .settings-panel#extension-panel .gradient-preview { height:150px; border-radius:8px; margin-top:8px; box-shadow: inset 0 -10px 40px rgba(0,0,0,0.25); }
+            .extension-form-group select {
+                padding: 10px 12px;
+                border-radius: 10px;
+                background: #0f1720;
+                color: #e6eef6;
+                border: 1px solid rgba(255,255,255,0.1);
+                min-width: 150px;
+                box-shadow: inset 0 -2px 8px rgba(0,0,0,0.35);
+                font-size: 14px;
+            }
+            .save-to-extension-btn {
+                width: 100%;
+                background: #000035;
+                color: #F4F4F1;
+                padding: 12px 20px;
+                border-radius: 12px;
+                font-size: 15px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                cursor: pointer;
+                margin-bottom: 20px;
+                border: none;
+                box-shadow: 0 10px 24px rgba(0,0,53,0.22);
+            }
+            .save-to-extension-btn i { font-size: 16px; }
+            .settings-panel#extension-panel .gradient-preview {
+                width: 100%;
+                height: 210px;
+                border-radius: 16px;
+                box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+                border: none;
+                margin: 16px 0 28px;
+                overflow: hidden;
+                background-clip: padding-box;
+                position: relative;
+            }
             .settings-panel#extension-panel .extension-placeholder { margin-top:10px; font-size:13px; color:#c7d2da; }
             .settings-panel#extension-panel .extension-placeholder a { color:#9eead4; text-decoration:none; font-weight:600; }
             .settings-panel#extension-panel .extension-placeholder a:hover { text-decoration:underline; }
             /* Promo card styling */
             .extension-promo {
-                color: #fff;
+                display: flex;
+                gap: 18px;
+                align-items: center;
+                padding: 22px;
+                border-radius: 14px;
+                background: linear-gradient(to right, #0B0F3E, #C4AD62);
+                color: #FFFFFF;
+            }
+            .extension-promo-logo {
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                background: rgba(255,255,255,0.1);
                 display: flex;
                 align-items: center;
-                gap: 12px;
-                min-height: 80px;
+                justify-content: center;
+                overflow: hidden;
             }
-            .extension-promo > div { flex: 1; }
-            .extension-promo .install-btn {
+            .extension-promo-logo img { width: 36px; height: 36px; }
+            .extension-promo-content { flex: 1; }
+            .extension-promo-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+            .extension-promo-text { font-size: 14px; opacity: 0.9; margin-bottom: 8px; }
+            .extension-install-buttons { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+            .extension-install-buttons .install-btn {
                 background: #ffffff;
-                color: #0b1220;
-                padding: 8px 12px;
-                border-radius: 10px;
+                color: #0B0F3E;
+                border-radius: 999px;
+                padding: 8px 16px;
+                font-weight: 600;
                 text-decoration: none;
-                font-weight: 700;
-                box-shadow: 0 8px 22px rgba(2,6,23,0.45);
                 border: none;
-                display: inline-block;
+                box-shadow: 0 10px 26px rgba(2,6,23,0.35);
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
                 transition: transform 120ms ease, box-shadow 120ms ease;
             }
-            .extension-promo .install-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(2,6,23,0.5); }
-            .extension-promo a.promo-link { color: rgba(255,255,255,0.95); text-decoration: underline; }
-
-            /* Make extension panel selects match site styling */
-            .settings-panel#extension-panel .controls .direction-controls select,
-            .settings-panel#test-panel .controls .direction-controls select {
-                padding: 8px 10px;
-                border-radius: 8px;
-                height: 36px;
-                border: 1px solid rgba(255,255,255,0.06);
-                background: #0f1720;
-                color: #e6eef6;
-                box-shadow: inset 0 -2px 8px rgba(0,0,0,0.35);
-                font-size: 14px;
-                min-width: 150px;
+            .extension-install-buttons .install-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px rgba(2,6,23,0.45); }
+            .extension-install-buttons .promo-link { color: rgba(255,255,255,0.95); text-decoration: underline; font-weight: 600; }
+            .extension-preview-overlay {
+                position: absolute;
+                inset: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                color: #F4F7FF;
+                text-shadow: 0 4px 16px rgba(0,0,0,0.35);
+                gap: 12px;
+                padding: 14px;
+                pointer-events: none;
             }
+            .extension-preview-header {
+                font-size: 15px;
+                font-weight: 700;
+                letter-spacing: 0.01em;
+            }
+            .extension-preview-time {
+                font-size: 38px;
+                font-weight: 800;
+                letter-spacing: 0.02em;
+            }
+            .extension-howitworks {
+                margin-top: 14px;
+                padding: 14px 16px;
+                background: #0B0F3E;
+                border: 1px solid rgba(255,255,255,0.12);
+                border-radius: 12px;
+                color: #f3f6ff;
+                line-height: 1.5;
+                box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+            }
+            .extension-howitworks strong { color: #ffffff; }
+            .extension-howitworks ul { padding-left: 18px; margin: 10px 0 0; }
+            .extension-howitworks li { margin: 6px 0; color: #e0e5f5; }
+
             /* Overlay for extension panel when extension isn't public */
             .settings-panel#extension-panel {
                 position: relative;
@@ -221,6 +304,9 @@
                 <button class="nav-item" data-target="extension">
                     <i class="fas fa-puzzle-piece"></i> Extension
                 </button>
+                <button class="nav-item" data-target="contact">
+                    <i class="fas fa-envelope"></i> Contact Us
+                </button>
             </div>
             
             <div class="settings-panels">
@@ -247,7 +333,10 @@
                             </div>
                             <div class="background-preview">
                                 <div class="preview-label" style="color:var(--text-muted);font-size:13px;margin-bottom:8px;">Current background</div>
-                                <div id="bg-preview" aria-label="Current background preview"></div>
+                                <div id="bg-preview" class="bg-preview-frame" aria-label="Current background preview">
+                                    <div class="bg-preview-blur"></div>
+                                    <img id="bg-preview-img" class="bg-preview-img" alt="Background preview">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -263,10 +352,10 @@
                             </div>
                         </div>
                             <div id="gradient-settings" class="gradient-controls">
-                            <div>
-                                <label for="gradient-angle">Angle:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="gradient-angle">Angle:</label>
                                 <input type="range" id="gradient-angle" min="0" max="360" value="90">
-                                <span class="range-value">90°</span>
+                                <span class="range-value slider-value">90°</span>
                             </div>
                             <div class="gradient-main-colors" style="display: flex; gap: 16px; margin-bottom: 12px;">
                                 <div class="gradient-stop">
@@ -296,10 +385,10 @@
                                 <label for="white-box-color">Background color</label>
                                 <input type="color" id="white-box-color" onchange="updateWhiteBoxColor()">
                             </div>
-                            <div>
-                                <label for="white-box-opacity">Opacity</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="white-box-opacity">Opacity</label>
                                 <input type="range" id="white-box-opacity" min="0" max="100" value="90" onchange="updateWhiteBoxColor()">
-                                <span class="range-value">90%</span>
+                                <span class="range-value slider-value">90%</span>
                             </div>
                             <div>
                                 <label for="white-box-text-color">Text color</label>
@@ -321,10 +410,10 @@
                                 <label for="progress-bar-color">Bar Color:</label>
                                 <input type="color" id="progress-bar-color" value="#00bfa5" onchange="updateProgressBarStyle()">
                             </div>
-                            <div>
-                                <label for="progress-bar-opacity">Opacity:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="progress-bar-opacity">Opacity:</label>
                                 <input type="range" id="progress-bar-opacity" min="0" max="100" value="20" step="5" onchange="updateProgressBarStyle()">
-                                <span class="range-value">20%</span>
+                                <span class="range-value slider-value">20%</span>
                             </div>
                         </div>
                     </div>
@@ -351,25 +440,25 @@
                                 <label for="shadow-color">Shadow Color:</label>
                                 <input type="color" id="shadow-color" value="#000000" onchange="updateTimerShadow()">
                             </div>
-                            <div>
-                                <label for="shadow-opacity">Shadow Opacity:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="shadow-opacity">Shadow Opacity:</label>
                                 <input type="range" id="shadow-opacity" min="0" max="100" value="50" onchange="updateTimerShadow()">
-                                <span class="range-value">50%</span>
+                                <span class="range-value slider-value">50%</span>
                             </div>
-                            <div>
-                                <label for="shadow-blur">Shadow Blur:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="shadow-blur">Shadow Blur:</label>
                                 <input type="range" id="shadow-blur" min="0" max="20" value="4" onchange="updateTimerShadow()">
-                                <span class="range-value">4px</span>
+                                <span class="range-value slider-value">4px</span>
                             </div>
-                            <div>
-                                <label for="shadow-distance">Shadow Distance:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="shadow-distance">Shadow Distance:</label>
                                 <input type="range" id="shadow-distance" min="0" max="20" value="2" onchange="updateTimerShadow()">
-                                <span class="range-value">2px</span>
+                                <span class="range-value slider-value">2px</span>
                             </div>
-                            <div>
-                                <label for="shadow-angle">Shadow Angle:</label>
+                            <div class="slider-row">
+                                <label class="slider-label" for="shadow-angle">Shadow Angle:</label>
                                 <input type="range" id="shadow-angle" min="0" max="360" value="45" onchange="updateTimerShadow()">
-                                <span class="range-value">45°</span>
+                                <span class="range-value slider-value">45°</span>
                             </div>
                         </div>
                     </div>
@@ -491,73 +580,134 @@
                             <p>Questions, issues, or feedback? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a></p>
 
                             <div class="contact-info">
-                                <p class="version-info">Version 3.0.0</p>
+                                <p class="version-info">Version 3.0.2</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="settings-panel" id="contact-panel">
+                    <div class="settings-group contact-shell">
+                        <div class="contact-header-row">
+                            <div class="contact-header-icon"><i class="fas fa-envelope"></i></div>
+                            <h3>Contact Us</h3>
+                        </div>
+                        <div class="about-content contact-card">
+                            <div class="contact-accent-bar"></div>
+                            <div class="support-grid">
+                                <div class="support-col">
+                                    <div class="contact-header">
+                                        <div class="contact-icon">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </div>
+                                        <div>
+                                            <p class="contact-kicker">We usually reply within 1–2 business days.</p>
+                                            <p class="contact-title">Tell us what's going on and we'll help.</p>
+                                        </div>
+                                    </div>
+                                    <a class="contact-btn" href="mailto:ShilohSchedule@outlook.com">
+                                        <i class="fas fa-envelope"></i>
+                                        Email ShilohSchedule@outlook.com
+                                    </a>
+                                </div>
+                                <div class="support-col">
+                                    <ul class="contact-list">
+                                        <li><span class="contact-bullet-icon">👤</span><span class="contact-bullet-text"><strong>Name</strong> — your full name.</span></li>
+                                        <li><span class="contact-bullet-icon">🗂️</span><span class="contact-bullet-text"><strong>Topic</strong> — bug/issue, feature request, schedule correction, sync/extension problem, general feedback, or other.</span></li>
+                                        <li><span class="contact-bullet-icon">📝</span><span class="contact-bullet-text"><strong>Details</strong> — what happened, what you expected, and what you want added or fixed.</span></li>
+                                        <li><span class="contact-bullet-icon">📎</span><span class="contact-bullet-text"><strong>Screenshots (optional)</strong> — attach any relevant images to speed things up.</span></li>
+                                    </ul>
+                                    <div class="contact-mini-faq">
+                                        <p class="faq-title">Common issues</p>
+                                        <ul>
+                                            <li>Schedule looks off? Check the selected grade and schedule.</li>
+                                            <li>Extension not syncing? Re-open the extension popup and click “Save to Extension”.</li>
+                                            <li>Need a schedule changed? <a href="mailto:ShilohSchedule@outlook.com">Request a schedule update</a>.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="contact-footer-note">We typically reply within 1–2 business days.</p>
+                        </div>
+                    </div>
+                </div>
                 <div class="settings-panel" id="legal-panel">
                     <div class="settings-group">
-                        <h3>Legal</h3>
-                        <div class="legal-grid">
-                            <div class="legal-card">
-                                <div class="legal-card-header">
-                                    <i class="fas fa-file-contract fa-2x"></i>
-                                    <div class="legal-card-title">Terms of Service</div>
+                        <div class="legal-section">
+                            <h3 class="legal-section-title">Legal</h3>
+                            <div class="legal-cards-row">
+                                <div class="legal-card">
+                                    <div class="legal-card-header">
+                                        <div class="legal-card-icon">
+                                            <i class="fas fa-file-contract"></i>
+                                        </div>
+                                        <div class="legal-card-title">Terms of Service</div>
+                                    </div>
+                                    <div class="legal-card-body">
+                                        Our Terms of Service explain the rules and responsibilities for using Shiloh Schedule. They cover permitted usage, account handling, and acceptable conduct.
+                                    </div>
+                                    <div class="legal-card-footer">
+                                        <a class="legal-btn" href="terms.html" target="_blank" rel="noopener">View Terms</a>
+                                        <span class="legal-updated">Last updated: Sep 21, 2025</span>
+                                    </div>
                                 </div>
-                                <p class="legal-desc">Our Terms of Service explain the rules and responsibilities for using Shiloh Schedule. They cover permitted usage, account handling, and acceptable conduct.</p>
-                                <div class="legal-actions">
-                                    <a class="btn btn-primary" href="terms.html" target="_blank" rel="noopener">View Terms</a>
-                                    <span class="legal-updated">Last updated: Sep 21, 2025</span>
+
+                                <div class="legal-card">
+                                    <div class="legal-card-header">
+                                        <div class="legal-card-icon">
+                                            <i class="fas fa-user-secret"></i>
+                                        </div>
+                                        <div class="legal-card-title">Privacy Policy</div>
+                                    </div>
+                                    <div class="legal-card-body">
+                                        This policy explains what personal data we collect, how it's used, and how we protect your privacy. We minimize data collection and respect user preferences.
+                                    </div>
+                                    <div class="legal-card-footer">
+                                        <a class="legal-btn" href="privacy.html" target="_blank" rel="noopener">View Privacy Policy</a>
+                                        <span class="legal-updated">Last updated: Nov 23, 2025</span>
+                                    </div>
+                                    <div class="legal-card-footer legal-card-footer-secondary">
+                                        <a class="legal-btn legal-btn-secondary" href="extension-privacy.html" target="_blank" rel="noopener">Extension Privacy Policy</a>
+                                    </div>
                                 </div>
                             </div>
-
-                            <div class="legal-card">
-                                <div class="legal-card-header">
-                                    <i class="fas fa-user-secret fa-2x"></i>
-                                    <div class="legal-card-title">Privacy Policy</div>
-                                </div>
-                                <p class="legal-desc">This policy explains what personal data we collect, how it's used, and how we protect your privacy. We minimize data collection and respect user preferences.</p>
-                                <div class="legal-actions">
-                                    <a class="btn btn-primary" href="privacy.html" target="_blank" rel="noopener">View Privacy Policy</a>
-                                    <span class="legal-updated">Last updated: Nov 23, 2025</span>
-                                </div>
-                                <div style="margin-top:10px;">
-                                    <a class="btn btn-primary" href="extension-privacy.html" target="_blank" rel="noopener">Extension Privacy Policy</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="legal-footer">
-                            <p class="legal-note">By using Shiloh Schedule you agree to our Terms and acknowledge the Privacy Policy. For questions, contact <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.</p>
+                            <p class="legal-consent">
+                                By using Shiloh Schedule you agree to our Terms and acknowledge the Privacy Policy. For questions, contact <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a>.
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="settings-panel" id="test-panel">
-                    <div class="settings-group">
-                        <h3>Extension Gradient Settings</h3>
-                        <p>Customize the gradient used in the application. Adjust the colors and direction to update the background gradient.</p>
-                        <div class="controls" style="margin: 20px 0;">
-                            <div class="color-controls">
-                                <label for="startColor">Start Color:</label>
-                                <input type="color" id="startColor" value="#e66465" onchange="updateExtensionPreview()">
-                                <label for="endColor" style="margin-left: 10px;">End Color:</label>
-                                <input type="color" id="endColor" value="#9198e5" onchange="updateExtensionPreview()">
+                        <div class="settings-group">
+                            <h3>Extension Gradient Settings</h3>
+                            <p>Customize the gradient used in the application. Adjust the colors and direction to update the background gradient.</p>
+                            <div class="extension-form-row">
+                                <div class="extension-form-group">
+                                    <label class="extension-label" for="startColor">Start Color:</label>
+                                    <input type="color" id="startColor" value="#e66465" onchange="updateExtensionPreview()">
+                                </div>
+                                <div class="extension-form-group">
+                                    <label class="extension-label" for="endColor">End Color:</label>
+                                    <input type="color" id="endColor" value="#9198e5" onchange="updateExtensionPreview()">
+                                </div>
+                                <div class="extension-form-group flex-1">
+                                    <label class="extension-label" for="gradientDirection">Direction:</label>
+                                    <select id="gradientDirection" onchange="updateExtensionPreview()">
+                                        <option value="90">To Right →</option>
+                                        <option value="0">To Top ↑</option>
+                                        <option value="180">To Bottom ↓</option>
+                                        <option value="45">To Top Right ↗</option>
+                                        <option value="135">To Bottom Right ↘</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="direction-controls" style="margin-top: 15px;">
-                                <label for="gradientDirection">Direction:</label>
-                                <select id="gradientDirection" onchange="updateExtensionPreview()">
-                                    <option value="90">To Right →</option>
-                                    <option value="0">To Top ↑</option>
-                                    <option value="180">To Bottom ↓</option>
-                                    <option value="45">To Top Right ↗</option>
-                                    <option value="135">To Bottom Right ↘</option>
-                                </select>
-                            </div>
-                            <button id="saveExtensionButton" style="margin-top: 15px;" onclick="saveExtensionGradient()">Save Gradient</button>
-                        </div>
-                        <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
+
+                            <button id="saveExtensionButton" class="save-to-extension-btn" onclick="saveExtensionGradient()">
+                                <i class="fas fa-save"></i>
+                                <span>Save to Extension</span>
+                            </button>
+
+                            <div id="extensionPreview" class="gradient-preview" style="width:100%; height:150px; border-radius:8px;"></div>
                         <script>
                             // Load saved settings on init and prefer namespaced extension inputs
                             document.addEventListener('DOMContentLoaded', () => {
@@ -588,6 +738,10 @@
                                 const gradient = `linear-gradient(${angle}deg, ${start}, ${end})`;
                                 const preview = document.getElementById('ext-extensionPreview') || document.getElementById('extensionPreview');
                                 if (preview) preview.style.background = gradient;
+                                const header = document.getElementById('extensionPreviewHeader');
+                                if (header) header.textContent = 'Normal Schedule ▸ Period X';
+                                const timeEl = document.getElementById('extensionPreviewTime');
+                                if (timeEl) timeEl.textContent = '12:34';
                                 
                                 const settings = {
                                     startColor: start,
@@ -655,12 +809,12 @@
                             }
                         </script>
                         <script>
-                            // Set the placeholder Chrome Web Store links for the Extension settings
+                            // Set the Chrome Web Store links for the Extension settings
                             try {
                                 const ids = ['installExtensionLink', 'installExtensionLinkPromo'];
                                 ids.forEach(id => {
                                     const el = document.getElementById(id);
-                                        if (el) el.href = 'https://chrome.google.com/webstore/detail/clghadjfdfgihdkemlipfndoelebcipg';
+                                        if (el) el.href = 'https://chromewebstore.google.com/detail/shiloh-schedule-extension/clghadjfdfgihdkemlipfndoelebcipg?utm_source=item-share-cb';
                                 });
                             } catch (e) { /* ignore */ }
                         </script>
@@ -736,6 +890,22 @@
                                 });
                             })();
                         </script>
+                        <script>
+                            function toggleHowItWorks(e) {
+                                if (e) e.preventDefault();
+                                const box = document.getElementById('extensionHowItWorks');
+                                if (!box) return false;
+                                const link = e?.currentTarget;
+                                const isOpen = !box.hidden;
+                                box.hidden = isOpen;
+                                box.setAttribute('aria-hidden', isOpen ? 'true' : 'false');
+                                if (link) link.setAttribute('aria-expanded', (!isOpen).toString());
+                                if (!isOpen) {
+                                    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                                return false;
+                            }
+                        </script>
                     </div>
                 </div>
 
@@ -744,18 +914,17 @@
                     <div class="settings-group">
                         <h3><i class="fas fa-puzzle-piece"></i> Extension Settings</h3>
                         <p>Customize the gradient used in the Chrome extension. Adjust the colors and direction to update the background gradient.</p>
-                        
-                        <div class="controls">
-                            <div class="color-controls">
-                                <label for="ext-startColor">Start Color:</label>
+                        <div class="extension-form-row">
+                            <div class="extension-form-group">
+                                <label class="extension-label" for="ext-startColor">Start Color:</label>
                                 <input type="color" id="ext-startColor" value="#000035" onchange="updateExtensionPreview()">
-                                
-                                <label for="ext-endColor" style="margin-left: 10px;">End Color:</label>
+                            </div>
+                            <div class="extension-form-group">
+                                <label class="extension-label" for="ext-endColor">End Color:</label>
                                 <input type="color" id="ext-endColor" value="#c4ad62" onchange="updateExtensionPreview()">
                             </div>
-                            
-                            <div class="direction-controls">
-                                <label for="ext-gradientDirection">Direction:</label>
+                            <div class="extension-form-group flex-1">
+                                <label class="extension-label" for="ext-gradientDirection">Direction:</label>
                                 <select id="ext-gradientDirection" onchange="updateExtensionPreview()">
                                     <option value="90">To Right →</option>
                                     <option value="0">To Top ↑</option>
@@ -764,28 +933,40 @@
                                     <option value="135">To Bottom Right ↘</option>
                                 </select>
                             </div>
-                            
-                            <button id="saveExtensionButton" onclick="saveExtensionGradient()">
-                                <i class="fas fa-save"></i> Save to Extension
-                            </button>
                         </div>
-                        
-                        <div id="ext-extensionPreview" class="gradient-preview"></div>
-                            <div class="extension-promo" style="margin-top:12px; padding:12px; background: linear-gradient(90deg,#0b1220 0%, #c4ad62 100%); border-radius:10px; color:#ffffff;">
-                            <div style="display:flex; gap:12px; align-items:center;">
-                                <picture style="flex:0 0 auto;">
-                                    <source srcset="favicon.svg" type="image/svg+xml">
-                                    <img src="favicon.png" alt="Extension" style="width:56px;height:56px;border-radius:10px;object-fit:cover;box-shadow:0 10px 28px rgba(2,6,23,0.6);" />
-                                </picture>
-                                <div style="flex:1; color: #ffffff;">
-                                    <div style="font-weight:800; font-size:16px;">Shiloh Schedule: Extension</div>
-                                    <div style="font-size:13px; margin-top:6px; color:rgba(255,255,255,0.9);">Sync the site theme with your browser. Save gradients from the site and apply them instantly in the extension popup.</div>
-                                    <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-                                        <a id="installExtensionLinkPromo" class="btn btn-primary install-btn" href="#" target="_blank" rel="noopener">Install</a>
-                                        <a href="#" onclick="document.getElementById('saveExtensionButton')?.scrollIntoView(); return false;" class="promo-link" style="font-size:13px;">How it works →</a>
-                                    </div>
+
+                        <button id="saveExtensionButton" class="save-to-extension-btn" onclick="saveExtensionGradient()">
+                            <i class="fas fa-save"></i>
+                            <span>Save to Extension</span>
+                        </button>
+
+                        <div id="ext-extensionPreview" class="gradient-preview">
+                            <div class="extension-preview-overlay">
+                                <div class="extension-preview-header" id="extensionPreviewHeader">Normal Schedule ▸ Period X</div>
+                                <div class="extension-preview-time" id="extensionPreviewTime">12:34</div>
+                            </div>
+                        </div>
+
+                        <div class="extension-promo">
+                            <div class="extension-promo-logo">
+                                <img src="favicon.svg" alt="Shiloh Schedule extension logo">
+                            </div>
+                            <div class="extension-promo-content">
+                                <div class="extension-promo-title">Shiloh Schedule: Extension</div>
+                                <div class="extension-promo-text">Sync gradients between your browser and the site.</div>
+                                <div class="extension-install-buttons">
+                                    <a id="installExtensionLinkPromo" class="install-btn" href="https://chromewebstore.google.com/detail/shiloh-schedule-extension/clghadjfdfgihdkemlipfndoelebcipg?utm_source=item-share-cb" target="_blank" rel="noopener">Install</a>
+                                    <a href="#" onclick="return toggleHowItWorks(event);" class="promo-link" aria-expanded="false" aria-controls="extensionHowItWorks">How it works →</a>
                                 </div>
                             </div>
+                        </div>
+                        <div id="extensionHowItWorks" class="extension-howitworks" hidden>
+                            <strong>How the extension works</strong>
+                            <ul>
+                                <li>Pick your colors and angle, then hit “Save to Extension”.</li>
+                                <li>We send only your gradient and schedule name to the extension via Chrome’s messaging.</li>
+                                <li>The extension applies that theme to its popup and countdown — no account data or browsing history is shared.</li>
+                            </ul>
                         </div>
                         <!-- Extension coming soon overlay (default visible until disabled) -->
                         <div id="extensionComingSoonOverlay" class="extension-coming-soon-overlay" role="dialog" aria-modal="true" aria-label="Extension coming soon">
@@ -896,7 +1077,8 @@
                     window.authManager.toggleProfileVisibility();
                 });
             }
-                // Show redesigned update notice once per user (versioned localStorage key).
+            // Show redesigned update notice once per user (versioned localStorage key).
+            function maybeShowUpdateOverlay() {
                 try {
                     const key = 'updateNoticeShown_v3';
                     const backdrop = document.getElementById('update-notice-backdrop');
@@ -906,7 +1088,8 @@
                         backdrop.setAttribute('aria-hidden', 'false');
 
                         const okBtn = document.getElementById('update-notice-ok');
-                        if (okBtn) {
+                        if (okBtn && !okBtn._bound) {
+                            okBtn._bound = true;
                             okBtn.addEventListener('click', function() {
                                 try { localStorage.setItem(key, 'true'); } catch (e) {}
                                 try { okBtn.blur(); } catch (e) {}
@@ -922,12 +1105,20 @@
                 } catch (e) {
                     // ignore storage or DOM failures
                 }
+            }
+
+            const hasGrade = !!localStorage.getItem('gradeLevel');
+            if (hasGrade) {
+                maybeShowUpdateOverlay();
+            } else {
+                // wait until grade selection is completed
+                const handler = () => {
+                    document.removeEventListener('gradeLevelChosen', handler);
+                    setTimeout(maybeShowUpdateOverlay, 120);
+                };
+                document.addEventListener('gradeLevelChosen', handler);
+            }
         });
     </script>
-</body>
-</html>
-        </div>
-    </div>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </body>
 </html>
