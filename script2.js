@@ -93,6 +93,7 @@ function loadBackground() {
             document.body.style.backgroundPosition = 'center';
             document.body.style.backgroundRepeat = 'no-repeat';
             document.body.style.backgroundAttachment = 'fixed';
+            updateBackgroundPreview(bgImage);
         };
         img.onerror = function() {
             console.error('Failed to load background image');
@@ -336,14 +337,7 @@ async function processUploadedImage(dataUrl, dropArea, fileType) {
 
 function applyAndSaveImage(imageData) {
     try {
-        // Update preview
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = `url('${imageData}')`;
-            preview.style.backgroundSize = 'cover';
-            preview.style.backgroundPosition = 'center';
-            preview.style.backgroundRepeat = 'no-repeat';
-        }
+        updateBackgroundPreview(imageData);
         
         // Apply to body with correct CSS
         document.body.style.backgroundImage = `url('${imageData}')`;
@@ -417,14 +411,7 @@ function applyImageBackground(imageUrl) {
     // Save to localStorage
     localStorage.setItem('bgImage', imageUrl);
     
-    // Update preview if it exists
-    const preview = document.getElementById('bg-preview');
-    if (preview) {
-        preview.style.backgroundImage = `url('${imageUrl}')`;
-        preview.style.backgroundSize = 'cover';
-        preview.style.backgroundPosition = 'center';
-        preview.style.backgroundRepeat = 'no-repeat';
-    }
+    updateBackgroundPreview(imageUrl);
 
     // Disable gradient if it's enabled
     if (window.gradientManager) {
@@ -498,12 +485,30 @@ function removeBackground() {
         }
         
         // Update preview
-        const preview = document.getElementById('bg-preview');
-        if (preview) {
-            preview.style.backgroundImage = 'none';
-            preview.style.background = 'linear-gradient(90deg, #000035, #c4ad62)';
-        }
+        updateBackgroundPreview(null);
     }, 50);
+}
+
+function updateBackgroundPreview(imageUrl) {
+    const frame = document.getElementById('bg-preview');
+    if (!frame) return;
+    const blur = frame.querySelector('.bg-preview-blur');
+    const img = frame.querySelector('#bg-preview-img');
+
+    if (imageUrl) {
+        if (blur) blur.style.backgroundImage = `url('${imageUrl}')`;
+        if (img) {
+            img.src = imageUrl;
+            img.style.opacity = '1';
+        }
+    } else {
+        if (blur) blur.style.backgroundImage = 'none';
+        if (img) {
+            img.src = '';
+            img.style.opacity = '0';
+        }
+        frame.style.background = 'linear-gradient(135deg, #EEF2FF, #E5E7EB)';
+    }
 }
 
 function updateWhiteBoxColor() {
