@@ -227,6 +227,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     });
 
     initializeSettingsPanels();
+    initializeWhatsNewTabs();
     // Ensure schedule dropdown reflects current grade after settings panels initialize
     try { updateScheduleDropdown(); } catch (e) { console.debug('updateScheduleDropdown post-init call failed', e); }
     // Bind inline handlers safely (keeps existing onclick attributes but also ensures listeners exist)
@@ -1858,10 +1859,43 @@ function initializeSettingsPanels() {
     });
 }
 
+function initializeWhatsNewTabs() {
+    try {
+        const tabButtons = Array.from(document.querySelectorAll('.whatsnew-tab'));
+        const logs = Array.from(document.querySelectorAll('.whatsnew-log'));
+        if (!tabButtons.length || !logs.length) return;
+
+        const activate = (targetId) => {
+            logs.forEach(log => {
+                const isActive = log.id === targetId;
+                log.hidden = !isActive;
+                log.classList.toggle('active', isActive);
+            });
+
+            tabButtons.forEach(btn => {
+                const isActive = btn.dataset.wnTarget === targetId;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
+        };
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => activate(btn.dataset.wnTarget));
+        });
+
+        const defaultTab = tabButtons.find(btn => btn.dataset.wnTarget === 'whatsnew-website') || tabButtons[0];
+        if (defaultTab) activate(defaultTab.dataset.wnTarget);
+    } catch (e) {
+        console.error('initializeWhatsNewTabs failed', e);
+    }
+}
+
 // Wire the above function to DOMContentLoaded (ensure it's not already added)
 document.addEventListener("DOMContentLoaded", () => {
     // ...existing code...
     initializeSettingsPanels();
+    initializeWhatsNewTabs();
 });
 
 (function() {
