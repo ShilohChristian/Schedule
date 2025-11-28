@@ -304,6 +304,9 @@
                 <button class="nav-item" data-target="extension">
                     <i class="fas fa-puzzle-piece"></i> Extension
                 </button>
+                <button class="nav-item" data-target="whatsnew">
+                    <i class="fas fa-bolt"></i> What's New
+                </button>
                 <button class="nav-item" data-target="contact">
                     <i class="fas fa-envelope"></i> Contact Us
                 </button>
@@ -582,6 +585,386 @@
                             <div class="contact-info">
                                 <p class="version-info">Version 3.0.2</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-panel" id="whatsnew-panel">
+                    <div class="settings-group whatsnew-group">
+                        <div class="whatsnew-header">
+                            <div class="whatsnew-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div>
+                                <p class="whatsnew-kicker">Release notes</p>
+                                <h3 class="whatsnew-title">What's New</h3>
+                                <p class="whatsnew-subtitle">See the latest improvements to the website and extension.</p>
+                            </div>
+                        </div>
+                        <div class="whatsnew-tabs" role="tablist" aria-label="Update logs">
+                            <button class="whatsnew-tab active" data-wn-target="whatsnew-website" role="tab" aria-selected="true">Website updates</button>
+                            <button class="whatsnew-tab" data-wn-target="whatsnew-extension" role="tab" aria-selected="false">Extension updates</button>
+                        </div>
+
+                        <div id="whatsnew-website" class="whatsnew-log" role="tabpanel">
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v3.0.2</span>
+                                    <span class="wn-date">Nov 28, 2025</span>
+                                    <span class="wn-tag">Current</span>
+                                </div>
+                                <ul>
+                                    <li>Introduced the new What’s New panel with Website/Extension tabs and placed it ahead of Contact.</li>
+                                    <li>Polished release log styling with better spacing, hierarchy, and branded active tab highlight.</li>
+                                    <li>Populated full history for site and extension, including dates and quick-read badges.</li>
+                                    <li>Standardized release labels (Current, Design refresh, Bug fixes, etc.) across all entries.</li>
+                                    <li>Overall UX tidy-up to make updates easier to skim and the panel easier to find.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v3.0.1</span>
+                                    <span class="wn-date">Nov 25, 2025</span>
+                                    <span class="wn-tag">Sync fixes</span>
+                                </div>
+                                <ul>
+                                    <li>Improved popup ↔ website schedule interoperability so the extension receives correct arrays and current schedule names.</li>
+                                    <li>Updated gradient direction detection with angle extraction from CSS gradient strings and improved fallback logic.</li>
+                                    <li>Enhanced schedule-name formatting for better capitalization, spacing, and “Schedule ▸ Period” display in the extension.</li>
+                                    <li>Fixed next-period labeling and unified countdown naming conventions with extension formatting.</li>
+                                    <li>Improved overnight countdown behavior with better next-day rollover handling.</li>
+                                    <li>Strengthened schedule auto-detection for Normal, Chapel, or Pep Rally schedules.</li>
+                                    <li>Added safer gradient normalization helpers to recover from malformed or legacy gradient objects.</li>
+                                    <li>Cleaned Privacy Policy and Terms formatting with improved spacing and consistency.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v3.0.0</span>
+                                    <span class="wn-date">Nov 24, 2025</span>
+                                    <span class="wn-tag">Design refresh</span>
+                                </div>
+                                <ul>
+                                    <li>Major settings redesign with reorganized panels, updated card layouts, consistent spacing, and unified styling.</li>
+                                    <li>Full background image overhaul with multi-format support, compression, overlay animations, and preview syncing.</li>
+                                    <li>Rebuilt authentication flow with stronger wait-for-auth handling and reliable Firestore/localStorage syncing.</li>
+                                    <li>Upgraded schedule switching with better weekday handling, safer grade routing, and improved name normalization.</li>
+                                    <li>Improved rename periods system with safer migration for corrupted values and more reliable dropdown loading.</li>
+                                    <li>Enhanced progress bar, shadow editor, white box styling, and gradient fallbacks for consistency.</li>
+                                    <li>Polished layout, update notice modal, and legal pages (added Extension Privacy Policy).</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.8</span>
+                                    <span class="wn-date">Nov 24, 2025</span>
+                                    <span class="wn-tag">Grade update</span>
+                                </div>
+                                <ul>
+                                    <li>Added full grade-level switching (Middle/High School) with automatic dropdown population.</li>
+                                    <li>Major rename system overhaul with safer migration, unified logic, and cleaner syncing.</li>
+                                    <li>Upgraded background uploader with validation, compression, preview syncing, overlays, and success animation.</li>
+                                    <li>Strengthened background removal with reliable Firestore deletion and gradient fallback.</li>
+                                    <li>Refined shadow editor, white box styling, progress bar system, dropdown behavior, and profile/auth UI.</li>
+                                    <li>Added redesigned update notice modal and legal updates with Extension Privacy Policy.</li>
+                                    <li>Full gradient cleanup across the codebase.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7.5</span>
+                                    <span class="wn-date">Nov 22, 2025</span>
+                                    <span class="wn-tag">Polish</span>
+                                </div>
+                                <ul>
+                                    <li>Improved update notice modal animations and spacing.</li>
+                                    <li>Refined settings layout, margins, and overflow fixes.</li>
+                                    <li>Updated background drag-and-drop visuals and preview alignment.</li>
+                                    <li>Polished sign-in/profile button layout and transitions; refined logout/hide-profile positioning.</li>
+                                    <li>Improved mobile schedule layout for current period text.</li>
+                                    <li>Updated legal card styling and Privacy Policy consistency; stylesheet cleanup.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7.4</span>
+                                    <span class="wn-date">Oct 18, 2025</span>
+                                    <span class="wn-tag">Stability</span>
+                                </div>
+                                <ul>
+                                    <li>Improved settings loading flow with better auth wait logic and Firestore/localStorage fallback handling.</li>
+                                    <li>Refined background upload/removal with better drag-and-drop behavior, validation, and fallback.</li>
+                                    <li>Cleaned gradient manager UI, strengthened progress bar initialization, and improved shadow system.</li>
+                                    <li>Improved dropdown isolation, auth UI polish, spacing, scroll handling, and drag overlay animations.</li>
+                                    <li>Refreshed legal formatting.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7.3</span>
+                                    <span class="wn-date">Oct 18, 2025</span>
+                                    <span class="wn-tag">Stability</span>
+                                </div>
+                                <ul>
+                                    <li>Improved settings loading with safer auth checks and fallback storage.</li>
+                                    <li>Expanded background image support (AVIF, TIFF, BMP, WebP) and improved compression/overlay behavior.</li>
+                                    <li>Improved background removal, progress bar behavior, timer/shadow preview syncing, and font persistence.</li>
+                                    <li>Updated dropdown isolation, profile/auth transitions, and removed legacy gradient UI.</li>
+                                    <li>Spacing and light/dark consistency improvements plus legal formatting tweaks.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7.2</span>
+                                    <span class="wn-date">Sep 24, 2025</span>
+                                    <span class="wn-tag">Reliability</span>
+                                </div>
+                                <ul>
+                                    <li>Safer authentication checks and consistent login button states.</li>
+                                    <li>Improved grade-level dropdown creation and schedule loading.</li>
+                                    <li>Corrected chapel schedules and strengthened schedule switching logic.</li>
+                                    <li>Improved rename periods recovery, progress bar syncing, background validation, and processing overlay.</li>
+                                    <li>Cleanup of gradient UI and improved shadow editor, sidebar spacing, profile UI, and layout defaults.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7.1</span>
+                                    <span class="wn-date">Sep 22, 2025</span>
+                                    <span class="wn-tag">Bug fixes</span>
+                                </div>
+                                <ul>
+                                    <li>Improved auth initialization and login modal behavior.</li>
+                                    <li>Fixed grade-level switching and dropdown persistence.</li>
+                                    <li>Updated rename periods handling and TimerManager stability.</li>
+                                    <li>Reworked background upload validation and processing overlays.</li>
+                                    <li>Polished white box, shadow editor, dropdown isolation, and profile/auth interactions.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.7</span>
+                                    <span class="wn-date">Sep 21, 2025</span>
+                                    <span class="wn-tag">Feature update</span>
+                                </div>
+                                <ul>
+                                    <li>Added full About panel with version history and feature list.</li>
+                                    <li>Updated Privacy Policy and Terms styling; fixed gradient direction loading.</li>
+                                    <li>Improved background upload animation and drag overlay debounce.</li>
+                                    <li>Improved theme and white box persistence, dropdown animations, and profile/auth transitions.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.6.1</span>
+                                    <span class="wn-date">Aug 14, 2025</span>
+                                    <span class="wn-tag">Bug fixes</span>
+                                </div>
+                                <ul>
+                                    <li>Fixed period naming inconsistencies across grade levels and improved next-period headings.</li>
+                                    <li>Strengthened grade-level initialization and modal behavior.</li>
+                                    <li>Updated background handling and rename-periods UI spacing.</li>
+                                    <li>Cleaned gradient-related CSS and refreshed legal pages.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.6</span>
+                                    <span class="wn-date">Aug 9, 2025</span>
+                                    <span class="wn-tag">Schedules</span>
+                                </div>
+                                <ul>
+                                    <li>Added full High School and Middle School schedules with automatic grade selection.</li>
+                                    <li>Improved rename-period logic, countdown behavior, and timing edge cases.</li>
+                                    <li>Updated headings, layout spacing, login modal, profile menu, and drag-and-drop behavior.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.5</span>
+                                    <span class="wn-date">Apr 25, 2025</span>
+                                    <span class="wn-tag">UI overhaul</span>
+                                </div>
+                                <ul>
+                                    <li>Removed legacy gradient editor UI and classes.</li>
+                                    <li>Rebuilt background upload system with improved states, overlay, and animation.</li>
+                                    <li>Updated settings sidebar layout, profile/auth transitions, and login modal styling.</li>
+                                    <li>Improved auto-schedule detection and rename-period logic; legal formatting updates.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.4</span>
+                                    <span class="wn-date">Apr 24, 2025</span>
+                                    <span class="wn-tag">Backgrounds</span>
+                                </div>
+                                <ul>
+                                    <li>Major background handling upgrade with better validation, compression, and overlays.</li>
+                                    <li>Simplified gradient handling and loading; redesigned dropdowns and animations.</li>
+                                    <li>Improved profile/logout interactions, color usage, spacing, and Firestore sync.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.2</span>
+                                    <span class="wn-date">Apr 4, 2025</span>
+                                    <span class="wn-tag">Auth & sync</span>
+                                </div>
+                                <ul>
+                                    <li>Added Google sign-in and Firestore syncing with improved background/gradient save/load.</li>
+                                    <li>Updated settings sidebar spacing and responsiveness; improved schedule rendering and countdown behavior.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v2.0</span>
+                                    <span class="wn-date">Mar 10, 2025</span>
+                                    <span class="wn-tag">Major release</span>
+                                </div>
+                                <ul>
+                                    <li>Complete settings sidebar redesign with grouped sections and dropdowns.</li>
+                                    <li>Added custom schedules, rename periods, advanced gradient editor, background upload, and timer shadow system.</li>
+                                    <li>Improved countdown logic, persistence for theme/colors/gradients/shadows/countdown/schedule.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.8</span>
+                                    <span class="wn-date">Feb 16, 2025</span>
+                                    <span class="wn-tag">Polish</span>
+                                </div>
+                                <ul>
+                                    <li>Improved styling and countdown reliability; better rename-period compatibility.</li>
+                                    <li>Fixed background persistence and improved performance.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.7.1</span>
+                                    <span class="wn-date">Feb 6, 2025</span>
+                                    <span class="wn-tag">Hotfix</span>
+                                </div>
+                                <ul>
+                                    <li>Patch for countdown timing bugs plus minor UI spacing fixes.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.7</span>
+                                    <span class="wn-date">Feb 6, 2025</span>
+                                    <span class="wn-tag">Layout refresh</span>
+                                </div>
+                                <ul>
+                                    <li>Improved layout, spacing, and schedule rendering; fixed mobile layout issues.</li>
+                                    <li>Updated behavior for transitioning between periods.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.6</span>
+                                    <span class="wn-date">Feb 5, 2025</span>
+                                    <span class="wn-tag">Launch</span>
+                                </div>
+                                <ul>
+                                    <li>GitHub site launch with reorganized JS/CSS/HTML and cleaned CSS.</li>
+                                    <li>Improved countdown refresh consistency and layout spacing.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.5</span>
+                                    <span class="wn-date">Feb 3, 2025</span>
+                                    <span class="wn-tag">Stability</span>
+                                </div>
+                                <ul>
+                                    <li>Stability pass on countdown and schedule functions with consolidated JS.</li>
+                                    <li>Improved gradient performance, next-period display, and mobile layout polish.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.4</span>
+                                    <span class="wn-date">Feb 1, 2025</span>
+                                    <span class="wn-tag">UI polish</span>
+                                </div>
+                                <ul>
+                                    <li>Improved settings panel animation, font sizes, button styles, and spacing.</li>
+                                    <li>Reduced timer flicker and refined gear icon behavior.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.3</span>
+                                    <span class="wn-date">Jan 29, 2025</span>
+                                    <span class="wn-tag">Detection update</span>
+                                </div>
+                                <ul>
+                                    <li>Updated period-detection logic and added passing/free period indicators.</li>
+                                    <li>Improved schedule padding, countdown behavior, and settings reliability.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.2</span>
+                                    <span class="wn-date">Jan 26, 2025</span>
+                                    <span class="wn-tag">Settings debut</span>
+                                </div>
+                                <ul>
+                                    <li>First settings sidebar with gradient controls and timer text-color options.</li>
+                                    <li>Improved early mobile responsiveness.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1</span>
+                                    <span class="wn-date">Jan 23, 2025</span>
+                                    <span class="wn-tag">Countdown update</span>
+                                </div>
+                                <ul>
+                                    <li>Improved countdown accuracy and text spacing in the schedule box.</li>
+                                    <li>Early mobile margin fixes and CSS cleanup.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.0</span>
+                                    <span class="wn-date">Jan 20, 2025</span>
+                                    <span class="wn-tag">Initial</span>
+                                </div>
+                                <ul>
+                                    <li>First internal version with live period detection, countdown, and original white schedule box.</li>
+                                    <li>Very early styling and limited customization.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div id="whatsnew-extension" class="whatsnew-log" role="tabpanel" hidden>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.1</span>
+                                    <span class="wn-date">Nov 25, 2025</span>
+                                    <span class="wn-tag">Current</span>
+                                </div>
+                                <ul>
+                                    <li>Improved gradient loader normalization.</li>
+                                    <li>Updated countdown engine with more stable period detection, rollover logic, and HH:MM:SS formatting.</li>
+                                    <li>Improved schedule-name formatting and service worker handling.</li>
+                                    <li>Updated content script with retries, allowlist, and EXTENSION_PONG logic.</li>
+                                    <li>Polished popup rendering, text-shadow behavior, and manifest reliability.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.0.0</span>
+                                    <span class="wn-date">Nov 24, 2025</span>
+                                    <span class="wn-tag">Launch</span>
+                                </div>
+                                <ul>
+                                    <li>First Chrome extension release with full popup countdown UI and gradient support.</li>
+                                    <li>Gradient normalization engine and complete schedule sync between site and extension.</li>
+                                    <li>MV3 manifest with service worker, improved content script behavior, and rebuilt background script.</li>
+                                    <li>Polished countdown logic, next-period detection, and popup rendering.</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
