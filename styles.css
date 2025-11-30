@@ -1302,6 +1302,12 @@ html, body, #settings-sidebar, .settings-sidebar, .container {
 /* Schedule preview chip */
 .preview-chip { display:inline-block; padding:8px 12px; border-radius:8px; font-size:13px; box-shadow: 0 6px 18px rgba(2,6,23,0.3); color:var(--text-primary); background: rgba(255,255,255,0.02); }
 
+/* Ensure Timer Shadow label stays readable */
+label[for="timer-shadow"] {
+    color: #0b1220;
+    font-weight: 700;
+}
+
 /* ======= User-requested overrides: tighter header, panel cards, nav pills, form grid, previews ======= */
 
 /* Tightened header / breadcrumb topbar inside the main panel */
@@ -1854,7 +1860,7 @@ close-settings-sidebar:hover {
 #shadow-settings-content label {
     display: block;
     margin-bottom: 5px;
-    color: #EEEEEE;
+    color: #0b1220;
 }
 
 /* ...existing code... */
@@ -1863,13 +1869,13 @@ close-settings-sidebar:hover {
     font-size: 4em;
     text-align: center;
     margin-bottom: 20px;
-    color: #ffffff;
+    color: #0b1220;
 }
 
 .range-value {
     display: inline-block;
     margin-left: 10px;
-    color: #ffffff;
+    color: #0b1220;
     min-width: 40px;
 }
 
