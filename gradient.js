@@ -260,6 +260,7 @@ class GradientManager {
         }
         this.updateGradientSettingsVisibility();
         this.saveSettings();
+        this.updatePreviewFallback();
     }
 
     updateAngle(value) {
@@ -302,6 +303,7 @@ class GradientManager {
             if (preview) {
                 preview.style.background = gradientString;
             }
+            this.updatePreviewFallback();
             this.saveSettings();
         } catch (error) {
             console.error('Error applying gradient:', error);
@@ -317,6 +319,21 @@ class GradientManager {
         this.updateUI();
         this.applyGradient();
         this.saveSettings();
+    }
+
+    updatePreviewFallback() {
+        const frame = document.getElementById('bg-preview');
+        if (!frame) return;
+        const blur = frame.querySelector('.bg-preview-blur');
+        const img = frame.querySelector('#bg-preview-img');
+        if (blur) blur.style.backgroundImage = 'none';
+        if (img) {
+            img.src = '';
+            img.style.opacity = '0';
+        }
+        const start = this.stops?.[0]?.color || DEFAULT_START_COLOR;
+        const end = this.stops?.[1]?.color || DEFAULT_END_COLOR;
+        frame.style.background = `linear-gradient(135deg, ${start}, ${end})`;
     }
 
     updateUI() {
@@ -357,9 +374,11 @@ class GradientManager {
         if (settings) {
             // Keep the settings visible but toggle a disabled state so an overlay message
             // can be shown when gradients are turned off (or when a background image exists).
+            const checkbox = document.getElementById('gradient-enabled');
+            const shouldDisable = !this.enabled || (checkbox && !checkbox.checked);
             settings.style.display = 'block';
-            settings.classList.toggle('disabled', !this.enabled);
-            settings.setAttribute('aria-hidden', String(!this.enabled));
+            settings.classList.toggle('disabled', shouldDisable);
+            settings.setAttribute('aria-hidden', String(shouldDisable));
         }
         // Hide stops container always
         const stopsContainer = document.getElementById('gradient-stops');
