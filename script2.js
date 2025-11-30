@@ -38,16 +38,6 @@ function toggleSettingsSidebar() {
     // Save settings when closing the sidebar
     if (!sidebar.classList.contains("open")) {
         saveSettings();
-        try {
-            if (window.sendScheduleToExtension && typeof window.sendScheduleToExtension === 'function') {
-                // Delay slightly to ensure saveSettings persisted any changes
-                setTimeout(() => {
-                    try { window.sendScheduleToExtension(); } catch (e) { console.debug('sendScheduleToExtension from toggleSettingsSidebar failed', e); }
-                }, 120);
-            }
-        } catch (e) {
-            console.debug('toggleSettingsSidebar sendScheduleToExtension guard failed', e);
-        }
     }
 }
 
@@ -507,7 +497,9 @@ function updateBackgroundPreview(imageUrl) {
             img.src = '';
             img.style.opacity = '0';
         }
-        frame.style.background = 'linear-gradient(135deg, #EEF2FF, #E5E7EB)';
+        const start = window.gradientManager?.stops?.[0]?.color || '#000035';
+        const end = window.gradientManager?.stops?.[1]?.color || '#c4ad62';
+        frame.style.background = `linear-gradient(135deg, ${start}, ${end})`;
     }
 }
 
@@ -1934,8 +1926,20 @@ function loadGradientSettings() {
     if (gradientAngle) gradientAngle.value = savedSettings.angle;
     
     // Show controls if enabled
-    if (gradientControls && savedSettings.enabled) {
-        gradientControls.classList.add('active');
+    if (gradientControls) {
+        gradientControls.classList.toggle('disabled', !savedSettings.enabled);
+        gradientControls.classList.toggle('active', !!savedSettings.enabled);
+        if (!savedSettings.enabled) {
+            gradientControls.querySelectorAll('input, select, button').forEach(el => el.disabled = true);
+        } else {
+            gradientControls.querySelectorAll('input, select, button').forEach(el => el.disabled = false);
+        }
+    }
+
+    // Sync gradient manager state if present
+    if (window.gradientManager) {
+        window.gradientManager.enabled = !!savedSettings.enabled;
+        window.gradientManager.updateGradientSettingsVisibility?.();
     }
 
     // Apply the gradient without saving
@@ -2008,38 +2012,6 @@ async function saveSettings() {
 }
 
 // ...existing code...
-
-// Add this to your gradient manager's applyGradient method
-function applyGradient() {
-    if (!this.enabled) return;
-    
-    try {
-        // ...existing gradient application code...
-        
-        // Send settings to Chrome extension if it exists
-        if (chrome?.runtime?.sendMessage) {
-            try {
-                chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
-                    type: 'UPDATE_GRADIENT',
-                    settings: {
-                        angle: this.angle,
-                        stops: this.stops
-                    },
-                    currentScheduleName: window.currentScheduleName || null,
-                    schedules: (typeof window.schedules !== 'undefined') ? window.schedules : null
-                });
-            } catch (e) {
-                console.warn('Failed to send gradient update to extension:', e);
-            }
-        }
-    } catch (error) {
-        console.error('Error applying gradient:', error);
-    }
-}
-
-// ...existing code...
-
-// Add these functions after your existing gradient management code
 
 function initializePopupGradientControls() {
     const container = document.getElementById('popup-gradient-settings');
