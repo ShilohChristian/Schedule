@@ -206,6 +206,79 @@
             .extension-howitworks strong { color: #ffffff; }
             .extension-howitworks ul { padding-left: 18px; margin: 10px 0 0; }
             .extension-howitworks li { margin: 6px 0; color: #e0e5f5; }
+            .extension-info-banner {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 12px 14px;
+                margin: 0 0 14px 0;
+                border-radius: 14px;
+                background: linear-gradient(135deg, rgba(11,15,62,0.98) 0%, rgba(196,173,98,0.92) 100%);
+                border: none;
+                color: #f6f7ff;
+                box-shadow: 0 12px 28px rgba(0,0,0,0.28);
+                font-weight: 650;
+                letter-spacing: 0.01em;
+            }
+            .extension-info-banner i {
+                color: #f5d267;
+                font-size: 18px;
+            }
+            .update-notice-body .update-section {
+                margin: 16px 0;
+                padding: 20px 24px 22px 24px;
+                border-radius: 16px;
+                background: rgba(255,255,255,0.06);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.1);
+                box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .update-notice-body .update-section h3 {
+                margin: 0 0 10px 0;
+                font-size: 18px;
+            }
+            .update-notice-body .update-section ul {
+                margin: 0;
+                padding-left: 18px;
+            }
+            .section-title {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+                font-weight: 700;
+                margin-bottom: 10px;
+                position: relative;
+            }
+            .section-title .section-divider {
+                flex: 1 1 40%;
+                max-width: 50%;
+                min-width: 80px;
+                height: 1px;
+                background: linear-gradient(90deg, rgba(196,173,98,0.7), rgba(196,173,98,0.05));
+                opacity: 0.9;
+            }
+            .section-title > span:not(.section-icon):not(.section-divider) {
+                color: #f8fafc;
+                line-height: 1.2;
+            }
+            .section-icon {
+                width: 20px;
+                height: 20px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: #f5d267;
+                font-size: 14px;
+                filter: drop-shadow(0 0 6px rgba(255,200,0,0.3));
+            }
+            .inline-icon {
+                color: #f5d267;
+                margin-right: 6px;
+                font-size: 14px;
+            }
 
             /* Overlay for extension panel when extension isn't public */
             .settings-panel#extension-panel {
@@ -1295,6 +1368,10 @@
                 <!-- Extension Panel -->
                 <div class="settings-panel" id="extension-panel">
                     <div class="settings-group">
+                        <div class="extension-info-banner" role="status">
+                            <i class="fas fa-bell"></i>
+                            <span>Shiloh students: we’ve reached out to admin and are working to get the extension unblocked. Thank you for your patience.</span>
+                        </div>
                         <h3><i class="fas fa-puzzle-piece"></i> Extension Settings</h3>
                         <p>Customize the gradient used in the Chrome extension. Adjust the colors and direction to update the background gradient.</p>
                         <div class="extension-form-row">
@@ -1351,13 +1428,6 @@
                                 <li>The extension applies that theme to its popup and countdown — no account data or browsing history is shared.</li>
                             </ul>
                         </div>
-                        <!-- Extension coming soon overlay (default visible until disabled) -->
-                        <div id="extensionComingSoonOverlay" class="extension-coming-soon-overlay" role="dialog" aria-modal="true" aria-label="Extension coming soon">
-                            <div class="overlay-card">
-                                <h4>Extension coming soon!</h4>
-                                <p>We're preparing the Shiloh Schedule: Extension for release.</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1378,21 +1448,47 @@
     <!-- Update notice modal (v3 placeholder) -->
     <div id="update-notice-backdrop" class="update-notice-backdrop" aria-hidden="true">
         <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
-            <div class="update-notice-body">
-                <div class="update-header">
-                    <img src="favicon.svg" alt="Logo" class="update-logo" />
-                    <div class="update-title-block">
-                        <h2 id="update-notice-title">Update Notice: Version 3.0 Released!</h2>
-                    </div>
+            <div class="update-notice-header">
+                <div class="update-title-icon"><img src="favicon.svg" alt="Shiloh Schedule logo"></div>
+                <div class="update-title-block">
+                    <h2 id="update-notice-title">Version 3 and the Extension are here!</h2>
                 </div>
-                <p>We’ve introduced a comprehensive design refresh featuring:</p>
-                <p>• A cleaner, modernized interface</p>
-                <p>• Updated Navy + Gold visual theme</p>
-                <p>• Streamlined settings layout</p>
-                <p>• Improved background and gradient controls</p>
-                <p>• Enhanced performance and consistency throughout</p>
-                <p style="margin-top:6px;">A dedicated Shiloh Schedule browser extension is also nearing release!</p>
-                <p>Thank you for using Shiloh Schedule.</p>
+            </div>
+            <div class="update-notice-body">
+                <div class="update-section">
+                    <div class="section-title">
+                        <span class="section-icon"><i class="fas fa-puzzle-piece"></i></span>
+                        <span>Chrome Extension Launch</span>
+                        <span class="section-divider"></span>
+                    </div>
+                    <h3> The Shiloh Schedule Chrome Extension is Here!</h3>
+                    <p>You can now view your schedule countdown right from your browser.</p>
+                    <p>The extension stays synced with the website and matches your theme, colors, and settings.</p>
+                    <p>
+                        <span class="inline-icon"><i class="fas fa-link"></i></span>
+                        <a href="https://chromewebstore.google.com/detail/shiloh-schedule-extension/clghadjfdfgihdkemlipfndoelebcipg?utm_source=item-share-cb" target="_blank" rel="noopener">
+                            Install it from the Chrome Web Store
+                        </a>
+                    </p>
+                    <p><span class="inline-icon"><i class="fas fa-exclamation-triangle"></i></span><em>The extension is currently blocked on Shiloh Chromebooks; we’re working with admin to get it unblocked.</em></p>
+                </div>
+
+                <div class="update-section">
+                    <div class="section-title">
+                        <span class="section-icon"><i class="fas fa-cog"></i></span>
+                        <span>Website Updates (v3.0 → v3.0.2)</span>
+                        <span class="section-divider"></span>
+                    </div>
+                    <p>We’ve made several improvements across the site, including:</p>
+                    <ul>
+                        <li>A cleaner, updated look with improved colors and layout</li>
+                        <li>A reorganized settings panel that’s easier to use</li>
+                        <li>Better background uploads and smoother gradient controls</li>
+                        <li>More accurate schedule switching and countdown behavior</li>
+                        <li>A new “What’s New” panel to see updates as they’re released</li>
+                        <li>Faster performance and overall UI polish</li>
+                    </ul>
+                </div>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -1400,55 +1496,6 @@
         </div>
     </div>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script>
-        // Overlay control and secret '/off' shortcut for testing (no persistence)
-        (function(){
-            const overlayId = 'extensionComingSoonOverlay';
-            const panelSelector = '#extension-panel';
-
-            function hideOverlay() {
-                const overlay = document.getElementById(overlayId);
-                const panel = document.querySelector(panelSelector);
-                if (!overlay || !panel) return;
-                overlay.style.display = 'none';
-                panel.classList.remove('overlay-active');
-            }
-
-            function showOverlay() {
-                const overlay = document.getElementById(overlayId);
-                const panel = document.querySelector(panelSelector);
-                if (!overlay || !panel) return;
-                overlay.style.display = 'flex';
-                panel.classList.add('overlay-active');
-            }
-
-            document.addEventListener('DOMContentLoaded', function(){
-                // Ensure any previously stored hidden flag is removed (we do not persist hiding anymore)
-                try { localStorage.removeItem('extensionOverlayDisabled_v1'); } catch(e) {}
-                showOverlay();
-            });
-
-            // Secret key buffer to detect '/off' — hides overlay for current session only
-            let keyBuffer = '';
-            const maxBuffer = 6;
-            document.addEventListener('keydown', function(e){
-                // Ignore modifier-only presses
-                if (e.key.length > 1 && e.key !== 'Backspace') return;
-
-                if (e.key === 'Backspace') {
-                    keyBuffer = keyBuffer.slice(0, -1);
-                } else {
-                    keyBuffer += e.key;
-                }
-                if (keyBuffer.length > maxBuffer) keyBuffer = keyBuffer.slice(-maxBuffer);
-
-                if (keyBuffer.toLowerCase().endsWith('/off')) {
-                    hideOverlay();
-                    keyBuffer = '';
-                }
-            });
-        })();
-    </script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Profile visibility switch logic
@@ -1463,7 +1510,7 @@
             // Show redesigned update notice once per user (versioned localStorage key).
             function maybeShowUpdateOverlay() {
                 try {
-                    const key = 'updateNoticeShown_v3';
+                    const key = 'updateNoticeShown_v3_1';
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
