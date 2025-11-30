@@ -436,26 +436,70 @@ select {
     animation: backdropFade 220ms ease-in;
 }
 .update-notice-dialog {
-    background: linear-gradient(180deg, #0b1f3d 0%, #0b2f52 100%);
-    color: #e8eef7;
+    background: linear-gradient(180deg, rgba(10,18,38,0.96) 0%, rgba(11,31,61,0.92) 100%);
+    color: #e9ecf1;
     width: 100%;
-    max-width: 560px;
-    border-radius: 12px;
-    box-shadow: 0 16px 36px rgba(2,6,23,0.55);
+    max-width: 620px;
+    border-radius: 14px;
+    box-shadow: 0 24px 50px rgba(0,0,0,0.35);
     position: relative;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.update-notice-dialog::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255,212,128,0.12), transparent 34%),
+        radial-gradient(circle at 78% 32%, rgba(98,140,255,0.10), transparent 42%),
+        radial-gradient(circle at 42% 78%, rgba(0,0,0,0.12), transparent 56%),
+        radial-gradient(ellipse at center, rgba(0,0,0,0.14), transparent 65%);
+    opacity: 0.65;
+    pointer-events: none;
+}
+.update-notice-header {
+    height: 68px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 22px;
+    background: linear-gradient(135deg, #0e1b34, #162b50, #0e1b34);
+    background-size: 200% 200%;
+    animation: floatGrad 12s ease infinite;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.update-title-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(245,210,103,0.12);
+    color: #f5d267;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    font-size: 16px;
+}
+.update-title-icon img {
+    width: 26px;
+    height: 26px;
+    display: block;
+}
+.update-title-block h2 {
+    margin: 0;
+    color: #f8fafc;
+    font-size: 20px;
+    letter-spacing: 0.01em;
 }
 .update-notice-body {
-    padding: 22px 24px 18px 24px;
+    padding: 20px 28px 22px 28px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     align-items: flex-start;
+    line-height: 1.55;
 }
-.update-header { display:flex; align-items:center; gap:12px; }
-.update-logo { width:44px; height:44px; max-width:44px; max-height:44px; display:block; border-radius:8px; }
-.update-title-block h2 { margin:0; color:#f5f8ff; font-size:18px; }
 .update-notice-dialog h2 {
     margin: 0;
     font-size: 20px;
@@ -463,27 +507,47 @@ select {
 }
 .update-notice-dialog p {
     margin: 0;
-    color: rgba(232,238,247,0.92);
+    color: #e9ecf1;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
+}
+.update-notice-dialog em {
+    color: #e9ecf1;
+}
+.update-notice-body a {
+    color: #f5d267;
+    font-weight: 700;
+    text-decoration: underline;
+}
+.update-notice-body a:hover {
+    color: #ffe08a;
+}
+.update-notice-dialog li {
+    line-height: 1.55;
 }
 .update-notice-actions {
     display: flex;
     gap: 10px;
     margin-top: 6px;
     width: 100%;
+    justify-content: flex-end;
 }
 .update-notice-actions .btn {
-    padding: 10px 16px;
-    border-radius: 8px;
+    padding: 12px 24px;
+    border-radius: 999px;
     cursor: pointer;
     font-weight: 600;
 }
 .update-notice-actions .btn-primary {
-    background: linear-gradient(90deg,#0c2546 0%, #0b305a 100%);
+    background: linear-gradient(135deg, #1a2f60, #213873);
     color: #fff;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 8px 18px rgba(20,30,40,0.35);
+    border: 1px solid rgba(255,255,255,0.16);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,210,103,0.25) inset;
+    transition: box-shadow 160ms ease, transform 160ms ease;
+}
+.update-notice-actions .btn-primary:hover {
+    box-shadow: 0 8px 18px rgba(0,0,0,0.35), 0 0 0 1px rgba(245,210,103,0.35) inset, 0 0 12px rgba(245,210,103,0.25);
+    transform: translateY(-1px);
 }
 .update-notice-actions .btn { background: transparent; border: 1px solid rgba(244,237,226,0.08); color: #E8EEF7; }
 .update-close {
@@ -510,13 +574,18 @@ select {
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
-@keyframes dialogSlideUp {
-    from { transform: translateY(8px) scale(0.995); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
+@keyframes floatGrad {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
-.update-notice-dialog { animation: dialogSlideUp 260ms cubic-bezier(.2,.9,.3,1) both; }
+@keyframes dialogSlideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.update-notice-dialog { animation: dialogSlideUp 220ms ease both; }
 
 /* Grade level welcome modal */
 .grade-modal-backdrop {
