@@ -328,15 +328,6 @@ function initializeAppLogic() {
 
     updateScheduleDisplay();
     if (window.TimerManager) window.TimerManager.restart();
-    // Send current schedules/gradient to extension on app init so the extension
-    // reflects the active schedule immediately when the page is opened.
-    try {
-        if (typeof window.sendScheduleToExtension === 'function') {
-            window.sendScheduleToExtension();
-        }
-    } catch (e) {
-        console.debug('sendScheduleToExtension on init failed (ignored)', e);
-    }
     } catch (error) {
         console.error('Error initializing app:', error);
     }
@@ -514,15 +505,6 @@ function switchSchedule(scheduleName) {
         updateCountdowns();
     console.debug(`Switched to schedule: ${scheduleName}`);
             if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
-        // After switching schedules, notify the extension (if installed) so it can
-        // update its stored schedule/heading and countdown immediately.
-        try {
-            if (typeof sendScheduleToExtension === 'function') {
-                sendScheduleToExtension();
-            }
-        } catch (e) {
-            console.debug('sendScheduleToExtension failed (ignored)', e);
-        }
     } catch (error) {
         console.error('Error switching schedule:', error);
         currentSchedule = schedules[scheduleName] || schedules.normal;
