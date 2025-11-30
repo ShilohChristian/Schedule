@@ -336,9 +336,7 @@ class AuthManager {
                 <div class="profile-container" data-hidden="${isHidden}">
                     <button class="profile-button" title="${this.currentUser.displayName}" 
                         style="opacity: ${isHidden ? '0' : '1'}" 
-                        disabled="${isHidden}" 
-                        aria-hidden="${isHidden}"
-                        tabindex="${isHidden ? '-1' : '0'}">
+                        ${isHidden ? 'disabled aria-hidden="true" tabindex="-1"' : 'aria-hidden="false" tabindex="0"'}>
                         <img src="${photoURL}" alt="Profile">
                     </button>
                     <button class="logout-button" ${isHidden ? 'disabled aria-hidden="true" tabindex="-1"' : ''}>
