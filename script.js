@@ -606,7 +606,6 @@ window.renamePeriod = renamePeriod; // ensure globally accessible
 // Send the current schedule and gradient settings to the Chrome extension (if installed).
 // This is intentionally defensive and will quietly noop if the extension API isn't present.
 function sendScheduleToExtension() {
-    const EXTENSION_ID = 'clghadjfdfgihdkemlipfndoelebcipg';
     try {
         // Try to reuse saved extension settings if available
         let settings = null;
@@ -681,7 +680,7 @@ function sendScheduleToExtension() {
         }
 
         const payload = {
-            type: 'UPDATE_GRADIENT',
+            type: 'SAVE_GRADIENT',
             settings: settings,
             currentScheduleName: resolvedScheduleName || null,
             schedules: null,
@@ -694,30 +693,20 @@ function sendScheduleToExtension() {
             // ignore if schedules not available
         }
 
-        // (silent) outgoing payload prepared for extension
-
-        if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
-            try {
-                chrome.runtime.sendMessage(EXTENSION_ID, payload, (response) => {
-                    if (chrome.runtime.lastError) {
-                        console.error('sendScheduleToExtension: chrome.runtime.lastError', chrome.runtime.lastError);
-                    } else {
-                        console.debug('sendScheduleToExtension response', response);
-                    }
-                });
-            } catch (e) {
-                console.error('sendScheduleToExtension error', e);
-            }
-        } else {
-            // If direct runtime API isn't available (page context), try posting a
-            // window message that the extension's content script listens for.
-            try {
-                const msg = { type: 'SAVE_GRADIENT', gradient: settings, schedules: payload.schedules, currentScheduleName: payload.currentScheduleName };
-                // Use '*' so the content script reliably receives the message regardless of minor origin mismatches during testing
-                window.postMessage(msg, '*');
-            } catch (e) {
-                console.error('sendScheduleToExtension: postMessage failed', e);
-            }
+        // Route to the extension through the content script bridge (ID-agnostic)
+        try {
+            const msg = {
+                type: 'SAVE_GRADIENT',
+                settings: payload.settings,
+                schedules: payload.schedules,
+                currentScheduleName: payload.currentScheduleName,
+                gradeLevel: payload.gradeLevel,
+                bridge: 'shiloh-extension',
+                intent: 'user-save'
+            };
+            window.postMessage(msg, '*');
+        } catch (e) {
+            console.error('sendScheduleToExtension: postMessage failed', e);
         }
     } catch (e) {
         console.debug('sendScheduleToExtension top-level error (ignored)', e);
