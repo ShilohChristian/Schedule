@@ -42,7 +42,7 @@ A modern, customizable schedule countdown tool designed for students, faculty, a
   - Automatic syncing to the main site  
   - Background previews in new tabs  
   - One-click visual customization  
-- Full release details coming soon  
+
 
 ---
 
