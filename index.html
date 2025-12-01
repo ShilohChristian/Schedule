@@ -373,7 +373,7 @@
                 <button class="nav-item" data-target="legal">
                     <i class="fas fa-file-contract"></i> Privacy & Terms
                 </button>
-                <!-- Temporary: expose Extension panel for testing -->
+            
                 <button class="nav-item" data-target="extension">
                     <i class="fas fa-puzzle-piece"></i> Extension
                 </button>
@@ -1028,9 +1028,22 @@
                         <div id="whatsnew-extension" class="whatsnew-log" role="tabpanel" hidden>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.2</span>
+                                    <span class="wn-date">Nov 30, 2025</span>
+                                    <span class="wn-tag">Current</span>
+                                </div>
+                                <ul>
+                                    <li>Hardened the content-script bridge: only messages with the extension bridge + intent flag are persisted, preventing nav clicks from overwriting gradients.</li>
+                                    <li>Added a bridge marker to GET_GRADIENT requests for safer sync with the site gradient manager.</li>
+                                    <li>Removed “blocked” messaging now that installs are allowed; clarified install cues.</li>
+                                    <li>Tuned popup polish and background service logging for more reliable updates.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
                                     <span class="wn-version">v1.1.1</span>
                                     <span class="wn-date">Nov 25, 2025</span>
-                                    <span class="wn-tag">Current</span>
+                                    <span class="wn-tag">Stability</span>
                                 </div>
                                 <ul>
                                     <li>Improved gradient loader normalization.</li>
@@ -1228,53 +1241,56 @@
                                 const start = startEl ? startEl.value : '#000035';
                                 const end = endEl ? endEl.value : '#c4ad62';
                                 const angle = dirEl ? dirEl.value : '90';
-                                
-                                        const EXTENSION_ID = 'clghadjfdfgihdkemlipfndoelebcipg';
-                                
-                                if (chrome?.runtime?.sendMessage) {
+
+                                // Route through the content script bridge (ID-agnostic)
+                                try {
+                                    const payload = {
+                                        type: 'SAVE_GRADIENT',
+                                        settings: {
+                                            angle: parseInt(angle),
+                                            stops: [
+                                                { color: start, position: 0 },
+                                                { color: end, position: 100 }
+                                            ]
+                                        },
+                                        currentScheduleName: window.currentScheduleName || null,
+                                        schedules: null,
+                                        bridge: 'shiloh-extension',
+                                        intent: 'user-save'
+                                    };
+
                                     try {
-                                        // Include current schedule metadata so the extension popup
-                                        // can show the correct period/countdown for the user's schedule.
-                                        const payload = {
-                                            type: 'UPDATE_GRADIENT',
-                                            settings: {
-                                                angle: parseInt(angle),
-                                                stops: [
-                                                    { color: start, position: 0 },
-                                                    { color: end, position: 100 }
-                                                ]
-                                            },
-                                            // Application-level schedule info (optional)
-                                            currentScheduleName: window.currentScheduleName || null,
-                                            schedules: null
-                                        };
-
-                                        try {
-                                            // Try to capture global `schedules` if present and serialize safely
-                                            if (window.schedules) payload.schedules = window.schedules;
-                                        } catch (e) {
-                                            console.warn('Could not include schedules in extension payload', e);
-                                        }
-
-                                        chrome.runtime.sendMessage(EXTENSION_ID, payload, response => {
-                                            if (chrome.runtime.lastError) {
-                                                console.error('Extension communication error:', chrome.runtime.lastError);
-                                                alert('Unable to communicate with the extension. Please make sure it is installed and enabled.');
-                                            } else if (response?.error) {
-                                                console.error('Extension response error:', response.error);
-                                                alert('Error updating gradient: ' + response.error);
-                                            } else {
-                                                // gradient updated successfully (user notified)
-                                                    alert('Gradient updated successfully!');
-                                            }
-                                        });
-                                    } catch (error) {
-                                        console.error('Error sending message to extension:', error);
-                                        alert('Error communicating with extension: ' + error.message);
+                                        // Try to capture global `schedules` if present and serialize safely
+                                        if (window.schedules) payload.schedules = window.schedules;
+                                    } catch (e) {
+                                        console.warn('Could not include schedules in extension payload', e);
                                     }
-                                } else {
-                                    console.error('Chrome extension API not available');
-                                            alert('Extension API not available. Please make sure the Shiloh Schedule: Extension is installed.');
+
+                                    let handled = false;
+                                    const onMessage = (event) => {
+                                        if (event.data?.type === 'GRADIENT_SAVED') {
+                                            handled = true;
+                                            alert('Gradient updated successfully!');
+                                            window.removeEventListener('message', onMessage);
+                                        }
+                                        if (event.data?.type === 'GRADIENT_SAVE_FAILED') {
+                                            handled = true;
+                                            alert('Unable to save gradient to the extension. Please try again.');
+                                            window.removeEventListener('message', onMessage);
+                                        }
+                                    };
+                                    window.addEventListener('message', onMessage);
+                                    setTimeout(() => {
+                                        if (!handled) {
+                                            alert('Attempted to update the extension. Please ensure it is installed and enabled.');
+                                            window.removeEventListener('message', onMessage);
+                                        }
+                                    }, 2000);
+
+                                    window.postMessage(payload, '*');
+                                } catch (error) {
+                                    console.error('Error sending message to extension:', error);
+                                    alert('Error communicating with extension: ' + error.message);
                                 }
                             }
                         </script>
@@ -1334,7 +1350,7 @@
                                         }
                                         window.addEventListener('message', onMessage);
                                         try {
-                                            window.postMessage({ type: 'EXTENSION_PING' }, origin);
+                                            window.postMessage({ type: 'EXTENSION_PING', bridge: 'shiloh-extension' }, origin);
                                         } catch (e) {
                                             // if postMessage fails, treat as not installed
                                             settled = true;
@@ -1382,10 +1398,6 @@
                 <!-- Extension Panel -->
                 <div class="settings-panel" id="extension-panel">
                     <div class="settings-group">
-                        <div class="extension-info-banner" role="status">
-                            <i class="fas fa-bell"></i>
-                            <span>Shiloh students: we’ve reached out to admin and are working to get the extension unblocked. Thank you for your patience.</span>
-                        </div>
                         <h3><i class="fas fa-puzzle-piece"></i> Extension Settings</h3>
                         <p>Customize the gradient used in the Chrome extension. Adjust the colors and direction to update the background gradient.</p>
                         <div class="extension-form-row">
@@ -1484,7 +1496,6 @@
                             Install it from the Chrome Web Store
                         </a>
                     </p>
-                    <p><span class="inline-icon"><i class="fas fa-exclamation-triangle"></i></span><em>The extension is currently blocked on Shiloh Chromebooks; we’re working with admin to get it unblocked.</em></p>
                 </div>
 
                 <div class="update-section">
