@@ -429,10 +429,11 @@ select {
     inset: 0;
     background: rgba(0,0,0,0.7);
     display: none; /* controlled via script */
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     z-index: 9999;
     padding: 20px;
+    overflow-y: auto;
     animation: backdropFade 220ms ease-in;
 }
 .update-notice-dialog {
@@ -440,11 +441,15 @@ select {
     color: #e9ecf1;
     width: 100%;
     max-width: 620px;
+    max-height: calc(100vh - 48px);
     border-radius: 14px;
     box-shadow: 0 24px 50px rgba(0,0,0,0.35);
     position: relative;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
     border: 1px solid rgba(255,255,255,0.12);
+    margin: 24px auto;
 }
 .update-notice-dialog::before {
     content: "";
@@ -499,6 +504,9 @@ select {
     gap: 12px;
     align-items: flex-start;
     line-height: 1.55;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 .update-notice-dialog h2 {
     margin: 0;
