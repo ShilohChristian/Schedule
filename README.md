@@ -36,8 +36,8 @@ A modern, customizable schedule countdown tool designed for students, faculty, a
 
 ---
 
-### 🧩 Chrome Extension Integration (Coming Soon)
-- The upcoming **Shiloh Schedule: Extension** will provide:
+### 🧩 Chrome Extension Integration
+- The **Shiloh Schedule: Extension** provides:
   - Quick gradient adjustments  
   - Automatic syncing to the main site  
   - Background previews in new tabs  
