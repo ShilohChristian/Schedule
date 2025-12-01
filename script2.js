@@ -2046,17 +2046,7 @@ function initializePopupGradientControls() {
     // Apply initial gradient
     updatePopupGradientPreview(settings);
     
-    // Send to extension if available
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        const extId = chrome.runtime.id; // Ensure an extension ID is provided
-        chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
-            type: 'UPDATE_GRADIENT',
-            settings: {
-                angle: settings.angle,
-                stops: settings.stops
-            }
-        });
-    }
+    // Do not auto-push to the extension here; require an explicit user action elsewhere.
 }
 
 function updatePopupGradientStops(stops) {
@@ -2097,14 +2087,7 @@ function updatePopupGradient(index, color, position) {
     localStorage.setItem('popupGradientSettings', JSON.stringify(settings));
     updatePopupGradientPreview(settings);
 
-    if (chrome && chrome.runtime && chrome.runtime.sendMessage) {
-        chrome.runtime.sendMessage("clghadjfdfgihdkemlipfndoelebcipg", {
-            type: 'UPDATE_GRADIENT',
-            settings: { angle: settings.angle, stops: settings.stops }
-        }, function(response) {
-            // ...existing code...
-        });
-    }
+    // Do not auto-push to the extension here; require an explicit user action elsewhere.
 }
 
 function updatePopupGradientPreview(settings) {
