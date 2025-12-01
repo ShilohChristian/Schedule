@@ -1574,6 +1574,54 @@
                 document.addEventListener('gradeLevelChosen', handler);
             }
         });
+
+        // Allow scrolling the update notice from anywhere while it is open
+        (function enableGlobalUpdateNoticeScroll() {
+            let lastTouchY = null;
+            let backdropEl = null;
+            let bodyEl = null;
+
+            function cacheElements() {
+                backdropEl = document.getElementById('update-notice-backdrop');
+                bodyEl = backdropEl ? backdropEl.querySelector('.update-notice-body') : null;
+            }
+
+            function isOpen() {
+                return backdropEl && backdropEl.style.display !== 'none' && backdropEl.getAttribute('aria-hidden') !== 'true';
+            }
+
+            function scrollBody(deltaY) {
+                if (!isOpen() || !bodyEl) return;
+                bodyEl.scrollTop += deltaY;
+            }
+
+            function onWheel(e) {
+                if (!isOpen()) return;
+                scrollBody(e.deltaY);
+                e.preventDefault();
+            }
+
+            function onTouchStart(e) {
+                if (!isOpen()) return;
+                lastTouchY = e.touches && e.touches.length ? e.touches[0].clientY : null;
+            }
+
+            function onTouchMove(e) {
+                if (!isOpen() || lastTouchY === null) return;
+                const currentY = e.touches && e.touches.length ? e.touches[0].clientY : lastTouchY;
+                const delta = lastTouchY - currentY;
+                scrollBody(delta);
+                lastTouchY = currentY;
+                e.preventDefault();
+            }
+
+            document.addEventListener('DOMContentLoaded', () => {
+                cacheElements();
+                window.addEventListener('wheel', onWheel, { passive: false });
+                window.addEventListener('touchstart', onTouchStart, { passive: true });
+                window.addEventListener('touchmove', onTouchMove, { passive: false });
+            });
+        })();
     </script>
 </body>
 </html>
