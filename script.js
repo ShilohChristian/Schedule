@@ -505,6 +505,32 @@ function switchSchedule(scheduleName) {
         updateCountdowns();
     console.debug(`Switched to schedule: ${scheduleName}`);
             if (typeof window.refreshDevtoolsOverlay === 'function') window.refreshDevtoolsOverlay();
+            // Notify the extension (if present) about the schedule change so it can update its stored schedule
+            try {
+                if (typeof sendScheduleToExtension === 'function') {
+                    sendScheduleToExtension();
+                } else {
+                    // expose via window in case the helper is namespaced elsewhere
+                    if (window.sendScheduleToExtension) window.sendScheduleToExtension();
+                }
+            } catch (e) {
+                console.debug('Failed to notify extension of schedule change:', e);
+            }
+            // Also post an explicit message containing only the current schedule array
+            // to ensure the content script saves the exact schedule that was switched to.
+            try {
+                window.postMessage({
+                    type: 'SAVE_GRADIENT',
+                    settings: null,
+                    schedules: currentSchedule,
+                    currentScheduleName: scheduleName,
+                    gradeLevel: gradeLevel || 'highSchool',
+                    bridge: 'shiloh-extension',
+                    intent: 'user-save'
+                }, '*');
+            } catch (e) {
+                console.debug('Failed to post current schedule to extension bridge:', e);
+            }
     } catch (error) {
         console.error('Error switching schedule:', error);
         currentSchedule = schedules[scheduleName] || schedules.normal;
