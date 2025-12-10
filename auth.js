@@ -10,7 +10,7 @@ const firebaseConfig = {
 };
 
 const TOAST_ICON_KEY = 'toastIconEnabled';
-const BREAD_WORDS = ['bread', 'bagel', 'toast', 'roll', 'waffle', 'pancake', 'brioche', 'wheat', 'rye', 'sourdough', 'bun', 'ciabatta', 'focaccia', 'pita', 'naan', 'baguette'];
+const BREAD_WORDS = ['bread', 'bagel', 'toast', 'roll', 'waffle', 'pancake', 'brioche', 'wheat', 'rye', 'sourdough', 'bun', 'ciabatta', 'focaccia', 'pita', 'naan', 'baguette', 'flatbread', 'chapati', 'cornbread', 'pain', 'pumpernickel', 'monkey bread', 'pane', 'zopf', 'sweetroll', 'muffin', 'crumpet', 'babka', 'crostini', 'rye bread', 'tortilla', 'pain de mie', 'panettone', 'stollen', 'english muffin', 'breadstick', 'lavash', 'kettle bread', 'soda bread', 'pullman loaf', 'cinnamon roll', 'garlic bread', 'baguette viennoise', 'hardroll', 'soft roll', 'dinner roll', 'pretzel roll', 'coburg', 'rusk', 'tiger bread', 'naan bread', 'challah', 'bretzel', 'polenta bread', 'salt rising bread', 'pumpkin bread', 'beer bread', 'fry bread', 'sourdough baguette', 'brioche loaf', 'whole grain bread', 'gluten-free bread', 'multigrain bread', 'sweet roll', 'bunny bread', 'french toast', 'kvass bread', 'baker\'s bread', 'caraway bread', 'pane Siciliano', 'romano bread', 'cereal bread', 'bamboo bread', 'Miche', 'cinnamon swirl bread', 'oatmeal bread', 'spelt bread', 'seeded bread', 'lavender bread', 'tzatziki bread', 'toasted rye', 'Nordic flatbread', 'pepper bread', 'bakers'];
 
 function isToastIconEnabled() {
     try {
