@@ -9,6 +9,220 @@ const firebaseConfig = {
     measurementId: "G-YS6FHHEGFZ"
 };
 
+const TOAST_ICON_KEY = 'toastIconEnabled';
+const BREAD_WORDS = ['bread', 'bagel', 'toast', 'roll', 'waffle', 'pancake', 'brioche', 'wheat', 'rye', 'sourdough', 'bun', 'ciabatta', 'focaccia', 'pita', 'naan', 'baguette'];
+
+function isToastIconEnabled() {
+    try {
+        const value = localStorage.getItem(TOAST_ICON_KEY);
+        return value === true || value === 'true' || value === '1';
+    } catch (e) {
+        return false;
+    }
+}
+
+function updateToastIcon() {
+    try {
+        const existing = document.getElementById('toast-easter-egg');
+        const enabled = isToastIconEnabled();
+
+        if (!enabled) {
+            if (existing) existing.remove();
+            return;
+        }
+
+        if (existing) return;
+
+        const icon = document.createElement('div');
+        icon.id = 'toast-easter-egg';
+        icon.setAttribute('role', 'img');
+        icon.setAttribute('aria-label', 'Mildly annoyed toaster');
+        icon.title = 'I am still mildly annoyed – toaster';
+        icon.setAttribute('data-tooltip', 'I am still mildly annoyed – toaster');
+        icon.innerHTML = '<i class="fas fa-bread-slice" aria-hidden="true"></i>';
+        icon.addEventListener('click', triggerToastChaos, { once: false });
+
+        document.body.appendChild(icon);
+    } catch (e) {
+        console.warn('Could not render toast icon', e);
+    }
+}
+
+let toastChaosActive = false;
+function triggerToastChaos() {
+    if (toastChaosActive) return;
+    toastChaosActive = true;
+
+    // Replace visible text with bread variants during the effect
+    breadifyTextNodes();
+    startBreadFlash();
+    applyBreadBackground();
+
+    const container = document.createElement('div');
+    container.className = 'toast-chaos-container';
+    document.body.appendChild(container);
+
+    const spawnWindowMs = 4200;
+    const spawnEnd = Date.now() + spawnWindowMs;
+
+    function spawnToastPieces(count = 30) {
+        for (let i = 0; i < count; i++) {
+            const piece = document.createElement('div');
+            piece.className = 'toast-piece';
+            const delay = Math.random() * 0.5;
+            const duration = 1.6 + Math.random() * 1.4; // faster flight
+
+            // Spawn from random points along the screen edges (slightly off-screen), fling in any direction
+            const edge = Math.floor(Math.random() * 4); // 0=top,1=right,2=bottom,3=left
+            let startX, startY;
+            if (edge === 0) { // top
+                startX = Math.random() * 100;
+                startY = -15 - Math.random() * 10;
+            } else if (edge === 1) { // right
+                startX = 110 + Math.random() * 10;
+                startY = Math.random() * 100;
+            } else if (edge === 2) { // bottom
+                startX = Math.random() * 100;
+                startY = 110 + Math.random() * 10;
+            } else { // left
+                startX = -15 - Math.random() * 10;
+                startY = Math.random() * 100;
+            }
+
+            // fling toward a random target zone (can exit off-screen)
+            const endX = startX + (Math.random() * 220 - 110); // +/-110vw
+            const endY = startY + (Math.random() * 220 - 110); // +/-110vh
+
+            const spin = (Math.random() * 1400 - 700).toFixed(1);
+            piece.style.setProperty('--start-x', `${startX}vw`);
+            piece.style.setProperty('--end-x', `${endX}vw`);
+            piece.style.setProperty('--start-y', `${startY}vh`);
+            piece.style.setProperty('--end-y', `${endY}vh`);
+            piece.style.setProperty('--spin', `${spin}deg`);
+            piece.style.setProperty('--duration', `${duration}s`);
+            piece.style.animationDelay = `${delay}s`;
+            piece.style.animationDuration = `${duration}s`;
+            container.appendChild(piece);
+        }
+    }
+
+    spawnToastPieces(140); // initial burst
+    const spawnInterval = setInterval(() => {
+        if (Date.now() > spawnEnd) {
+            clearInterval(spawnInterval);
+            return;
+        }
+        spawnToastPieces(90);
+    }, 120);
+
+    const glitch = document.createElement('div');
+    glitch.className = 'toast-glitch-overlay';
+    document.body.appendChild(glitch);
+
+    // Build glitch slices with randomized transforms/hues for full-screen effect
+    const slices = 22;
+    for (let i = 0; i < slices; i++) {
+        const slice = document.createElement('div');
+        slice.className = 'toast-glitch-slice';
+        const height = 3 + Math.random() * 10;
+        const top = Math.random() * 100;
+        const dur = 1 + Math.random() * 1.4;
+        const delay = Math.random() * 0.8;
+        const x1 = (Math.random() * 30 - 15).toFixed(1) + 'px';
+        const x2 = (Math.random() * 40 - 20).toFixed(1) + 'px';
+        const hue1 = (Math.random() * 40 - 20).toFixed(1) + 'deg';
+        const hue2 = (Math.random() * 50 - 25).toFixed(1) + 'deg';
+        slice.style.top = `${top}%`;
+        slice.style.height = `${height}px`;
+        slice.style.animationDelay = `${delay}s`;
+        slice.style.animationDuration = `${dur}s`;
+        slice.style.setProperty('--glitch-x-1', x1);
+        slice.style.setProperty('--glitch-x-2', x2);
+        slice.style.setProperty('--glitch-hue-1', hue1);
+        slice.style.setProperty('--glitch-hue-2', hue2);
+        glitch.appendChild(slice);
+    }
+
+    // After the chaos, fade to black then reload
+    setTimeout(() => {
+        glitch.classList.add('active');
+    }, 200);
+
+    setTimeout(() => {
+        const blackout = document.createElement('div');
+        blackout.className = 'toast-blackout';
+        document.body.appendChild(blackout);
+    }, spawnWindowMs + 800);
+
+    setTimeout(() => {
+        window.location.reload();
+    }, spawnWindowMs + 2000);
+}
+
+function breadifyTextNodes() {
+    try {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+            acceptNode(node) {
+                if (!node || !node.data || !node.data.trim()) return NodeFilter.FILTER_REJECT;
+                // skip script/style tags
+                const parent = node.parentNode;
+                if (!parent || /^(SCRIPT|STYLE|NOSCRIPT|IFRAME|CANVAS)$/.test(parent.nodeName)) return NodeFilter.FILTER_REJECT;
+                return NodeFilter.FILTER_ACCEPT;
+            }
+        });
+        const replacements = [];
+        while (walker.nextNode()) {
+            const n = walker.currentNode;
+            const choice = BREAD_WORDS[Math.floor(Math.random() * BREAD_WORDS.length)];
+            replacements.push({ node: n, value: choice });
+        }
+        replacements.forEach(({ node, value }) => { node.data = value; });
+    } catch (e) {
+        console.warn('breadify failed', e);
+    }
+}
+
+let breadFlashInterval = null;
+function startBreadFlash() {
+    try {
+        const timerEl = document.getElementById('current-period-time');
+        const headerEl = document.getElementById('countdown-heading');
+        if (!timerEl && !headerEl) return;
+
+        if (breadFlashInterval) clearInterval(breadFlashInterval);
+        breadFlashInterval = setInterval(() => {
+            const word = BREAD_WORDS[Math.floor(Math.random() * BREAD_WORDS.length)];
+            if (timerEl) timerEl.textContent = word;
+            const word2 = BREAD_WORDS[Math.floor(Math.random() * BREAD_WORDS.length)];
+            if (headerEl) headerEl.textContent = word2;
+        }, 70); // rapid flashing
+    } catch (e) {
+        console.warn('flash failed', e);
+    }
+}
+
+function applyBreadBackground() {
+    try {
+        document.body.style.setProperty('--pre-bread-bg', document.body.style.backgroundImage || '');
+        document.body.style.backgroundImage = `
+            radial-gradient(circle at 10% 20%, rgba(244,198,131,0.28), transparent 28%),
+            radial-gradient(circle at 80% 10%, rgba(255,235,180,0.22), transparent 26%),
+            radial-gradient(circle at 30% 80%, rgba(193,146,89,0.25), transparent 30%),
+            repeating-linear-gradient(
+                45deg,
+                rgba(255,255,255,0.04) 0px,
+                rgba(255,255,255,0.04) 12px,
+                rgba(0,0,0,0.08) 12px,
+                rgba(0,0,0,0.08) 18px
+            )
+        `;
+        document.body.style.backgroundColor = '#f5deb3';
+        document.body.style.backgroundBlendMode = 'screen, screen, multiply, normal';
+    } catch (e) {
+        console.warn('could not apply bread background', e);
+    }
+}
+
 class AuthManager {
     constructor() {
         // Initialize Firebase first
@@ -91,6 +305,7 @@ class AuthManager {
             this.isAuthenticated = true;
             this.hideLoginModal();
             this.updateUI();
+            updateToastIcon();
             
             // Load or save user settings in Firestore (will load if present,
             // otherwise save current local settings). Use the existing
@@ -118,6 +333,7 @@ class AuthManager {
             
             // Collect all settings
             const settings = {
+                toastIconEnabled: localStorage.getItem(TOAST_ICON_KEY),
                 whiteBoxColor: localStorage.getItem("whiteBoxColor"),
                 whiteBoxOpacity: localStorage.getItem("whiteBoxOpacity"),
                 whiteBoxTextColor: localStorage.getItem("whiteBoxTextColor"),
@@ -248,11 +464,13 @@ class AuthManager {
                         loadSettings();
                     }
 
+                    updateToastIcon();
                     console.info("✅ Settings applied successfully");
                 }
             } else {
                 console.info("No settings found in Firestore, saving current local settings.");
                 await this.saveAllUserSettings(this.currentUser.uid);
+                updateToastIcon();
             }
         } catch (e) {
             console.error("Error handling user settings:", e);
@@ -574,6 +792,9 @@ window.addEventListener('message', (event) => {
     }
 });
 
+// Render easter-egg icon once the DOM is available, based on stored flag.
+document.addEventListener('DOMContentLoaded', updateToastIcon);
+
 // New helper function to load user settings from Firestore
 async function loadUserSettings() {
     if (!window.authManager || !window.authManager.currentUser) return null;
@@ -618,6 +839,7 @@ async function loadUserSettings() {
                     console.warn('Could not mirror setting', key, e);
                 }
             });
+            updateToastIcon();
             return settings;
         }
     } catch (error) {
