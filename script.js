@@ -799,13 +799,16 @@ window.populateRenamePeriods = populateRenamePeriods;
     window.__devConsoleGlobalInit = true;
     window.__devConsoleBuffer = window.__devConsoleBuffer || [];
     window.__origConsole = window.__origConsole || {};
+    window.__devConsolePauseCapture = window.__devConsolePauseCapture || false;
     ['log','info','warn','error','debug'].forEach(level => {
         try {
             window.__origConsole[level] = console[level].bind(console);
             console[level] = function(...args){
                 try {
-                    window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() });
-                    if (window.__devConsoleBuffer.length > 5000) window.__devConsoleBuffer.shift();
+                    if (!window.__devConsolePauseCapture) {
+                        window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() });
+                        if (window.__devConsoleBuffer.length > 1000) window.__devConsoleBuffer.shift();
+                    }
                 } catch (e) { }
                 try { window.__origConsole[level](...args); } catch (e) { }
             };
@@ -866,6 +869,31 @@ window.populateRenamePeriods = populateRenamePeriods;
         title.style.fontSize = '16px';
         title.textContent = 'DEVTOOLS · Debug Overlay';
 
+        const stateLine = document.createElement('div');
+        stateLine.style.display = 'flex';
+        stateLine.style.flexWrap = 'wrap';
+        stateLine.style.gap = '10px';
+        stateLine.style.marginTop = '6px';
+        stateLine.style.fontSize = '12px';
+        stateLine.style.opacity = '0.9';
+        function computeStateLine() {
+            const schedule = typeof currentScheduleName !== 'undefined' ? currentScheduleName : '(unknown schedule)';
+            const grade = typeof gradeLevel !== 'undefined' ? gradeLevel : '(no grade)';
+            const authUser = window.authManager?.currentUser?.email || (window.authManager?.currentUser?.displayName || 'signed out');
+            const timerRunning = !!(window.TimerManager && window.TimerManager.isRunning && window.TimerManager.isRunning());
+            const toastOn = typeof isToastIconEnabled === 'function'
+                ? isToastIconEnabled()
+                : (localStorage.getItem('toastIconEnabled') === 'true');
+            stateLine.innerHTML = `
+                <span>Schedule: <strong>${schedule}</strong></span>
+                <span>Grade: <strong>${grade}</strong></span>
+                <span>Auth: <strong>${authUser}</strong></span>
+                <span>Timer: <strong>${timerRunning ? 'running' : 'idle'}</strong></span>
+                <span>Toast icon: <strong>${toastOn ? 'on' : 'off'}</strong></span>
+            `;
+        }
+        computeStateLine();
+
         // Tabs: Debug | Console
         const tabs = document.createElement('div');
         tabs.style.display = 'flex';
@@ -908,37 +936,48 @@ window.populateRenamePeriods = populateRenamePeriods;
         tabs.appendChild(consoleTab);
 
         leftGroup.appendChild(title);
+        leftGroup.appendChild(stateLine);
         leftGroup.appendChild(tabs);
 
         const btnGroup = document.createElement('div');
         btnGroup.style.display = 'flex';
         btnGroup.style.gap = '8px';
 
-        const toastBtn = document.createElement('button');
-        toastBtn.textContent = 'Enable toast icon';
-        toastBtn.style.cursor = 'pointer';
-        toastBtn.style.padding = '10px 12px';
-        toastBtn.style.borderRadius = '10px';
-        toastBtn.style.border = '1px solid rgba(255,255,255,0.12)';
-        toastBtn.style.background = 'rgba(246,214,140,0.14)';
-        toastBtn.style.color = '#ffe7a4';
-        toastBtn.style.fontWeight = '700';
-        toastBtn.addEventListener('click', async (ev) => {
+        const toastToggleBtn = document.createElement('button');
+        toastToggleBtn.style.cursor = 'pointer';
+        toastToggleBtn.style.padding = '10px 12px';
+        toastToggleBtn.style.borderRadius = '10px';
+        toastToggleBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        toastToggleBtn.style.background = 'rgba(246,214,140,0.14)';
+        toastToggleBtn.style.color = '#ffe7a4';
+        toastToggleBtn.style.fontWeight = '700';
+        function syncToastToggleLabel() {
+            const enabled = typeof isToastIconEnabled === 'function'
+                ? isToastIconEnabled()
+                : (localStorage.getItem('toastIconEnabled') === 'true');
+            toastToggleBtn.textContent = enabled ? 'Toast icon: on (click to disable)' : 'Toast icon: off (click to enable)';
+        }
+        syncToastToggleLabel();
+        toastToggleBtn.addEventListener('click', async (ev) => {
             ev.stopPropagation();
             try {
-                localStorage.setItem('toastIconEnabled', 'true');
+                const currentlyOn = typeof isToastIconEnabled === 'function'
+                    ? isToastIconEnabled()
+                    : (localStorage.getItem('toastIconEnabled') === 'true');
+                const next = !currentlyOn;
+                localStorage.setItem('toastIconEnabled', String(next));
                 if (typeof updateToastIcon === 'function') updateToastIcon();
                 if (window.authManager?.currentUser) {
                     await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
                 }
                 const status = document.getElementById('devtools-clean-status');
-                if (status) status.textContent = 'Toast icon enabled for this browser/user.';
-                toastBtn.textContent = 'Toast enabled';
-                setTimeout(() => { toastBtn.textContent = 'Enable toast icon'; }, 1400);
+                if (status) status.textContent = `Toast icon ${next ? 'enabled' : 'disabled'} for this browser/user.`;
+                syncToastToggleLabel();
+                computeStateLine();
             } catch (e) {
-                console.error('Failed to enable toast icon', e);
-                toastBtn.textContent = 'Error enabling';
-                setTimeout(() => { toastBtn.textContent = 'Enable toast icon'; }, 1600);
+                console.error('Failed to toggle toast icon', e);
+                toastToggleBtn.textContent = 'Toggle failed';
+                setTimeout(syncToastToggleLabel, 1600);
             }
         });
 
@@ -956,6 +995,8 @@ window.populateRenamePeriods = populateRenamePeriods;
             cleanBtn.disabled = true;
             cleanBtn.textContent = 'Cleaning...';
             try {
+                const before = {};
+                Object.keys(localStorage).forEach(k => { before[k] = localStorage.getItem(k); });
                 const report = normalizeLocalStorage();
                 // wait a tick to ensure changes persisted
                 setTimeout(() => {
@@ -964,12 +1005,47 @@ window.populateRenamePeriods = populateRenamePeriods;
                     setTimeout(() => { cleanBtn.textContent = 'Clean/Normalize localStorage'; cleanBtn.disabled = false; }, 1200);
                     // show brief status
                     const status = document.getElementById('devtools-clean-status');
-                    if (status) status.textContent = `Fixed keys: ${report.fixedKeys.length}; details: ${report.fixedKeys.join(', ') || 'none'}`;
+                    if (status) {
+                        const after = {};
+                        Object.keys(localStorage).forEach(k => { after[k] = localStorage.getItem(k); });
+                        const changed = [];
+                        const seen = new Set([...Object.keys(before), ...Object.keys(after)]);
+                        seen.forEach(k => { if (before[k] !== after[k]) changed.push(k); });
+                        status.textContent = `Fixed keys: ${report.fixedKeys.length}; changed: ${changed.length ? changed.join(', ') : 'none'}`;
+                    }
                 }, 150);
             } catch (e) {
                 console.error('Normalization failed', e);
                 cleanBtn.textContent = 'Error';
                 cleanBtn.disabled = false;
+            }
+        });
+        const simulateScheduleBtn = document.createElement('button');
+        simulateScheduleBtn.textContent = 'Simulate schedule change';
+        simulateScheduleBtn.style.cursor = 'pointer';
+        simulateScheduleBtn.style.padding = '10px 12px';
+        simulateScheduleBtn.style.borderRadius = '10px';
+        simulateScheduleBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        simulateScheduleBtn.style.background = 'rgba(158,234,212,0.14)';
+        simulateScheduleBtn.style.color = '#c4ad62';
+        simulateScheduleBtn.style.fontWeight = '700';
+        simulateScheduleBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            try {
+                const active = typeof getActiveSchedules === 'function' ? getActiveSchedules() : schedules;
+                const keys = Object.keys(active || {});
+                if (!keys.length) throw new Error('No schedules available');
+                const currentIdx = Math.max(0, keys.indexOf(currentScheduleName));
+                const nextKey = keys[(currentIdx + 1) % keys.length];
+                if (typeof switchSchedule === 'function') switchSchedule(nextKey);
+                if (typeof sendScheduleToExtension === 'function') sendScheduleToExtension();
+                const status = document.getElementById('devtools-clean-status');
+                if (status) status.textContent = `Simulated switch to "${nextKey}" and pushed to extension (if available).`;
+                computeStateLine();
+            } catch (e) {
+                console.error('Failed to simulate schedule change', e);
+                simulateScheduleBtn.textContent = 'Sim failed';
+                setTimeout(() => { simulateScheduleBtn.textContent = 'Simulate schedule change'; }, 1600);
             }
         });
         const closeBtn = document.createElement('button');
@@ -1008,9 +1084,34 @@ window.populateRenamePeriods = populateRenamePeriods;
                 alert('Failed to clear localStorage (see console)');
             }
         });
-        btnGroup.appendChild(toastBtn);
+        const positionBtn = document.createElement('button');
+        positionBtn.textContent = 'Move to top-right';
+        positionBtn.style.cursor = 'pointer';
+        positionBtn.style.padding = '10px 12px';
+        positionBtn.style.borderRadius = '10px';
+        positionBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        positionBtn.style.background = 'rgba(255,255,255,0.08)';
+        positionBtn.style.color = '#E8ECF7';
+        positionBtn.style.fontWeight = '700';
+        let overlayPos = 'bottom-right';
+        positionBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            overlayPos = overlayPos === 'bottom-right' ? 'top-right' : 'bottom-right';
+            if (overlayPos === 'top-right') {
+                overlay.style.top = '16px';
+                overlay.style.bottom = '';
+                positionBtn.textContent = 'Move to bottom-right';
+            } else {
+                overlay.style.bottom = '16px';
+                overlay.style.top = '';
+                positionBtn.textContent = 'Move to top-right';
+            }
+        });
+        btnGroup.appendChild(toastToggleBtn);
+        btnGroup.appendChild(simulateScheduleBtn);
         btnGroup.appendChild(cleanBtn);
         btnGroup.appendChild(clearBtn);
+        btnGroup.appendChild(positionBtn);
         btnGroup.appendChild(closeBtn);
 
         header.appendChild(leftGroup);
@@ -1065,6 +1166,40 @@ window.populateRenamePeriods = populateRenamePeriods;
     consoleControls.style.gap = '8px';
     consoleControls.style.marginTop = '10px';
     consoleControls.style.justifyContent = 'flex-end';
+
+    const filterSelect = document.createElement('select');
+    filterSelect.style.borderRadius = '999px';
+    filterSelect.style.padding = '8px 12px';
+    filterSelect.style.border = '1px solid rgba(255,255,255,0.12)';
+    filterSelect.style.background = 'rgba(255,255,255,0.06)';
+    filterSelect.style.color = '#E8ECF7';
+    ['all','error','warn','info','debug','log'].forEach(level => {
+        const opt = document.createElement('option');
+        opt.value = level;
+        opt.textContent = `Show ${level}`;
+        filterSelect.appendChild(opt);
+    });
+    filterSelect.value = window.__devConsoleFilterLevel || 'all';
+    filterSelect.addEventListener('change', (ev) => {
+        window.__devConsoleFilterLevel = ev.target.value;
+        refreshConsoleOverlay();
+    });
+
+    const pauseBtn = document.createElement('button');
+    pauseBtn.textContent = window.__devConsolePauseCapture ? 'Resume capture' : 'Pause capture';
+    pauseBtn.style.cursor = 'pointer';
+    pauseBtn.style.padding = '8px 12px';
+    pauseBtn.style.borderRadius = '999px';
+    pauseBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    pauseBtn.style.background = 'rgba(255,255,255,0.06)';
+    pauseBtn.style.color = '#E8ECF7';
+    pauseBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        window.__devConsolePauseCapture = !window.__devConsolePauseCapture;
+        pauseBtn.textContent = window.__devConsolePauseCapture ? 'Resume capture' : 'Pause capture';
+        refreshConsoleOverlay();
+    });
+
     const clearConsoleBtn = document.createElement('button');
     clearConsoleBtn.textContent = 'Clear Console';
     clearConsoleBtn.style.cursor = 'pointer';
@@ -1074,6 +1209,30 @@ window.populateRenamePeriods = populateRenamePeriods;
     clearConsoleBtn.style.background = 'rgba(255,255,255,0.06)';
     clearConsoleBtn.style.color = '#E8ECF7';
     clearConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); window.__devConsoleBuffer = []; refreshConsoleOverlay(); });
+
+    const copyLatestErrorBtn = document.createElement('button');
+    copyLatestErrorBtn.textContent = 'Copy latest error';
+    copyLatestErrorBtn.style.cursor = 'pointer';
+    copyLatestErrorBtn.style.padding = '8px 12px';
+    copyLatestErrorBtn.style.borderRadius = '999px';
+    copyLatestErrorBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    copyLatestErrorBtn.style.background = 'rgba(255,107,107,0.18)';
+    copyLatestErrorBtn.style.color = '#ffdede';
+    copyLatestErrorBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        try {
+            const latestError = [...(window.__devConsoleBuffer || [])].reverse().find(l => l.level === 'error');
+            if (!latestError) { alert('No errors logged yet'); return; }
+            const text = `[${latestError.time}] ERROR: ${latestError.args.map(a=> {
+                try { return typeof a==='object' ? JSON.stringify(a) : String(a); } catch(e) { return String(a); }
+            }).join(' ')}`;
+            navigator.clipboard.writeText(text);
+            alert('Copied latest error');
+        } catch (e) {
+            alert('Copy failed');
+        }
+    });
+
     const copyConsoleBtn = document.createElement('button');
     copyConsoleBtn.textContent = 'Copy Logs';
     copyConsoleBtn.style.cursor = 'pointer';
@@ -1083,6 +1242,10 @@ window.populateRenamePeriods = populateRenamePeriods;
     copyConsoleBtn.style.background = 'rgba(196,173,98,0.12)';
     copyConsoleBtn.style.color = '#f8f3e3';
     copyConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try { const text = window.__devConsoleBuffer.map(l=>`[${l.time}] ${l.level.toUpperCase()}: ${l.args.map(a=> (typeof a==='object'?JSON.stringify(a):String(a))).join(' ')}\n`).join(''); navigator.clipboard.writeText(text); alert('Copied console logs to clipboard'); } catch(e){ alert('Copy failed'); } });
+
+    consoleControls.appendChild(filterSelect);
+    consoleControls.appendChild(pauseBtn);
+    consoleControls.appendChild(copyLatestErrorBtn);
     consoleControls.appendChild(copyConsoleBtn);
     consoleControls.appendChild(clearConsoleBtn);
     overlay.appendChild(consoleControls);
@@ -1175,11 +1338,17 @@ window.populateRenamePeriods = populateRenamePeriods;
         if (window.__devConsoleCaptured) return;
         window.__devConsoleCaptured = true;
         window.__originalConsole = window.__originalConsole || {};
+        window.__devConsolePauseCapture = window.__devConsolePauseCapture || false;
         ['log','info','warn','error','debug'].forEach(level => {
             try {
                 window.__originalConsole[level] = console[level].bind(console);
                 console[level] = function(...args){
-                    try { window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() }); if (window.__devConsoleBuffer.length>2000) window.__devConsoleBuffer.shift(); } catch(e){}
+                    try {
+                        if (!window.__devConsolePauseCapture) {
+                            window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() });
+                            if (window.__devConsoleBuffer.length>1000) window.__devConsoleBuffer.shift();
+                        }
+                    } catch(e){}
                     try { window.__originalConsole[level](...args); } catch(e){}
                 };
             } catch(e){}
@@ -1192,7 +1361,19 @@ window.populateRenamePeriods = populateRenamePeriods;
         if (!c) return;
         c.innerHTML = '';
         const buf = window.__devConsoleBuffer || [];
-        buf.slice().reverse().forEach((entry, idx) => {
+        const filter = window.__devConsoleFilterLevel || 'all';
+        const filtered = buf.filter(entry => filter === 'all' ? true : entry.level === filter);
+        if (window.__devConsolePauseCapture) {
+            const pausedNote = document.createElement('div');
+            pausedNote.textContent = 'Console capture paused';
+            pausedNote.style.padding = '8px 10px';
+            pausedNote.style.border = '1px dashed rgba(255,255,255,0.25)';
+            pausedNote.style.borderRadius = '10px';
+            pausedNote.style.marginBottom = '8px';
+            pausedNote.style.color = '#ffdede';
+            c.appendChild(pausedNote);
+        }
+        filtered.slice().reverse().forEach((entry, idx) => {
             const row = document.createElement('div');
             row.style.padding = '8px 10px';
             row.style.borderRadius = '10px';
@@ -1431,6 +1612,21 @@ window.populateRenamePeriods = populateRenamePeriods;
         if (buffer === sequence) {
             showDebugOverlay();
             buffer = '';
+        }
+    });
+
+    // Keyboard shortcut: Ctrl/Cmd + Shift + D toggles overlay
+    window.addEventListener('keydown', (e) => {
+        const isToggleShortcut = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key?.toLowerCase() === 'd');
+        if (!isToggleShortcut) return;
+        e.preventDefault();
+        const overlay = document.getElementById('devtools-debug-overlay');
+        const backdrop = document.getElementById('devtools-debug-backdrop');
+        if (overlay) {
+            overlay.remove();
+            if (backdrop) backdrop.remove();
+        } else {
+            showDebugOverlay();
         }
     });
 
