@@ -914,6 +914,34 @@ window.populateRenamePeriods = populateRenamePeriods;
         btnGroup.style.display = 'flex';
         btnGroup.style.gap = '8px';
 
+        const toastBtn = document.createElement('button');
+        toastBtn.textContent = 'Enable toast icon';
+        toastBtn.style.cursor = 'pointer';
+        toastBtn.style.padding = '10px 12px';
+        toastBtn.style.borderRadius = '10px';
+        toastBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        toastBtn.style.background = 'rgba(246,214,140,0.14)';
+        toastBtn.style.color = '#ffe7a4';
+        toastBtn.style.fontWeight = '700';
+        toastBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            try {
+                localStorage.setItem('toastIconEnabled', 'true');
+                if (typeof updateToastIcon === 'function') updateToastIcon();
+                if (window.authManager?.currentUser) {
+                    await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid);
+                }
+                const status = document.getElementById('devtools-clean-status');
+                if (status) status.textContent = 'Toast icon enabled for this browser/user.';
+                toastBtn.textContent = 'Toast enabled';
+                setTimeout(() => { toastBtn.textContent = 'Enable toast icon'; }, 1400);
+            } catch (e) {
+                console.error('Failed to enable toast icon', e);
+                toastBtn.textContent = 'Error enabling';
+                setTimeout(() => { toastBtn.textContent = 'Enable toast icon'; }, 1600);
+            }
+        });
+
         const cleanBtn = document.createElement('button');
         cleanBtn.textContent = 'Clean/Normalize localStorage';
         cleanBtn.style.cursor = 'pointer';
@@ -980,6 +1008,7 @@ window.populateRenamePeriods = populateRenamePeriods;
                 alert('Failed to clear localStorage (see console)');
             }
         });
+        btnGroup.appendChild(toastBtn);
         btnGroup.appendChild(cleanBtn);
         btnGroup.appendChild(clearBtn);
         btnGroup.appendChild(closeBtn);
