@@ -419,13 +419,13 @@
 
 .toast-piece {
     position: absolute;
-    width: 26px;
-    height: 32px;
+    width: 54px;
+    height: 68px;
     background: linear-gradient(140deg, #f3d08a, #f4b66b);
-    border-radius: 6px 6px 9px 9px;
+    border-radius: 12px 12px 16px 16px;
     box-shadow:
-        inset 0 -4px 0 rgba(0,0,0,0.15),
-        0 6px 14px rgba(0,0,0,0.28);
+        inset 0 -6px 0 rgba(0,0,0,0.15),
+        0 12px 26px rgba(0,0,0,0.32);
     left: var(--start-x);
     top: var(--start-y);
     transform: rotate(0deg);
