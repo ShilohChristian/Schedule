@@ -821,22 +821,188 @@ window.populateRenamePeriods = populateRenamePeriods;
 (() => {
     const sequence = '/dev';
     let buffer = '';
+    function ensureDevtoolsStyles() {
+        if (document.getElementById('devtools-style')) return;
+        const style = document.createElement('style');
+        style.id = 'devtools-style';
+        style.textContent = `
+        #devtools-debug-overlay::-webkit-scrollbar,
+        #devtools-debug-content::-webkit-scrollbar,
+        #devtools-console-content::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        #devtools-debug-overlay::-webkit-scrollbar-thumb,
+        #devtools-debug-content::-webkit-scrollbar-thumb,
+        #devtools-console-content::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, rgba(196,173,98,0.9), rgba(0,0,53,0.85));
+            border-radius: 999px;
+            border: 2px solid rgba(7,10,26,0.8);
+        }
+        #devtools-debug-overlay::-webkit-scrollbar-track,
+        #devtools-debug-content::-webkit-scrollbar-track,
+        #devtools-console-content::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.05);
+            border-radius: 999px;
+        }
+        `;
+        document.head.appendChild(style);
+    }
+
+    function toggleDevtoolsHud() {
+        const existing = document.getElementById('devtools-hud');
+        if (existing) {
+            if (existing._raf) cancelAnimationFrame(existing._raf);
+            if (existing._timer) clearInterval(existing._timer);
+            if (existing._pingTimer) clearInterval(existing._pingTimer);
+            if (existing._driftInterval) clearInterval(existing._driftInterval);
+            existing.remove();
+            try { localStorage.setItem('devtoolsHudEnabled', 'false'); } catch (e) {}
+            return;
+        }
+
+        const hud = document.createElement('div');
+        hud.id = 'devtools-hud';
+        hud.style.position = 'fixed';
+        hud.style.top = '12px';
+        hud.style.left = '12px';
+        hud.style.zIndex = 2147483645;
+        hud.style.minWidth = '220px';
+        hud.style.padding = '14px 16px';
+        hud.style.borderRadius = '14px';
+        hud.style.background = 'linear-gradient(155deg, rgba(0,0,53,0.9), rgba(12,16,32,0.94))';
+        hud.style.border = '1px solid rgba(196,173,98,0.5)';
+        hud.style.boxShadow = '0 14px 36px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,53,0.45), inset 0 1px 0 rgba(255,255,255,0.08)';
+        hud.style.color = '#E8ECF7';
+        hud.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
+        hud.style.fontSize = '12px';
+        hud.style.pointerEvents = 'none';
+
+        const title = document.createElement('div');
+        title.textContent = 'Live Stats';
+        title.style.fontWeight = '800';
+        title.style.letterSpacing = '0.08em';
+        title.style.marginBottom = '10px';
+        title.style.fontSize = '12px';
+        title.style.textTransform = 'uppercase';
+        title.style.color = '#f5e7c0';
+        title.style.textShadow = '0 0 10px rgba(196,173,98,0.45)';
+        hud.appendChild(title);
+
+        const row = (label) => {
+            const wrap = document.createElement('div');
+            wrap.style.display = 'flex';
+            wrap.style.justifyContent = 'space-between';
+            wrap.style.gap = '10px';
+            wrap.style.marginBottom = '4px';
+            wrap.style.opacity = '0.9';
+            const l = document.createElement('span');
+            l.textContent = label;
+            l.style.color = '#d9e2ff';
+            const v = document.createElement('span');
+            v.style.fontWeight = '700';
+            v.style.color = '#f8f4e8';
+            v.style.textAlign = 'right';
+            wrap.appendChild(l);
+            wrap.appendChild(v);
+            hud.appendChild(wrap);
+            return v;
+        };
+
+        const fpsVal = row('FPS');
+        const authVal = row('Auth');
+        const schedVal = row('Schedule');
+        const timerVal = row('Timer');
+        const memVal = row('Memory');
+        const lagVal = row('Latency');
+        const driftVal = row('Timer Drift');
+        const onlineVal = row('Online Status');
+        const pingVal = row('Ping');
+
+        let fps = 0;
+        let last = performance.now();
+        const tick = (now) => {
+            const delta = now - last;
+            last = now;
+            const instant = 1000 / (delta || 1);
+            fps = fps * 0.9 + instant * 0.1;
+            fpsVal.textContent = `${fps.toFixed(1)}`;
+            hud._raf = requestAnimationFrame(tick);
+        };
+        hud._raf = requestAnimationFrame(tick);
+
+        let driftMs = 0;
+        let lastDrift = performance.now();
+        hud._driftInterval = setInterval(() => {
+            const now = performance.now();
+            driftMs = Math.abs((now - lastDrift) - 1000);
+            lastDrift = now;
+        }, 1000);
+
+        const updateHud = async () => {
+            const authUser = window.authManager?.currentUser?.email || 'signed out';
+            const schedule = typeof currentScheduleName !== 'undefined' ? currentScheduleName : '(unknown)';
+            const timerRunning = !!(window.TimerManager && window.TimerManager.isRunning && window.TimerManager.isRunning());
+            authVal.textContent = authUser;
+            schedVal.textContent = schedule;
+            timerVal.textContent = timerRunning ? 'running' : 'idle';
+            if (performance && performance.memory) {
+                const { usedJSHeapSize, totalJSHeapSize } = performance.memory;
+                const mb = (usedJSHeapSize / 1048576).toFixed(1);
+                const total = (totalJSHeapSize / 1048576).toFixed(1);
+                memVal.textContent = `${mb} / ${total} MB`;
+            } else {
+                memVal.textContent = 'n/a';
+            }
+            const start = performance.now();
+            await Promise.resolve();
+            const now = performance.now();
+            lagVal.textContent = `${Math.max(0, now - start).toFixed(1)} ms`;
+            driftVal.textContent = `${driftMs.toFixed(1)} ms`;
+            const online = navigator.onLine ? 'Online' : 'Offline';
+            onlineVal.textContent = online;
+            onlineVal.style.color = navigator.onLine ? '#8ff7d8' : '#ffdede';
+        };
+        updateHud();
+        hud._timer = setInterval(updateHud, 1000);
+
+        // Ping updater
+        const pingEndpoint = window.location.href;
+        const updatePing = async () => {
+            const t0 = performance.now();
+            try {
+                await fetch(pingEndpoint, { method: 'HEAD', cache: 'no-store' });
+                const dur = performance.now() - t0;
+                pingVal.textContent = `${dur.toFixed(0)} ms`;
+            } catch (e) {
+                pingVal.textContent = 'fail';
+            }
+        };
+        updatePing();
+        hud._pingTimer = setInterval(updatePing, 10000);
+
+        document.body.appendChild(hud);
+        try { localStorage.setItem('devtoolsHudEnabled', 'true'); } catch (e) {}
+    }
+
     function showDebugOverlay() {
     if (document.getElementById('devtools-debug-overlay')) return;
+    ensureDevtoolsStyles();
     // create backdrop
     const backdrop = document.createElement('div');
     backdrop.id = 'devtools-debug-backdrop';
     backdrop.style.position = 'fixed';
     backdrop.style.inset = '0';
     backdrop.style.zIndex = 2147483646;
-    backdrop.style.background = 'radial-gradient(circle at 20% 20%, rgba(16,185,129,0.08), transparent 35%), radial-gradient(circle at 80% 0%, rgba(196,173,98,0.14), transparent 40%), rgba(7,10,26,0.6)';
+    backdrop.style.background = 'radial-gradient(circle at 20% 20%, rgba(0,0,53,0.18), transparent 35%), radial-gradient(circle at 80% 0%, rgba(196,173,98,0.18), transparent 40%), rgba(7,10,26,0.6)';
     document.body.appendChild(backdrop);
 
     const overlay = document.createElement('div');
     overlay.id = 'devtools-debug-overlay';
     overlay.style.position = 'fixed';
-        overlay.style.right = '16px';
-        overlay.style.bottom = '16px';
+        overlay.style.left = '50%';
+        overlay.style.top = '50%';
+        overlay.style.transform = 'translate(-50%, -50%)';
         overlay.style.zIndex = 2147483647;
         overlay.style.background = 'linear-gradient(135deg, rgba(7,10,26,0.92), rgba(8,17,44,0.9))';
         overlay.style.color = '#E8ECF7';
@@ -848,8 +1014,18 @@ window.populateRenamePeriods = populateRenamePeriods;
         overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.06)';
         overlay.style.backdropFilter = 'blur(12px) saturate(140%)';
         overlay.style.border = '1px solid rgba(255,255,255,0.08)';
-        overlay.style.overflow = 'auto';
+        overlay.style.overflow = 'hidden';
+        overlay.style.display = 'flex';
+        overlay.style.flexDirection = 'column';
     overlay.style.pointerEvents = 'auto';
+        // Restore saved position/size if available
+        try {
+            const saved = JSON.parse(localStorage.getItem('devtoolsOverlayPlacement') || '{}');
+            if (saved.top !== undefined) { overlay.style.top = `${saved.top}px`; overlay.style.transform = 'none'; }
+            if (saved.left !== undefined) { overlay.style.left = `${saved.left}px`; overlay.style.transform = 'none'; }
+            if (saved.width !== undefined) overlay.style.width = `${saved.width}px`;
+            if (saved.height !== undefined) overlay.style.height = `${saved.height}px`;
+        } catch (e) {}
 
         // Header with title, tabs and button group so buttons don't overlap the title
         const header = document.createElement('div');
@@ -867,7 +1043,27 @@ window.populateRenamePeriods = populateRenamePeriods;
         title.style.fontWeight = '800';
         title.style.letterSpacing = '0.02em';
         title.style.fontSize = '16px';
-        title.textContent = 'DEVTOOLS · Debug Overlay';
+        title.textContent = 'Dev Tools';
+        title.style.display = 'flex';
+        title.style.alignItems = 'center';
+        title.style.gap = '8px';
+
+        const errorBadge = document.createElement('span');
+        errorBadge.id = 'devtools-error-badge';
+        errorBadge.style.display = 'inline-flex';
+        errorBadge.style.alignItems = 'center';
+        errorBadge.style.justifyContent = 'center';
+        errorBadge.style.minWidth = '22px';
+        errorBadge.style.padding = '2px 7px';
+        errorBadge.style.borderRadius = '999px';
+        errorBadge.style.background = 'rgba(255,107,107,0.25)';
+        errorBadge.style.color = '#ffdede';
+        errorBadge.style.fontSize = '11px';
+        errorBadge.style.fontWeight = '800';
+        errorBadge.style.border = '1px solid rgba(255,255,255,0.12)';
+        errorBadge.textContent = '0';
+        errorBadge.title = 'Errors in console';
+        title.appendChild(errorBadge);
 
         const stateLine = document.createElement('div');
         stateLine.style.display = 'flex';
@@ -901,14 +1097,14 @@ window.populateRenamePeriods = populateRenamePeriods;
         tabs.style.marginTop = '10px';
 
         const debugTab = document.createElement('button');
-        debugTab.textContent = 'Debug';
+        debugTab.textContent = 'Local Storage';
         debugTab.setAttribute('role','tab');
         debugTab.setAttribute('aria-pressed','true');
         debugTab.tabIndex = 0;
         debugTab.style.cursor = 'pointer';
         debugTab.style.padding = '10px 16px';
         debugTab.style.borderRadius = '999px';
-        debugTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
+        debugTab.style.background = 'linear-gradient(120deg, rgba(196,173,98,0.28), rgba(0,0,53,0.35))';
         debugTab.style.border = '1px solid rgba(255,255,255,0.18)';
         debugTab.style.color = '#E8ECF7';
         debugTab.style.fontWeight = '700';
@@ -942,6 +1138,7 @@ window.populateRenamePeriods = populateRenamePeriods;
         const btnGroup = document.createElement('div');
         btnGroup.style.display = 'flex';
         btnGroup.style.gap = '8px';
+        btnGroup.style.flexWrap = 'wrap';
 
         const toastToggleBtn = document.createElement('button');
         toastToggleBtn.style.cursor = 'pointer';
@@ -981,45 +1178,6 @@ window.populateRenamePeriods = populateRenamePeriods;
             }
         });
 
-        const cleanBtn = document.createElement('button');
-        cleanBtn.textContent = 'Clean/Normalize localStorage';
-        cleanBtn.style.cursor = 'pointer';
-        cleanBtn.style.padding = '10px 12px';
-        cleanBtn.style.borderRadius = '10px';
-        cleanBtn.style.border = '1px solid rgba(255,255,255,0.12)';
-        cleanBtn.style.background = 'rgba(78,227,186,0.1)';
-        cleanBtn.style.color = '#8ff7d8';
-        cleanBtn.style.fontWeight = '700';
-        cleanBtn.addEventListener('click', async (ev) => {
-            ev.stopPropagation();
-            cleanBtn.disabled = true;
-            cleanBtn.textContent = 'Cleaning...';
-            try {
-                const before = {};
-                Object.keys(localStorage).forEach(k => { before[k] = localStorage.getItem(k); });
-                const report = normalizeLocalStorage();
-                // wait a tick to ensure changes persisted
-                setTimeout(() => {
-                    refreshDebugOverlay();
-                    cleanBtn.textContent = 'Cleaned';
-                    setTimeout(() => { cleanBtn.textContent = 'Clean/Normalize localStorage'; cleanBtn.disabled = false; }, 1200);
-                    // show brief status
-                    const status = document.getElementById('devtools-clean-status');
-                    if (status) {
-                        const after = {};
-                        Object.keys(localStorage).forEach(k => { after[k] = localStorage.getItem(k); });
-                        const changed = [];
-                        const seen = new Set([...Object.keys(before), ...Object.keys(after)]);
-                        seen.forEach(k => { if (before[k] !== after[k]) changed.push(k); });
-                        status.textContent = `Fixed keys: ${report.fixedKeys.length}; changed: ${changed.length ? changed.join(', ') : 'none'}`;
-                    }
-                }, 150);
-            } catch (e) {
-                console.error('Normalization failed', e);
-                cleanBtn.textContent = 'Error';
-                cleanBtn.disabled = false;
-            }
-        });
         const simulateScheduleBtn = document.createElement('button');
         simulateScheduleBtn.textContent = 'Simulate schedule change';
         simulateScheduleBtn.style.cursor = 'pointer';
@@ -1048,6 +1206,25 @@ window.populateRenamePeriods = populateRenamePeriods;
                 setTimeout(() => { simulateScheduleBtn.textContent = 'Simulate schedule change'; }, 1600);
             }
         });
+
+        const hudBtn = document.createElement('button');
+        hudBtn.textContent = 'Live HUD';
+        hudBtn.style.cursor = 'pointer';
+        hudBtn.style.padding = '10px 12px';
+        hudBtn.style.borderRadius = '10px';
+        hudBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+        hudBtn.style.background = 'rgba(255,255,255,0.08)';
+        hudBtn.style.color = '#E8ECF7';
+        hudBtn.style.fontWeight = '700';
+        const syncHudBtnLabel = () => {
+            const on = document.getElementById('devtools-hud');
+            hudBtn.textContent = on ? 'Hide HUD' : 'Live HUD';
+        };
+        hudBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            toggleDevtoolsHud();
+            syncHudBtnLabel();
+        });
         const closeBtn = document.createElement('button');
         closeBtn.textContent = 'Close';
         closeBtn.style.cursor = 'pointer';
@@ -1070,7 +1247,7 @@ window.populateRenamePeriods = populateRenamePeriods;
         clearBtn.style.color = '#ffdede';
         clearBtn.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            const ok = confirm('Clear all localStorage? This will remove all saved settings. You can undo via the "Undo Clean" button in this panel if needed. Continue?');
+        const ok = confirm('Clear all localStorage? This will remove all saved settings. Continue?');
             if (!ok) return;
             try {
                 // take a snapshot so undoNormalization can restore
@@ -1078,45 +1255,103 @@ window.populateRenamePeriods = populateRenamePeriods;
                 localStorage.clear();
                 refreshDebugOverlay();
                 const status = document.getElementById('devtools-clean-status');
-                if (status) status.textContent = 'localStorage cleared — use "Undo Clean" to restore';
+                if (status) status.textContent = 'localStorage cleared for this browser.';
             } catch (e) {
                 console.error('Failed to clear localStorage', e);
                 alert('Failed to clear localStorage (see console)');
             }
         });
-        const positionBtn = document.createElement('button');
-        positionBtn.textContent = 'Move to top-right';
-        positionBtn.style.cursor = 'pointer';
-        positionBtn.style.padding = '10px 12px';
-        positionBtn.style.borderRadius = '10px';
-        positionBtn.style.border = '1px solid rgba(255,255,255,0.12)';
-        positionBtn.style.background = 'rgba(255,255,255,0.08)';
-        positionBtn.style.color = '#E8ECF7';
-        positionBtn.style.fontWeight = '700';
-        let overlayPos = 'bottom-right';
-        positionBtn.addEventListener('click', (ev) => {
-            ev.stopPropagation();
-            overlayPos = overlayPos === 'bottom-right' ? 'top-right' : 'bottom-right';
-            if (overlayPos === 'top-right') {
-                overlay.style.top = '16px';
-                overlay.style.bottom = '';
-                positionBtn.textContent = 'Move to bottom-right';
-            } else {
-                overlay.style.bottom = '16px';
-                overlay.style.top = '';
-                positionBtn.textContent = 'Move to top-right';
-            }
-        });
         btnGroup.appendChild(toastToggleBtn);
         btnGroup.appendChild(simulateScheduleBtn);
-        btnGroup.appendChild(cleanBtn);
+        btnGroup.appendChild(hudBtn);
         btnGroup.appendChild(clearBtn);
-        btnGroup.appendChild(positionBtn);
         btnGroup.appendChild(closeBtn);
 
         header.appendChild(leftGroup);
         header.appendChild(btnGroup);
         overlay.appendChild(header);
+
+        // Draggable overlay (header as drag handle)
+        (function enableDrag() {
+            let dragging = false;
+            let startX = 0, startY = 0, startLeft = 0, startTop = 0;
+            header.style.cursor = 'move';
+            header.addEventListener('mousedown', (e) => {
+                dragging = true;
+                startX = e.clientX; startY = e.clientY;
+                const rect = overlay.getBoundingClientRect();
+                startLeft = rect.left; startTop = rect.top;
+                document.body.style.userSelect = 'none';
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                overlay.style.left = `${startLeft + dx}px`;
+                overlay.style.top = `${startTop + dy}px`;
+                overlay.style.right = '';
+                overlay.style.bottom = '';
+            });
+            window.addEventListener('mouseup', () => {
+                if (!dragging) return;
+                dragging = false;
+                document.body.style.userSelect = '';
+                try {
+                    const rect = overlay.getBoundingClientRect();
+                    localStorage.setItem('devtoolsOverlayPlacement', JSON.stringify({
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height
+                    }));
+                } catch (e) {}
+            });
+        })();
+
+        // Resize handle
+        const resizeHandle = document.createElement('div');
+        resizeHandle.style.position = 'absolute';
+        resizeHandle.style.right = '6px';
+        resizeHandle.style.bottom = '6px';
+        resizeHandle.style.width = '16px';
+        resizeHandle.style.height = '16px';
+        resizeHandle.style.borderRight = '2px solid rgba(255,255,255,0.3)';
+        resizeHandle.style.borderBottom = '2px solid rgba(255,255,255,0.3)';
+        resizeHandle.style.cursor = 'nwse-resize';
+        overlay.appendChild(resizeHandle);
+        (function enableResize() {
+            let resizing = false;
+            let startX = 0, startY = 0, startW = 0, startH = 0;
+            resizeHandle.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                resizing = true;
+                const rect = overlay.getBoundingClientRect();
+                startX = e.clientX; startY = e.clientY;
+                startW = rect.width; startH = rect.height;
+                document.body.style.userSelect = 'none';
+            });
+            window.addEventListener('mousemove', (e) => {
+                if (!resizing) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                overlay.style.width = `${Math.max(420, startW + dx)}px`;
+                overlay.style.height = `${Math.max(300, startH + dy)}px`;
+            });
+            window.addEventListener('mouseup', () => {
+                if (!resizing) return;
+                resizing = false;
+                document.body.style.userSelect = '';
+                try {
+                    const rect = overlay.getBoundingClientRect();
+                    localStorage.setItem('devtoolsOverlayPlacement', JSON.stringify({
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height
+                    }));
+                } catch (e) {}
+            });
+        })();
 
     const status = document.createElement('div');
     status.id = 'devtools-clean-status';
@@ -1129,19 +1364,24 @@ window.populateRenamePeriods = populateRenamePeriods;
     overlay.appendChild(status);
 
     // Debug JSON content
-    const debugContent = document.createElement('pre');
+    const debugContent = document.createElement('div');
     debugContent.id = 'devtools-debug-content';
-    debugContent.style.whiteSpace = 'pre-wrap';
+    debugContent.style.whiteSpace = 'normal';
     debugContent.style.marginTop = '14px';
     debugContent.style.display = 'block';
     debugContent.style.fontSize = '13px';
     debugContent.style.lineHeight = '1.45';
-    debugContent.style.maxHeight = '58vh';
+    debugContent.style.maxHeight = 'calc(80vh - 230px)';
     debugContent.style.overflow = 'auto';
     debugContent.style.padding = '14px';
     debugContent.style.borderRadius = '12px';
     debugContent.style.background = 'linear-gradient(145deg, rgba(255,255,255,0.03), rgba(255,255,255,0.04))';
     debugContent.style.border = '1px solid rgba(255,255,255,0.06)';
+    debugContent.style.display = 'grid';
+    debugContent.style.gridTemplateColumns = '1.2fr 1.8fr';
+    debugContent.style.columnGap = '12px';
+    debugContent.style.rowGap = '6px';
+    debugContent.style.alignItems = 'start';
     overlay.appendChild(debugContent);
 
     // Console content (hidden by default)
@@ -1149,7 +1389,7 @@ window.populateRenamePeriods = populateRenamePeriods;
     consoleContent.id = 'devtools-console-content';
     consoleContent.style.marginTop = '12px';
     consoleContent.style.display = 'none';
-    consoleContent.style.maxHeight = '60vh';
+    consoleContent.style.maxHeight = 'calc(80vh - 230px)';
     consoleContent.style.overflow = 'auto';
     consoleContent.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
     consoleContent.style.fontSize = '13px';
@@ -1183,6 +1423,34 @@ window.populateRenamePeriods = populateRenamePeriods;
     filterSelect.addEventListener('change', (ev) => {
         window.__devConsoleFilterLevel = ev.target.value;
         refreshConsoleOverlay();
+    });
+
+    const searchInput = document.createElement('input');
+    searchInput.type = 'search';
+    searchInput.placeholder = 'Search logs…';
+    searchInput.style.padding = '8px 12px';
+    searchInput.style.borderRadius = '10px';
+    searchInput.style.border = '1px solid rgba(255,255,255,0.12)';
+    searchInput.style.background = 'rgba(255,255,255,0.06)';
+    searchInput.style.color = '#E8ECF7';
+    searchInput.value = window.__devConsoleSearch || '';
+    searchInput.addEventListener('input', (ev) => {
+        window.__devConsoleSearch = ev.target.value;
+        refreshConsoleOverlay();
+    });
+
+    const preserveToggle = document.createElement('button');
+    preserveToggle.textContent = window.__devConsolePreserve ? 'Preserve log: on' : 'Preserve log: off';
+    preserveToggle.style.cursor = 'pointer';
+    preserveToggle.style.padding = '8px 12px';
+    preserveToggle.style.borderRadius = '999px';
+    preserveToggle.style.border = '1px solid rgba(255,255,255,0.12)';
+    preserveToggle.style.background = 'rgba(255,255,255,0.06)';
+    preserveToggle.style.color = '#E8ECF7';
+    preserveToggle.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        window.__devConsolePreserve = !window.__devConsolePreserve;
+        preserveToggle.textContent = window.__devConsolePreserve ? 'Preserve log: on' : 'Preserve log: off';
     });
 
     const pauseBtn = document.createElement('button');
@@ -1243,10 +1511,54 @@ window.populateRenamePeriods = populateRenamePeriods;
     copyConsoleBtn.style.color = '#f8f3e3';
     copyConsoleBtn.addEventListener('click', (ev) => { ev.stopPropagation(); try { const text = window.__devConsoleBuffer.map(l=>`[${l.time}] ${l.level.toUpperCase()}: ${l.args.map(a=> (typeof a==='object'?JSON.stringify(a):String(a))).join(' ')}\n`).join(''); navigator.clipboard.writeText(text); alert('Copied console logs to clipboard'); } catch(e){ alert('Copy failed'); } });
 
+    const downloadConsoleBtn = document.createElement('button');
+    downloadConsoleBtn.textContent = 'Download JSON';
+    downloadConsoleBtn.style.cursor = 'pointer';
+    downloadConsoleBtn.style.padding = '8px 12px';
+    downloadConsoleBtn.style.borderRadius = '999px';
+    downloadConsoleBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    downloadConsoleBtn.style.background = 'rgba(158,234,212,0.12)';
+    downloadConsoleBtn.style.color = '#d2fff2';
+    downloadConsoleBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        try {
+            const blob = new Blob([JSON.stringify(window.__devConsoleBuffer || [], null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `devtools-logs-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) { alert('Download failed'); }
+    });
+
+    const copySettingsBtn = document.createElement('button');
+    copySettingsBtn.textContent = 'Copy settings';
+    copySettingsBtn.style.cursor = 'pointer';
+    copySettingsBtn.style.padding = '8px 12px';
+    copySettingsBtn.style.borderRadius = '999px';
+    copySettingsBtn.style.border = '1px solid rgba(255,255,255,0.12)';
+    copySettingsBtn.style.background = 'rgba(78,227,186,0.12)';
+    copySettingsBtn.style.color = '#8ff7d8';
+    copySettingsBtn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        try {
+            const kv = {};
+            Object.keys(localStorage).sort().forEach(k => kv[k] = localStorage.getItem(k));
+            navigator.clipboard.writeText(JSON.stringify(kv, null, 2));
+            const status = document.getElementById('devtools-clean-status');
+            if (status) status.textContent = 'Copied settings to clipboard';
+        } catch (e) { alert('Copy failed'); }
+    });
+
     consoleControls.appendChild(filterSelect);
+    consoleControls.appendChild(searchInput);
+    consoleControls.appendChild(preserveToggle);
     consoleControls.appendChild(pauseBtn);
     consoleControls.appendChild(copyLatestErrorBtn);
     consoleControls.appendChild(copyConsoleBtn);
+    consoleControls.appendChild(downloadConsoleBtn);
+    consoleControls.appendChild(copySettingsBtn);
     consoleControls.appendChild(clearConsoleBtn);
     overlay.appendChild(consoleControls);
 
@@ -1259,7 +1571,7 @@ window.populateRenamePeriods = populateRenamePeriods;
         // Tab switching with accessible styles and aria states
         function setActiveTab(tabName) {
             if (tabName === 'debug') {
-                debugTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
+                debugTab.style.background = 'linear-gradient(120deg, rgba(196,173,98,0.28), rgba(0,0,53,0.35))';
                 debugTab.style.border = '1px solid rgba(255,255,255,0.2)';
                 debugTab.setAttribute('aria-pressed','true');
                 consoleTab.style.background = 'transparent';
@@ -1269,10 +1581,10 @@ window.populateRenamePeriods = populateRenamePeriods;
                 consoleContent.style.display = 'none';
                 consoleControls.style.display = 'none';
             } else {
-                consoleTab.style.background = 'linear-gradient(120deg, rgba(78,227,186,0.22), rgba(196,173,98,0.28))';
-                consoleTab.style.border = '1px solid rgba(255,255,255,0.2)';
-                consoleTab.setAttribute('aria-pressed','true');
-                debugTab.style.background = 'transparent';
+        consoleTab.style.background = 'linear-gradient(120deg, rgba(196,173,98,0.28), rgba(0,0,53,0.35))';
+        consoleTab.style.border = '1px solid rgba(255,255,255,0.2)';
+        consoleTab.setAttribute('aria-pressed','true');
+        debugTab.style.background = 'transparent';
                 debugTab.style.border = '1px solid rgba(255,255,255,0.08)';
                 debugTab.setAttribute('aria-pressed','false');
                 debugContent.style.display = 'none';
@@ -1298,38 +1610,200 @@ window.populateRenamePeriods = populateRenamePeriods;
     function refreshDebugOverlay() {
         const content = document.getElementById('devtools-debug-content');
         if (!content) return;
+        content.innerHTML = '';
         const keys = Object.keys(localStorage).sort();
-        const renames = getPeriodRenames();
-        const globalNames = getGlobalPeriodNames();
-        const intervals = {
-            TimerManager_running: !!(window.TimerManager && window.TimerManager.isRunning && window.TimerManager.isRunning()),
-            legacy_countdownInterval: !!window.countdownInterval,
-            legacy_progressInterval: !!window.progressInterval
-        };
+        const hdrKey = document.createElement('div');
+        hdrKey.textContent = `Key (${keys.length})`;
+        hdrKey.style.fontWeight = '800';
+        hdrKey.style.letterSpacing = '0.02em';
+        hdrKey.style.textTransform = 'uppercase';
+        hdrKey.style.color = '#f5e7c0';
+        hdrKey.style.padding = '8px 10px';
+        hdrKey.style.borderRadius = '10px';
+        hdrKey.style.background = 'rgba(255,255,255,0.08)';
+        hdrKey.style.border = '1px solid rgba(255,255,255,0.12)';
+        const hdrVal = document.createElement('div');
+        hdrVal.textContent = `Value — ${new Date().toLocaleTimeString()}`;
+        hdrVal.style.fontWeight = '800';
+        hdrVal.style.letterSpacing = '0.02em';
+        hdrVal.style.textTransform = 'uppercase';
+        hdrVal.style.color = '#f5e7c0';
+        hdrVal.style.padding = '8px 10px';
+        hdrVal.style.borderRadius = '10px';
+        hdrVal.style.background = 'rgba(255,255,255,0.08)';
+        hdrVal.style.border = '1px solid rgba(255,255,255,0.12)';
+        content.appendChild(hdrKey);
+        content.appendChild(hdrVal);
 
-        // Build a key->value map showing parsed values where possible
-        const kv = {};
-        keys.forEach(k => {
+        keys.forEach((k, idx) => {
             const raw = localStorage.getItem(k);
             let parsed = raw;
-            try {
-                parsed = JSON.parse(raw);
-            } catch (e) {
-                // not JSON, keep raw string
-                parsed = raw;
-            }
-            kv[k] = parsed;
-        });
+            try { parsed = JSON.parse(raw); } catch (e) { parsed = raw; }
+            const keyCell = document.createElement('div');
+            keyCell.textContent = k;
+            keyCell.style.padding = '6px 10px';
+            keyCell.style.borderRadius = '8px';
+            keyCell.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.06)';
+            keyCell.style.border = '1px solid rgba(255,255,255,0.12)';
+            keyCell.style.wordBreak = 'break-word';
 
-        const debug = {
-            now: new Date().toString(),
-            currentScheduleName,
-            periodRenames: renames,
-            globalPeriodNames: globalNames,
-            localStorage: kv,
-            intervals
-        };
-        content.textContent = JSON.stringify(debug, null, 2);
+            const valCell = document.createElement('div');
+            valCell.style.padding = '6px 10px';
+            valCell.style.borderRadius = '8px';
+            valCell.style.background = idx % 2 === 0 ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.05)';
+            valCell.style.border = '1px solid rgba(255,255,255,0.1)';
+            valCell.style.whiteSpace = 'pre-wrap';
+            valCell.style.wordBreak = 'break-word';
+            valCell.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
+            valCell.style.position = 'relative';
+            valCell.style.setProperty('--pencil-color', 'rgba(196,173,98,0.9)');
+            const fullText = (typeof parsed === 'object' && parsed !== null)
+                ? JSON.stringify(parsed, null, 2)
+                : String(parsed);
+            const shouldCollapse = fullText.length > 1000;
+            const collapsedText = shouldCollapse ? `${fullText.slice(0, 1000)} …` : fullText;
+            const valText = document.createElement('span');
+            valText.textContent = collapsedText;
+            valText.dataset.full = fullText;
+            valText.dataset.collapsed = collapsedText;
+            valText.style.display = 'block';
+            valCell.appendChild(valText);
+
+            const controls = document.createElement('div');
+            controls.style.display = 'flex';
+            controls.style.gap = '6px';
+            controls.style.flexWrap = 'wrap';
+            controls.style.marginTop = '6px';
+
+            const editBtn = document.createElement('button');
+            editBtn.innerHTML = '✎';
+            editBtn.title = 'Edit value';
+            editBtn.style.position = 'absolute';
+            editBtn.style.top = '6px';
+            editBtn.style.left = '6px';
+            editBtn.style.padding = '4px 6px';
+            editBtn.style.borderRadius = '8px';
+            editBtn.style.border = '1px solid rgba(255,255,255,0.14)';
+            editBtn.style.background = 'rgba(255,255,255,0.14)';
+            editBtn.style.color = '#f8f8ff';
+            editBtn.style.cursor = 'pointer';
+            editBtn.style.opacity = '0';
+            editBtn.style.transition = 'opacity 120ms ease';
+            const iconSpan = document.createElement('span');
+            iconSpan.textContent = '✎';
+            iconSpan.style.display = 'inline-block';
+            iconSpan.style.transform = 'rotate(-25deg)';
+            editBtn.innerHTML = '';
+            editBtn.appendChild(iconSpan);
+            valCell.addEventListener('mouseenter', () => { editBtn.style.opacity = '1'; });
+            valCell.addEventListener('mouseleave', () => { editBtn.style.opacity = '0'; });
+            editBtn.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                if (valCell.querySelector('textarea')) {
+                    const existing = valCell.querySelector('textarea');
+                    existing.focus();
+                    return;
+                }
+                const editor = document.createElement('textarea');
+                editor.value = valText.dataset.full;
+                editor.style.width = '100%';
+                editor.style.boxSizing = 'border-box';
+                editor.style.marginTop = '28px';
+                editor.style.padding = '8px';
+                editor.style.borderRadius = '8px';
+                editor.style.border = '1px solid rgba(255,255,255,0.18)';
+                editor.style.background = 'rgba(0,0,53,0.55)';
+                editor.style.color = '#f0f4ff';
+                editor.rows = Math.min(10, Math.max(4, Math.ceil(valText.dataset.full.length / 80)));
+
+                const saveBtn = document.createElement('button');
+                saveBtn.textContent = 'Save';
+                saveBtn.style.marginTop = '6px';
+                saveBtn.style.marginRight = '6px';
+                saveBtn.style.padding = '6px 10px';
+                saveBtn.style.borderRadius = '8px';
+                saveBtn.style.border = '1px solid rgba(255,255,255,0.18)';
+                saveBtn.style.background = 'rgba(196,173,98,0.2)';
+                saveBtn.style.color = '#f5e7c0';
+                saveBtn.style.cursor = 'pointer';
+
+                const cancelBtn = document.createElement('button');
+                cancelBtn.textContent = 'Cancel';
+                cancelBtn.style.marginTop = '6px';
+                cancelBtn.style.padding = '6px 10px';
+                cancelBtn.style.borderRadius = '8px';
+                cancelBtn.style.border = '1px solid rgba(255,255,255,0.14)';
+                cancelBtn.style.background = 'rgba(255,255,255,0.08)';
+                cancelBtn.style.color = '#e8ecf7';
+                cancelBtn.style.cursor = 'pointer';
+
+                const actionRow = document.createElement('div');
+                actionRow.style.display = 'flex';
+                actionRow.style.gap = '6px';
+                actionRow.appendChild(saveBtn);
+                actionRow.appendChild(cancelBtn);
+
+                const applyText = (nextVal) => {
+                    const isLong = nextVal.length > 1000;
+                    valText.dataset.full = nextVal;
+                    valText.dataset.collapsed = isLong ? `${nextVal.slice(0, 1000)} …` : nextVal;
+                    valText.textContent = isLong ? valText.dataset.collapsed : nextVal;
+                };
+
+                saveBtn.addEventListener('click', async (e2) => {
+                    e2.stopPropagation();
+                    try {
+                        localStorage.setItem(k, editor.value);
+                        applyText(editor.value);
+                        if (window.authManager?.currentUser) {
+                            try { await window.authManager.saveAllUserSettings(window.authManager.currentUser.uid); } catch (e) { console.warn('Firestore sync failed', e); }
+                        }
+                        refreshDebugOverlay();
+                    } catch (e) {
+                        alert('Save failed (see console)');
+                        console.error('Failed to save localStorage key', k, e);
+                    }
+                });
+                cancelBtn.addEventListener('click', (e2) => {
+                    e2.stopPropagation();
+                    editor.remove();
+                    actionRow.remove();
+                });
+
+                valCell.appendChild(editor);
+                valCell.appendChild(actionRow);
+                editor.focus();
+            });
+            valCell.appendChild(editBtn);
+
+            if (shouldCollapse) {
+                const toggle = document.createElement('button');
+                toggle.textContent = 'Expand';
+                toggle.style.padding = '4px 8px';
+                toggle.style.borderRadius = '8px';
+                toggle.style.border = '1px solid rgba(255,255,255,0.12)';
+                toggle.style.background = 'rgba(196,173,98,0.12)';
+                toggle.style.color = '#f5e7c0';
+                toggle.style.cursor = 'pointer';
+                toggle.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    const expanded = toggle.textContent === 'Collapse';
+                    if (expanded) {
+                        valText.textContent = valText.dataset.collapsed;
+                        toggle.textContent = 'Expand';
+                    } else {
+                        valText.textContent = valText.dataset.full;
+                        toggle.textContent = 'Collapse';
+                    }
+                });
+                controls.appendChild(toggle);
+            }
+
+            valCell.appendChild(controls);
+
+            content.appendChild(keyCell);
+            content.appendChild(valCell);
+        });
     }
 
     // Console capture and rendering
@@ -1346,7 +1820,7 @@ window.populateRenamePeriods = populateRenamePeriods;
                     try {
                         if (!window.__devConsolePauseCapture) {
                             window.__devConsoleBuffer.push({ level, args, time: new Date().toLocaleTimeString() });
-                            if (window.__devConsoleBuffer.length>1000) window.__devConsoleBuffer.shift();
+                            if (!window.__devConsolePreserve && window.__devConsoleBuffer.length>1000) window.__devConsoleBuffer.shift();
                         }
                     } catch(e){}
                     try { window.__originalConsole[level](...args); } catch(e){}
@@ -1362,7 +1836,15 @@ window.populateRenamePeriods = populateRenamePeriods;
         c.innerHTML = '';
         const buf = window.__devConsoleBuffer || [];
         const filter = window.__devConsoleFilterLevel || 'all';
-        const filtered = buf.filter(entry => filter === 'all' ? true : entry.level === filter);
+        const search = (window.__devConsoleSearch || '').toLowerCase();
+        const filtered = buf.filter(entry => {
+            if (filter !== 'all' && entry.level !== filter) return false;
+            if (!search) return true;
+            const haystack = entry.args.map(a => {
+                try { return typeof a === 'object' ? JSON.stringify(a) : String(a); } catch (e) { return String(a); }
+            }).join(' ').toLowerCase();
+            return haystack.includes(search);
+        });
         if (window.__devConsolePauseCapture) {
             const pausedNote = document.createElement('div');
             pausedNote.textContent = 'Console capture paused';
@@ -1391,6 +1873,17 @@ window.populateRenamePeriods = populateRenamePeriods;
             row.appendChild(time); row.appendChild(lvl); row.appendChild(msg);
             c.appendChild(row);
         });
+        // Update error badge
+        try {
+            const badge = document.getElementById('devtools-error-badge');
+            if (badge) {
+                const errorCount = buf.filter(e => e.level === 'error').length;
+                badge.textContent = errorCount;
+                badge.style.opacity = errorCount ? '1' : '0.55';
+                badge.style.background = errorCount ? 'rgba(255,107,107,0.25)' : 'rgba(255,255,255,0.08)';
+                badge.style.color = errorCount ? '#ffdede' : '#d1d5e7';
+            }
+        } catch (e) {}
         // expose a window hook so external code (or tests) can refresh the console view
         try { window.__refreshDevConsoleOverlay = refreshConsoleOverlay; } catch (e) { }
     }
@@ -1581,25 +2074,7 @@ window.populateRenamePeriods = populateRenamePeriods;
     });
 
     // Add undo button wiring: add listener to overlay when present
-    const observer = new MutationObserver(() => {
-        const overlay = document.getElementById('devtools-debug-overlay');
-        if (!overlay) return;
-        if (overlay._wired) return;
-        // insert Undo button near clean status
-        const status = document.getElementById('devtools-clean-status');
-        if (status) {
-            const undoBtn = document.createElement('button');
-            undoBtn.textContent = 'Undo Clean';
-            undoBtn.style.marginLeft = '8px';
-            undoBtn.addEventListener('click', (ev) => {
-                ev.stopPropagation();
-                const res = undoNormalization();
-                status.textContent = `Undo restored ${res.restored} keys`;
-            });
-            status.appendChild(undoBtn);
-        }
-        overlay._wired = true;
-    });
+    const observer = new MutationObserver(() => {});
     observer.observe(document.body, { childList: true, subtree: true });
 
     // Keyboard listener for sequence (now '/dev')
@@ -1628,6 +2103,17 @@ window.populateRenamePeriods = populateRenamePeriods;
         } else {
             showDebugOverlay();
         }
+    });
+
+    // Auto-show HUD if previously enabled
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            if (localStorage.getItem('devtoolsHudEnabled') === 'true') {
+                setTimeout(() => {
+                    toggleDevtoolsHud();
+                }, 50);
+            }
+        } catch (e) {}
     });
 
     // Expose refresh function for overlay
