@@ -335,6 +335,7 @@ class AuthManager {
             // Collect all settings
             const settings = {
                 toastIconEnabled: localStorage.getItem(TOAST_ICON_KEY),
+                gradeLevel: localStorage.getItem("gradeLevel"),
                 whiteBoxColor: localStorage.getItem("whiteBoxColor"),
                 whiteBoxOpacity: localStorage.getItem("whiteBoxOpacity"),
                 whiteBoxTextColor: localStorage.getItem("whiteBoxTextColor"),
@@ -342,14 +343,20 @@ class AuthManager {
                 fontColor: localStorage.getItem("fontColor"),
                 theme: localStorage.getItem("theme"),
                 countdownColor: localStorage.getItem("countdownColor"),
+                showPeriodTimes: localStorage.getItem("showPeriodTimes"),
                 progressBarEnabled: localStorage.getItem("progressBarEnabled"),
                 progressBarColor: localStorage.getItem("progressBarColor"),
                 progressBarOpacity: localStorage.getItem("progressBarOpacity"),
                 timerShadowSettings: localStorage.getItem("timerShadowSettings"),
                 gradientSettings: localStorage.getItem("gradientSettings"),
+                extensionGradientSettings: localStorage.getItem("extensionGradientSettings"),
+                popupGradientSettings: localStorage.getItem("popupGradientSettings"),
                 bgImage: localStorage.getItem("bgImage"),
+                boxBorderColor: localStorage.getItem("boxBorderColor"),
+                boxBorderWidth: localStorage.getItem("boxBorderWidth"),
                 profileHidden: localStorage.getItem("profileHidden"),
-                currentScheduleName: localStorage.getItem("currentScheduleName")
+                currentScheduleName: localStorage.getItem("currentScheduleName"),
+                sawUpdateNotice: localStorage.getItem("sawUpdateNotice")
             };
 
             // Include period renames and global period names (as JSON)
