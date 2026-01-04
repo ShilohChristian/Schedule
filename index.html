@@ -571,6 +571,7 @@
                         <select id="grade-level-dropdown">
                             <option value="highSchool">High School</option>
                             <option value="middleSchool">Middle School</option>
+                            <option value="grade5">5th Grade</option>
                         </select>
                     </div>
                     <div class="settings-group">
@@ -656,7 +657,7 @@
                             <p>Questions, issues, or feedback? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a></p>
 
                             <div class="contact-info">
-                                <p class="version-info">Version 3.0.3</p>
+                                <p class="version-info">Version 3.1.0</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
                             </div>
                         </div>
@@ -680,6 +681,18 @@
                         </div>
 
                         <div id="whatsnew-website" class="whatsnew-log" role="tabpanel">
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v3.1.0</span>
+                                    <span class="wn-date">Dec 2, 2025</span>
+                                    <span class="wn-tag">Schedules</span>
+                                </div>
+                                <ul>
+                                    <li>Added 5th Grade schedules and refreshed Middle School (6-7th grade) schedules.</li>
+                                    <li>Grade picker now includes 5th Grade; chapel and house days pick the right schedule automatically.</li>
+                                    <li>Extension stays in sync with the new schedules when you save from the site.</li>
+                                </ul>
+                            </div>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
                                     <span class="wn-version">v3.0.4</span>
@@ -1039,6 +1052,28 @@
                         </div>
 
                         <div id="whatsnew-extension" class="whatsnew-log" role="tabpanel" hidden>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.5</span>
+                                    <span class="wn-date">Dec 4, 2025</span>
+                                    <span class="wn-tag">Cleanup</span>
+                                </div>
+                                <ul>
+                                    <li>Kept the extension in sync with the new schedules added on the site.</li>
+                                    <li>Trimmed unneeded permissions and kept the latest schedule-sync fixes intact.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.4</span>
+                                    <span class="wn-date">Dec 2, 2025</span>
+                                    <span class="wn-tag">Schedules</span>
+                                </div>
+                                <ul>
+                                    <li>Bundled the new Middle School (6-7) and 5th Grade schedules with passing periods.</li>
+                                    <li>Popup honors the grade level and schedule name sent from the site for accurate countdowns.</li>
+                                </ul>
+                            </div>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
                                     <span class="wn-version">v1.1.3</span>
@@ -1499,49 +1534,22 @@
             </div>
         </div>
     </div>
-    <!-- Update notice modal (v3 placeholder) -->
+    <!-- Update notice modal -->
     <div id="update-notice-backdrop" class="update-notice-backdrop" aria-hidden="true">
         <div class="update-notice-dialog" role="dialog" aria-modal="true" aria-labelledby="update-notice-title">
             <div class="update-notice-header">
                 <div class="update-title-icon"><img src="favicon.svg" alt="Shiloh Schedule logo"></div>
                 <div class="update-title-block">
-                    <h2 id="update-notice-title">Version 3 and the Extension are here!</h2>
+                    <h2 id="update-notice-title">Version 3.1.0 is here</h2>
                 </div>
             </div>
             <div class="update-notice-body">
-                <div class="update-section">
-                    <div class="section-title">
-                        <span class="section-icon"><i class="fas fa-puzzle-piece"></i></span>
-                        <span>Chrome Extension Launch</span>
-                        <span class="section-divider"></span>
-                    </div>
-                    <h3> The Shiloh Schedule Chrome Extension is Here!</h3>
-                    <p>You can now view your schedule countdown right from your browser.</p>
-                    <p>The extension stays synced with the website and matches your theme, colors, and settings.</p>
-                    <p>
-                        <span class="inline-icon"><i class="fas fa-link"></i></span>
-                        <a href="https://chromewebstore.google.com/detail/shiloh-schedule-extension/clghadjfdfgihdkemlipfndoelebcipg?utm_source=item-share-cb" target="_blank" rel="noopener">
-                            Install it from the Chrome Web Store
-                        </a>
-                    </p>
-                </div>
-
-                <div class="update-section">
-                    <div class="section-title">
-                        <span class="section-icon"><i class="fas fa-cog"></i></span>
-                        <span>Website Updates (v3.0 – v3.0.3)</span>
-                        <span class="section-divider"></span>
-                    </div>
-                    <p>We’ve made several improvements across the site, including:</p>
-                    <ul>
-                        <li>A cleaner, updated look with improved colors and layout</li>
-                        <li>A reorganized settings panel that’s easier to use</li>
-                        <li>Better background uploads and smoother gradient controls</li>
-                        <li>More accurate schedule switching and countdown behavior</li>
-                        <li>A new “What’s New” panel to see updates as they’re released</li>
-                        <li>Faster performance and overall UI polish</li>
-                    </ul>
-                </div>
+                <p style="margin-top:0">What’s new in v3.1.0:</p>
+                <ul>
+                    <li>Added 5th Grade schedules and refreshed Middle School (6-7) schedules.</li>
+                    <li>Grade picker now includes 5th Grade; chapel/house days auto-pick the right schedule.</li>
+                    <li>Extension stays in sync with the new schedules you save on the site.</li>
+                </ul>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -1563,7 +1571,9 @@
             // Show redesigned update notice once per user (versioned localStorage key).
             function maybeShowUpdateOverlay() {
                 try {
-                    const key = 'updateNoticeShown_v3_1';
+                    const key = 'updateNoticeShown_v3_1_0';
+                    // clear prior keys so this one shows
+                    try { localStorage.removeItem('updateNoticeShown_v3_1'); localStorage.removeItem('updateNoticeShown_v4_0_0'); } catch (e) {}
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
