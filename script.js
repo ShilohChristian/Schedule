@@ -92,44 +92,57 @@ const schedules = {
     ]
 };
 
-// Then declare schedule display names
+// Then declare schedule display names (per grade)
 const scheduleDisplayNames = {
-    normal: 'Normal',
-    chapel: 'Chapel Bell',
-    latePepRally: 'Late Pep Rally',
-    earlyPepRally: 'Early Pep Rally'  // Fixed the display name
+    highSchool: {
+        normal: 'Normal',
+        chapel: 'Chapel Bell',
+        latePepRally: 'Late Pep Rally',
+        earlyPepRally: 'Early Pep Rally'
+    },
+    middleSchool: {
+        normal: 'Regular',
+        chapel: 'Chapel Bell',
+        house: 'House'
+    },
+    grade5: {
+        normal: 'Regular',
+        chapel: 'Chapel Bell',
+        house: 'House'
+    }
 };
+
+function getScheduleDisplayName(key) {
+    const map = scheduleDisplayNames[gradeLevel] || scheduleDisplayNames.highSchool;
+    return map[key] || key;
+}
 
 // Initialize global variables
 let currentSchedule = schedules.normal;
 let currentScheduleName = 'normal';
 
-// Add grade level and middle school schedules
-let gradeLevel = localStorage.getItem('gradeLevel') || 'highSchool'; // 'highSchool' or 'middleSchool'
+// Add grade level and grade-specific schedules
+let gradeLevel = localStorage.getItem('gradeLevel') || 'highSchool'; // 'highSchool' | 'middleSchool' | 'grade5'
 
 const middleSchoolSchedules = {
     normal: [
-        { name: "Homeroom", start: "08:10", end: "08:15" },
-        { name: "Passing", start: "08:15", end: "08:18" },
-        { name: "Period 1", start: "08:18", end: "08:55" },
+        { name: "Period 1", start: "08:10", end: "08:55" },
         { name: "Passing", start: "08:55", end: "09:00" },
-        { name: "Period 2", start: "09:00", end: "09:40" },
-        { name: "Passing", start: "09:40", end: "09:45" },
-        { name: "Period 3", start: "09:45", end: "10:25" },
-        { name: "Passing", start: "10:25", end: "10:30" },
-        { name: "SAINTS Advisory Time", start: "10:30", end: "11:10" },
-        { name: "Passing", start: "11:10", end: "11:13" },
-        { name: "Lunch", start: "11:13", end: "11:43" },
-        { name: "Passing", start: "11:43", end: "11:47" },
-        { name: "Period 4", start: "11:47", end: "12:27" },
-        { name: "Passing", start: "12:27", end: "12:31" },
-        { name: "Period 5", start: "12:31", end: "13:11" },
-        { name: "Passing", start: "13:11", end: "13:15" },
-        { name: "Period 6", start: "13:15", end: "13:55" },
-        { name: "Passing", start: "13:55", end: "13:59" },
-        { name: "Period 7", start: "13:59", end: "14:39" },
-        { name: "Passing", start: "14:39", end: "14:43" },
-        { name: "Period 8", start: "14:43", end: "15:30" }
+        { name: "Period 2", start: "09:00", end: "09:45" },
+        { name: "Passing", start: "09:45", end: "09:50" },
+        { name: "Period 3", start: "09:50", end: "10:35" },
+        { name: "Passing", start: "10:35", end: "10:40" },
+        { name: "Period 4", start: "10:40", end: "11:30" },
+        { name: "Passing", start: "11:30", end: "11:35" },
+        { name: "Lunch", start: "11:35", end: "12:05" },
+        { name: "Passing", start: "12:05", end: "12:10" },
+        { name: "Period 5", start: "12:10", end: "13:00" },
+        { name: "Passing", start: "13:00", end: "13:05" },
+        { name: "Period 6", start: "13:05", end: "13:50" },
+        { name: "Passing", start: "13:50", end: "13:55" },
+        { name: "Period 7", start: "13:55", end: "14:40" },
+        { name: "Passing", start: "14:40", end: "14:45" },
+        { name: "Period 8", start: "14:45", end: "15:30" }
     ],
     chapel: [
         { name: "Homeroom", start: "08:10", end: "08:15" },
@@ -153,6 +166,86 @@ const middleSchoolSchedules = {
         { name: "Period 7", start: "14:11", end: "14:49" },
         { name: "Passing", start: "14:49", end: "14:53" },
         { name: "Period 8", start: "14:53", end: "15:30" }
+    ],
+    house: [
+        { name: "Period 1", start: "08:10", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 2", start: "09:00", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Period 3", start: "09:45", end: "10:25" },
+        { name: "Passing", start: "10:25", end: "10:30" },
+        { name: "House Meeting / Competition", start: "10:30", end: "11:10" },
+        { name: "Passing", start: "11:10", end: "11:13" },
+        { name: "Lunch", start: "11:13", end: "11:43" },
+        { name: "Passing", start: "11:43", end: "11:47" },
+        { name: "Period 4", start: "11:47", end: "12:27" },
+        { name: "Passing", start: "12:27", end: "12:31" },
+        { name: "Period 5", start: "12:31", end: "13:11" },
+        { name: "Passing", start: "13:11", end: "13:15" },
+        { name: "Period 6", start: "13:15", end: "13:55" },
+        { name: "Passing", start: "13:55", end: "13:59" },
+        { name: "Period 7", start: "13:59", end: "14:39" },
+        { name: "Passing", start: "14:39", end: "14:43" },
+        { name: "Period 8", start: "14:43", end: "15:30" }
+    ]
+};
+
+const grade5Schedules = {
+    normal: [
+        { name: "Bible", start: "08:10", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 1", start: "09:00", end: "09:45" },
+        { name: "Passing", start: "09:45", end: "09:50" },
+        { name: "Period 2", start: "09:50", end: "10:35" },
+        { name: "Passing", start: "10:35", end: "10:40" },
+        { name: "Period 3", start: "10:40", end: "11:30" },
+        { name: "Passing", start: "11:30", end: "11:35" },
+        { name: "Lunch", start: "11:35", end: "12:05" },
+        { name: "Passing", start: "12:05", end: "12:10" },
+        { name: "Specials", start: "12:10", end: "13:00" },
+        { name: "Recess", start: "13:00", end: "13:30" },
+        { name: "Reading", start: "13:30", end: "14:20" },
+        { name: "Geography", start: "14:20", end: "15:10" }
+    ],
+    chapel: [
+        { name: "Homeroom", start: "08:10", end: "08:15" },
+        { name: "Chapel", start: "08:15", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 1", start: "09:00", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Period 2", start: "09:45", end: "10:25" },
+        { name: "Passing", start: "10:25", end: "10:30" },
+        { name: "Period 3", start: "10:30", end: "11:10" },
+        { name: "Passing", start: "11:10", end: "11:13" },
+        { name: "Lunch", start: "11:13", end: "11:43" },
+        { name: "Passing", start: "11:43", end: "11:47" },
+        { name: "Homeroom", start: "11:47", end: "12:00" },
+        { name: "Recess", start: "12:00", end: "12:30" },
+        { name: "Homeroom", start: "12:30", end: "12:49" },
+        { name: "Specials", start: "12:49", end: "13:27" },
+        { name: "Passing", start: "13:27", end: "13:31" },
+        { name: "Chapel Debrief / GEO", start: "13:31", end: "14:15" },
+        { name: "Reading", start: "14:15", end: "15:10" }
+    ],
+    house: [
+        { name: "Period 1", start: "08:10", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:00" },
+        { name: "Period 2", start: "09:00", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Period 3", start: "09:45", end: "10:25" },
+        { name: "Passing", start: "10:25", end: "10:30" },
+        { name: "House Meeting / Competition", start: "10:30", end: "11:10" },
+        { name: "Passing", start: "11:10", end: "11:13" },
+        { name: "Lunch", start: "11:13", end: "11:43" },
+        { name: "Passing", start: "11:43", end: "11:47" },
+        { name: "Homeroom", start: "11:47", end: "12:00" },
+        { name: "Recess", start: "12:00", end: "12:27" },
+        { name: "Passing", start: "12:27", end: "12:31" },
+        { name: "Specials", start: "12:31", end: "13:11" },
+        { name: "Passing", start: "13:11", end: "13:15" },
+        { name: "Bible", start: "13:15", end: "13:45" },
+        { name: "Reading", start: "13:45", end: "14:30" },
+        { name: "Geography", start: "14:30", end: "15:10" }
     ]
 };
 
@@ -208,9 +301,13 @@ document.addEventListener("DOMContentLoaded", async function() {
         highSchoolOption.textContent = 'High School';
         const middleSchoolOption = document.createElement('option');
         middleSchoolOption.value = 'middleSchool';
-        middleSchoolOption.textContent = 'Middle School';
+        middleSchoolOption.textContent = 'Middle School (6-7)';
+        const fifthGradeOption = document.createElement('option');
+        fifthGradeOption.value = 'grade5';
+        fifthGradeOption.textContent = '5th Grade';
         gradeDropdown.appendChild(highSchoolOption);
         gradeDropdown.appendChild(middleSchoolOption);
+        gradeDropdown.appendChild(fifthGradeOption);
         document.getElementById('app').prepend(gradeDropdown);
     }
     gradeDropdown.value = gradeLevel;
@@ -302,27 +399,27 @@ function initializeAppLogic() {
         // Handle Tuesday chapel and Wednesday normal schedule
         const today = new Date();
         const dayOfWeek = today.getDay();
+        const activeSchedules = getActiveSchedules();
         
-        if (dayOfWeek === 2) { // 2 represents Tuesday
+        if (dayOfWeek === 2 && activeSchedules.chapel) { // Tuesday
             switchSchedule('chapel');
             console.debug('Tuesday detected - switched to chapel schedule');
-        } else if (dayOfWeek === 3) { // 3 represents Wednesday
-            switchSchedule('normal');
-            console.debug('Wednesday detected - switched to normal schedule');
+        } else if (dayOfWeek === 4 && activeSchedules.house) { // Thursday
+            switchSchedule('house');
+            console.debug('Thursday detected - switched to house schedule');
         } else {
             // Load saved schedule for other days, but validate against active grade schedules
             const savedScheduleName = localStorage.getItem('currentScheduleName');
-            const activeSchedules = getActiveSchedules();
             if (savedScheduleName) {
                 if (activeSchedules && activeSchedules[savedScheduleName]) {
                     switchSchedule(savedScheduleName);
                 } else {
                     console.debug('Saved schedule not valid for current grade; clearing and defaulting to normal:', savedScheduleName);
                     localStorage.removeItem('currentScheduleName');
-                    switchSchedule('normal');
+                    switchSchedule(activeSchedules.normal ? 'normal' : Object.keys(activeSchedules)[0]);
                 }
             } else {
-                switchSchedule('normal');
+                switchSchedule(activeSchedules.normal ? 'normal' : Object.keys(activeSchedules)[0]);
             }
         }
 
@@ -335,7 +432,9 @@ function initializeAppLogic() {
 
 // Schedule management functions
 function getActiveSchedules() {
-    return gradeLevel === 'middleSchool' ? middleSchoolSchedules : schedules;
+    if (gradeLevel === 'middleSchool') return middleSchoolSchedules;
+    if (gradeLevel === 'grade5') return grade5Schedules;
+    return schedules;
 }
 
 // Helper: convert 'HH:MM' to seconds since midnight
@@ -388,7 +487,7 @@ function getGlobalPeriodNames() {
 
 // Add periodNum to all periods in all schedules
 function addPeriodNumsToSchedules() {
-    [schedules, middleSchoolSchedules].forEach(schedObj => {
+    [schedules, middleSchoolSchedules, grade5Schedules].forEach(schedObj => {
         Object.values(schedObj).forEach(schedule => {
             let sequentialCounter = 1;
             schedule.forEach(period => {
@@ -496,7 +595,7 @@ function switchSchedule(scheduleName) {
         localStorage.setItem('currentScheduleName', scheduleName);
         const displayName = scheduleName.startsWith('customSchedule_') 
             ? scheduleName.replace('customSchedule_', '')
-            : scheduleDisplayNames[scheduleName] || scheduleName;
+            : getScheduleDisplayName(scheduleName);
         const headingText = `${displayName} Schedule ▸ ${schedule[0].name}`;
         document.getElementById("countdown-heading").innerText = headingText;
         const dropdown = document.getElementById("schedule-dropdown");
@@ -871,10 +970,10 @@ window.populateRenamePeriods = populateRenamePeriods;
         hud.style.padding = '14px 16px';
         hud.style.borderRadius = '14px';
         hud.style.background = 'linear-gradient(155deg, rgba(0,0,53,0.9), rgba(12,16,32,0.94))';
-        hud.style.border = '1px solid rgba(196,173,98,0.5)';
+        hud.style.border = 'none';
         hud.style.boxShadow = '0 14px 36px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,53,0.45), inset 0 1px 0 rgba(255,255,255,0.08)';
-        hud.style.color = '#E8ECF7';
-        hud.style.fontFamily = 'ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono", monospace';
+        hud.style.color = '#fff';
+        hud.style.fontFamily = 'Inter, "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif';
         hud.style.fontSize = '12px';
         hud.style.pointerEvents = 'none';
 
@@ -1212,10 +1311,11 @@ window.populateRenamePeriods = populateRenamePeriods;
         hudBtn.style.cursor = 'pointer';
         hudBtn.style.padding = '10px 12px';
         hudBtn.style.borderRadius = '10px';
-        hudBtn.style.border = '1px solid rgba(255,255,255,0.12)';
-        hudBtn.style.background = 'rgba(255,255,255,0.08)';
-        hudBtn.style.color = '#E8ECF7';
+        hudBtn.style.border = 'none';
+        hudBtn.style.background = 'rgba(255,255,255,0.14)';
+        hudBtn.style.color = '#fff';
         hudBtn.style.fontWeight = '700';
+        hudBtn.style.fontFamily = 'Inter, "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif';
         const syncHudBtnLabel = () => {
             const on = document.getElementById('devtools-hud');
             hudBtn.textContent = on ? 'Hide HUD' : 'Live HUD';
@@ -2383,7 +2483,7 @@ function updateScheduleDropdown() {
     Object.keys(activeSchedules).forEach(key => {
         const opt = document.createElement('option');
         opt.value = key;
-        opt.textContent = scheduleDisplayNames[key] || key;
+        opt.textContent = getScheduleDisplayName(key);
         dropdown.appendChild(opt);
     });
 
@@ -2430,7 +2530,8 @@ function promptForGradeLevelIfFirstTime() {
                 </div>
                 <div class="grade-modal-actions">
                     <button id="choose-highschool" class="grade-choice primary welcome-option-btn">High School</button>
-                    <button id="choose-middleschool" class="grade-choice welcome-option-btn">Middle School</button>
+                    <button id="choose-middleschool" class="grade-choice welcome-option-btn">Middle School (6-7)</button>
+                    <button id="choose-grade5" class="grade-choice welcome-option-btn">5th Grade</button>
                 </div>
                 <div class="grade-modal-note">You can change this anytime in Settings.</div>
             </div>
@@ -2441,6 +2542,7 @@ function promptForGradeLevelIfFirstTime() {
 
     const chooseHigh = document.getElementById('choose-highschool');
     const chooseMiddle = document.getElementById('choose-middleschool');
+    const chooseGrade5 = document.getElementById('choose-grade5');
 
     const cleanup = () => {
         if (modal && modal.parentNode) modal.parentNode.removeChild(modal);
@@ -2467,10 +2569,21 @@ function promptForGradeLevelIfFirstTime() {
             try { switchSchedule('normal'); } catch(e){/* safe fallback */ }
         });
     }
+    if (chooseGrade5) {
+        chooseGrade5.addEventListener('click', () => {
+            localStorage.setItem('gradeLevel', 'grade5');
+            gradeLevel = 'grade5';
+            cleanup();
+            updateScheduleDropdown();
+            try { switchSchedule('normal'); } catch(e){/* safe fallback */ }
+        });
+    }
 }
 
 // One-time update notice: explains that period names may be wrong after a recent update
 function showUpdateNoticeOnce() {
+    // If the page already has a built-in update overlay, let that handle showing the notice.
+    if (document.getElementById('update-notice-backdrop')) return;
     try {
         // Don't show on first visit (when gradeLevel is not set)
         if (!localStorage.getItem('gradeLevel')) {
@@ -2483,8 +2596,9 @@ function showUpdateNoticeOnce() {
             document.addEventListener('gradeLevelChosen', handler);
             return;
         }
+        const noticeKey = 'sawUpdateNotice_v310';
         // If user already saw the notice, skip
-        if (localStorage.getItem('sawUpdateNotice') === 'true') return;
+        if (localStorage.getItem(noticeKey) === 'true') return;
 
         // Create modal elements
         const backdrop = document.createElement('div');
@@ -2500,8 +2614,8 @@ function showUpdateNoticeOnce() {
 
         dialog.innerHTML = `
             <button class="update-notice-close" aria-label="Close">×</button>
-            <h2 id="update-notice-title">Heads up — small update</h2>
-            <p>Due to a recent update, some period names may appear incorrect. All you need to do is rename the affected periods to restore the correct names.</p>
+            <h2 id="update-notice-title">New schedules added</h2>
+            <p>We added Middle School (6-7) and 5th Grade schedules with passing periods. Pick your grade in Settings → Schedule so the countdown matches your day.</p>
             <div class="update-notice-actions">
                 <button class="btn btn-primary update-notice-ok">Got it</button>
             </div>
@@ -2515,7 +2629,7 @@ function showUpdateNoticeOnce() {
     const okBtn = dialog.querySelector('.update-notice-ok');
 
         function closeAndRemember() {
-            try { localStorage.setItem('sawUpdateNotice', 'true'); } catch (e) {}
+            try { localStorage.setItem(noticeKey, 'true'); } catch (e) {}
             if (backdrop && backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
         }
 
