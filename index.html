@@ -1540,16 +1540,13 @@
             <div class="update-notice-header">
                 <div class="update-title-icon"><img src="favicon.svg" alt="Shiloh Schedule logo"></div>
                 <div class="update-title-block">
-                    <h2 id="update-notice-title">Version 3.1.0 is here</h2>
+                    <h2 id="update-notice-title">Shiloh Schedule Update</h2>
                 </div>
             </div>
             <div class="update-notice-body">
-                <p style="margin-top:0">What’s new in v3.1.0:</p>
-                <ul>
-                    <li>Added 5th Grade schedules and refreshed Middle School (6-7) schedules.</li>
-                    <li>Grade picker now includes 5th Grade; chapel/house days auto-pick the right schedule.</li>
-                    <li>Extension stays in sync with the new schedules you save on the site.</li>
-                </ul>
+                <p style="margin-top:0">The Shiloh schedule will remain available, though updates may be a little less frequent this year. If you notice anything incorrect or run into an issue, please <a href="mailto:ShilohSchedule@outlook.com">send an email</a> and every effort will be made to help.</p>
+                <p>You can also check out what I’m currently working on <strong><a href="https://indy-schedule.firebaseapp.com" target="_blank" rel="noopener">here</a></strong>.</p>
+                <p>Thanks for using the site, and have a great school year!</p>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -1571,9 +1568,7 @@
             // Show redesigned update notice once per user (versioned localStorage key).
             function maybeShowUpdateOverlay() {
                 try {
-                    const key = 'updateNoticeShown_v3_1_0';
-                    // clear prior keys so this one shows
-                    try { localStorage.removeItem('updateNoticeShown_v3_1'); localStorage.removeItem('updateNoticeShown_v4_0_0'); } catch (e) {}
+                    const key = 'updateNoticeShown_school_update_2026';
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
