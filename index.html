@@ -657,7 +657,7 @@
                             <p>Questions, issues, or feedback? Email <a href="mailto:ShilohSchedule@outlook.com">ShilohSchedule@outlook.com</a></p>
 
                             <div class="contact-info">
-                                <p class="version-info">Version 3.1.0</p>
+                                <p class="version-info">Version 3.1.1</p>
                                 <p class="creator-info">Created by Brady Blackwell</p>
                             </div>
                         </div>
@@ -681,6 +681,17 @@
                         </div>
 
                         <div id="whatsnew-website" class="whatsnew-log" role="tabpanel">
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v3.1.1</span>
+                                    <span class="wn-date">Sep 1, 2026</span>
+                                    <span class="wn-tag">Schedule Fixes</span>
+                                </div>
+                                <ul>
+                                    <li>Updated the High School Chapel schedule with the correct bell times.</li>
+                                    <li>Updated the High School Late Pep Rally schedule, including the 3:03 PM pep rally start.</li>
+                                </ul>
+                            </div>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
                                     <span class="wn-version">v3.1.0</span>
@@ -1052,6 +1063,28 @@
                         </div>
 
                         <div id="whatsnew-extension" class="whatsnew-log" role="tabpanel" hidden>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.7</span>
+                                    <span class="wn-date">Sep 1, 2026</span>
+                                    <span class="wn-tag">Schedule Update</span>
+                                </div>
+                                <ul>
+                                    <li>Updated the built-in High School Chapel schedule with the latest bell times.</li>
+                                    <li>Updated the built-in High School Late Pep Rally schedule, including the 3:03 PM pep rally start.</li>
+                                </ul>
+                            </div>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.6</span>
+                                    <span class="wn-date">Aug 14, 2026</span>
+                                    <span class="wn-tag">Schedule Update</span>
+                                </div>
+                                <ul>
+                                    <li>Updated the built-in High School Normal schedule for the new bell times.</li>
+                                    <li>The school day now ends at 3:45 PM while retaining six-minute passing periods.</li>
+                                </ul>
+                            </div>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
                                     <span class="wn-version">v1.1.5</span>
@@ -1540,13 +1573,11 @@
             <div class="update-notice-header">
                 <div class="update-title-icon"><img src="favicon.svg" alt="Shiloh Schedule logo"></div>
                 <div class="update-title-block">
-                    <h2 id="update-notice-title">Shiloh Schedule Update</h2>
+                    <h2 id="update-notice-title">Schedule Update</h2>
                 </div>
             </div>
             <div class="update-notice-body">
-                <p style="margin-top:0">The Shiloh schedule will remain available, though updates may be a little less frequent this year. If you notice anything incorrect or run into an issue, please <a href="mailto:ShilohSchedule@outlook.com">send an email</a> and every effort will be made to help.</p>
-                <p>You can also check out what I’m currently working on <strong><a href="https://indy-schedule.firebaseapp.com" target="_blank" rel="noopener">here</a></strong>.</p>
-                <p>Thanks for using the site, and have a great school year!</p>
+                <p style="margin-top:0">The High School Chapel, Normal, and Pep Rally schedules have been fixed with the correct bell times.</p>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -1568,7 +1599,7 @@
             // Show redesigned update notice once per user (versioned localStorage key).
             function maybeShowUpdateOverlay() {
                 try {
-                    const key = 'updateNoticeShown_school_update_2026';
+                    const key = 'updateNoticeShown_v3_1_1';
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
