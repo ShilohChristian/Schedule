@@ -33,42 +33,44 @@ const schedules = {
         { name: "Period 8", start: "14:59", end: "15:45" },
     ],
     chapel: [
-        { name: "Period 1", start: "08:15", end: "08:55" }, // 0
-        { name: "Passing", start: "08:55", end: "09:01" }, // 1
-        { name: "Period 2", start: "09:01", end: "09:40" }, // 2
-        { name: "Chapel", start: "09:40", end: "10:30" },   // 3
-        { name: "Passing", start: "10:30", end: "10:36" },  // 4
-        { name: "Period 3", start: "10:36", end: "11:17" }, // 5 (should be index 4)
-        { name: "Period 4", start: "11:23", end: "12:03" }, // 7 (should be index 6)
-        { name: "Lunch", start: "12:03", end: "12:39" },    // 8
-        { name: "Passing", start: "12:39", end: "12:45" },  // 9
-        { name: "Period 5", start: "12:45", end: "13:24" }, // 10 (should be index 8)
-        { name: "Passing", start: "13:24", end: "13:30" },  // 11
-        { name: "Period 6", start: "13:30", end: "14:10" }, // 12 (should be index 10)
-        { name: "Passing", start: "14:10", end: "14:16" },  // 13
-        { name: "Period 7", start: "14:16", end: "14:55" }, // 14 (should be index 12)
-        { name: "Passing", start: "14:55", end: "15:01" },  // 15
-        { name: "Period 8", start: "15:01", end: "15:40" }  // 16 (should be index 14)
+        { name: "Period 1", start: "08:15", end: "08:55" },
+        { name: "Passing", start: "08:55", end: "09:01" },
+        { name: "Period 2", start: "09:01", end: "09:40" },
+        { name: "Passing", start: "09:40", end: "09:45" },
+        { name: "Chapel", start: "09:45", end: "10:30" },
+        { name: "Passing", start: "10:30", end: "10:36" },
+        { name: "Period 3", start: "10:36", end: "11:18" },
+        { name: "Passing", start: "11:18", end: "11:24" },
+        { name: "Period 4", start: "11:24", end: "12:05" },
+        { name: "Lunch", start: "12:05", end: "12:40" },
+        { name: "Passing", start: "12:40", end: "12:46" },
+        { name: "Period 5", start: "12:46", end: "13:27" },
+        { name: "Passing", start: "13:27", end: "13:33" },
+        { name: "Period 6", start: "13:33", end: "14:13" },
+        { name: "Passing", start: "14:13", end: "14:19" },
+        { name: "Period 7", start: "14:19", end: "14:59" },
+        { name: "Passing", start: "14:59", end: "15:05" },
+        { name: "Period 8", start: "15:05", end: "15:45" }
     ],
     latePepRally: [
         { name: "Period 1", start: "08:15", end: "08:55" },
         { name: "Passing", start: "08:55", end: "09:01" },
         { name: "Period 2", start: "09:01", end: "09:41" },
         { name: "Passing", start: "09:41", end: "09:47" },
-        { name: "Period 3", start: "09:47", end: "10:27" },
-        { name: "Passing", start: "10:27", end: "10:33" },
-        { name: "Period 4", start: "10:33", end: "11:13" },
-        { name: "Passing", start: "11:13", end: "11:19" },
-        { name: "Period 5", start: "11:19", end: "11:59" },
-        { name: "Lunch", start: "11:59", end: "12:34" },
-        { name: "Passing", start: "12:34", end: "12:40" },
-        { name: "Period 6", start: "12:40", end: "13:21" },
-        { name: "Passing", start: "13:21", end: "13:27" },
-        { name: "Period 7", start: "13:27", end: "14:07" },
-        { name: "Passing", start: "14:07", end: "14:13" },
-        { name: "Period 8", start: "14:13", end: "14:52" },
-        { name: "Passing", start: "14:52", end: "14:58" },
-        { name: "Pep Rally", start: "14:58", end: "15:40" }
+        { name: "Period 3", start: "09:47", end: "10:28" },
+        { name: "Passing", start: "10:28", end: "10:34" },
+        { name: "Period 4", start: "10:34", end: "11:15" },
+        { name: "Passing", start: "11:15", end: "11:21" },
+        { name: "Period 5", start: "11:21", end: "12:02" },
+        { name: "Lunch", start: "12:02", end: "12:37" },
+        { name: "Passing", start: "12:37", end: "12:43" },
+        { name: "Period 6", start: "12:43", end: "13:25" },
+        { name: "Passing", start: "13:25", end: "13:31" },
+        { name: "Period 7", start: "13:31", end: "14:11" },
+        { name: "Passing", start: "14:11", end: "14:17" },
+        { name: "Period 8", start: "14:17", end: "14:57" },
+        { name: "Passing", start: "14:57", end: "15:03" },
+        { name: "Pep Rally", start: "15:03", end: "15:45" }
     ],
     earlyPepRally: [
         { name: "Period 1", start: "08:15", end: "08:58" },
@@ -2596,7 +2598,7 @@ function showUpdateNoticeOnce() {
             document.addEventListener('gradeLevelChosen', handler);
             return;
         }
-        const noticeKey = 'sawUpdateNotice_v310';
+        const noticeKey = 'sawUpdateNotice_v311';
         // If user already saw the notice, skip
         if (localStorage.getItem(noticeKey) === 'true') return;
 
@@ -2614,8 +2616,8 @@ function showUpdateNoticeOnce() {
 
         dialog.innerHTML = `
             <button class="update-notice-close" aria-label="Close">×</button>
-            <h2 id="update-notice-title">New schedules added</h2>
-            <p>We added Middle School (6-7) and 5th Grade schedules with passing periods. Pick your grade in Settings → Schedule so the countdown matches your day.</p>
+            <h2 id="update-notice-title">Schedule Update</h2>
+            <p>The High School Chapel, Normal, and Pep Rally schedules have been fixed with the correct bell times.</p>
             <div class="update-notice-actions">
                 <button class="btn btn-primary update-notice-ok">Got it</button>
             </div>
