@@ -105,7 +105,7 @@ const scheduleDisplayNames = {
     middleSchool: {
         normal: 'Regular',
         chapel: 'Chapel Bell',
-        house: 'House'
+        latePepRally: 'Late Pep Rally'
     },
     grade5: {
         normal: 'Regular',
@@ -128,67 +128,68 @@ let gradeLevel = localStorage.getItem('gradeLevel') || 'highSchool'; // 'highSch
 
 const middleSchoolSchedules = {
     normal: [
-        { name: "Period 1", start: "08:10", end: "08:55" },
-        { name: "Passing", start: "08:55", end: "09:00" },
-        { name: "Period 2", start: "09:00", end: "09:45" },
-        { name: "Passing", start: "09:45", end: "09:50" },
-        { name: "Period 3", start: "09:50", end: "10:35" },
-        { name: "Passing", start: "10:35", end: "10:40" },
-        { name: "Period 4", start: "10:40", end: "11:30" },
-        { name: "Passing", start: "11:30", end: "11:35" },
-        { name: "Lunch", start: "11:35", end: "12:05" },
-        { name: "Passing", start: "12:05", end: "12:10" },
-        { name: "Period 5", start: "12:10", end: "13:00" },
-        { name: "Passing", start: "13:00", end: "13:05" },
-        { name: "Period 6", start: "13:05", end: "13:50" },
-        { name: "Passing", start: "13:50", end: "13:55" },
-        { name: "Period 7", start: "13:55", end: "14:40" },
-        { name: "Passing", start: "14:40", end: "14:45" },
-        { name: "Period 8", start: "14:45", end: "15:30" }
+        { name: "Release to 1st Period", start: "08:05", end: "08:10" },
+        { name: "Period 1", start: "08:10", end: "08:56" },
+        { name: "Passing", start: "08:56", end: "09:01" },
+        { name: "Period 2", start: "09:01", end: "09:47" },
+        { name: "Passing", start: "09:47", end: "09:52" },
+        { name: "Period 3", start: "09:52", end: "10:38" },
+        { name: "Passing", start: "10:38", end: "10:43" },
+        { name: "Period 4", start: "10:43", end: "11:29" },
+        { name: "Passing", start: "11:29", end: "11:34" },
+        { name: "Lunch", start: "11:34", end: "12:04" },
+        { name: "Passing", start: "12:04", end: "12:09" },
+        { name: "Period 5", start: "12:09", end: "12:55" },
+        { name: "Passing", start: "12:55", end: "13:00" },
+        { name: "Period 6", start: "13:00", end: "13:46" },
+        { name: "Passing", start: "13:46", end: "13:51" },
+        { name: "Period 7", start: "13:51", end: "14:37" },
+        { name: "Passing", start: "14:37", end: "14:42" },
+        { name: "Period 8", start: "14:42", end: "15:30" }
     ],
     chapel: [
-        { name: "Homeroom", start: "08:10", end: "08:15" },
-        { name: "Chapel", start: "08:15", end: "08:55" },
-        { name: "Passing", start: "08:55", end: "09:00" },
-        { name: "Period 1", start: "09:00", end: "09:40" },
-        { name: "Passing", start: "09:40", end: "09:45" },
-        { name: "Period 2", start: "09:45", end: "10:25" },
-        { name: "Passing", start: "10:25", end: "10:30" },
-        { name: "Period 3", start: "10:30", end: "11:10" },
-        { name: "Passing", start: "11:10", end: "11:13" },
-        { name: "Lunch", start: "11:13", end: "11:43" },
-        { name: "Passing", start: "11:43", end: "11:47" },
-        { name: "Chapel Debrief", start: "11:47", end: "12:07" },
-        { name: "Period 4", start: "12:07", end: "12:45" },
-        { name: "Passing", start: "12:45", end: "12:49" },
-        { name: "Period 5", start: "12:49", end: "13:27" },
-        { name: "Passing", start: "13:27", end: "13:31" },
-        { name: "Period 6", start: "13:31", end: "14:07" },
-        { name: "Passing", start: "14:07", end: "14:11" },
-        { name: "Period 7", start: "14:11", end: "14:49" },
-        { name: "Passing", start: "14:49", end: "14:53" },
-        { name: "Period 8", start: "14:53", end: "15:30" }
+        { name: "Release to Chapel", start: "08:05", end: "08:12" },
+        { name: "Chapel", start: "08:12", end: "08:50" },
+        { name: "Passing", start: "08:50", end: "08:54" },
+        { name: "Period 1", start: "08:54", end: "09:32" },
+        { name: "Passing", start: "09:32", end: "09:36" },
+        { name: "Period 2", start: "09:36", end: "10:14" },
+        { name: "Passing", start: "10:14", end: "10:18" },
+        { name: "House Meeting", start: "10:18", end: "10:48" },
+        { name: "Lunch", start: "10:48", end: "11:18" },
+        { name: "Passing", start: "11:18", end: "11:22" },
+        { name: "Period 3", start: "11:22", end: "12:00" },
+        { name: "Passing", start: "12:00", end: "12:04" },
+        { name: "Period 4", start: "12:04", end: "12:42" },
+        { name: "Passing", start: "12:42", end: "12:46" },
+        { name: "Period 5", start: "12:46", end: "13:24" },
+        { name: "Passing", start: "13:24", end: "13:28" },
+        { name: "Period 6", start: "13:28", end: "14:06" },
+        { name: "Passing", start: "14:06", end: "14:10" },
+        { name: "Period 7", start: "14:10", end: "14:48" },
+        { name: "Passing", start: "14:48", end: "14:52" },
+        { name: "Period 8", start: "14:52", end: "15:30" }
     ],
-    house: [
-        { name: "Period 1", start: "08:10", end: "08:55" },
-        { name: "Passing", start: "08:55", end: "09:00" },
-        { name: "Period 2", start: "09:00", end: "09:40" },
-        { name: "Passing", start: "09:40", end: "09:45" },
-        { name: "Period 3", start: "09:45", end: "10:25" },
-        { name: "Passing", start: "10:25", end: "10:30" },
-        { name: "House Meeting / Competition", start: "10:30", end: "11:10" },
-        { name: "Passing", start: "11:10", end: "11:13" },
-        { name: "Lunch", start: "11:13", end: "11:43" },
-        { name: "Passing", start: "11:43", end: "11:47" },
-        { name: "Period 4", start: "11:47", end: "12:27" },
-        { name: "Passing", start: "12:27", end: "12:31" },
-        { name: "Period 5", start: "12:31", end: "13:11" },
-        { name: "Passing", start: "13:11", end: "13:15" },
-        { name: "Period 6", start: "13:15", end: "13:55" },
-        { name: "Passing", start: "13:55", end: "13:59" },
-        { name: "Period 7", start: "13:59", end: "14:39" },
-        { name: "Passing", start: "14:39", end: "14:43" },
-        { name: "Period 8", start: "14:43", end: "15:30" }
+    latePepRally: [
+        { name: "Release to 1st Period", start: "08:05", end: "08:10" },
+        { name: "Period 1", start: "08:10", end: "08:50" },
+        { name: "Passing", start: "08:50", end: "08:55" },
+        { name: "Period 2", start: "08:55", end: "09:35" },
+        { name: "Passing", start: "09:35", end: "09:40" },
+        { name: "Period 3", start: "09:40", end: "10:20" },
+        { name: "Passing", start: "10:20", end: "10:25" },
+        { name: "Period 4", start: "10:25", end: "11:05" },
+        { name: "Passing", start: "11:05", end: "11:10" },
+        { name: "Lunch", start: "11:10", end: "11:40" },
+        { name: "Passing", start: "11:40", end: "11:45" },
+        { name: "Period 5", start: "11:45", end: "12:30" },
+        { name: "Passing", start: "12:30", end: "12:35" },
+        { name: "Period 6", start: "12:35", end: "13:20" },
+        { name: "Passing", start: "13:20", end: "13:25" },
+        { name: "Period 7", start: "13:25", end: "14:10" },
+        { name: "Passing", start: "14:10", end: "14:15" },
+        { name: "Period 8", start: "14:15", end: "15:00" },
+        { name: "Pep Rally", start: "15:00", end: "15:40" }
     ]
 };
 
@@ -2598,7 +2599,7 @@ function showUpdateNoticeOnce() {
             document.addEventListener('gradeLevelChosen', handler);
             return;
         }
-        const noticeKey = 'sawUpdateNotice_v311';
+        const noticeKey = 'sawUpdateNotice_v311_middle_school';
         // If user already saw the notice, skip
         if (localStorage.getItem(noticeKey) === 'true') return;
 
@@ -2616,8 +2617,8 @@ function showUpdateNoticeOnce() {
 
         dialog.innerHTML = `
             <button class="update-notice-close" aria-label="Close">×</button>
-            <h2 id="update-notice-title">Schedule Update</h2>
-            <p>The High School Chapel, Normal, and Pep Rally schedules have been fixed with the correct bell times.</p>
+            <h2 id="update-notice-title">Middle School Schedules Updated</h2>
+            <p>The 6th–7th Grade Regular, Chapel, and Late Pep Rally schedules now use the correct 2026–27 bell times.</p>
             <div class="update-notice-actions">
                 <button class="btn btn-primary update-notice-ok">Got it</button>
             </div>
