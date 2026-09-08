@@ -497,6 +497,20 @@ select {
     font-size: 20px;
     letter-spacing: 0.01em;
 }
+.update-version-pill {
+    display: inline-flex;
+    margin-top: 5px;
+    padding: 2px 8px;
+    border: 1px solid rgba(245, 210, 103, 0.28);
+    border-radius: 999px;
+    background: rgba(245, 210, 103, 0.1);
+    color: #f5d267;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
 .update-notice-body {
     padding: 20px 28px 22px 28px;
     display: flex;
