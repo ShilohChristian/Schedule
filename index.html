@@ -690,6 +690,7 @@
                                 <ul>
                                     <li>Updated the High School Chapel schedule with the correct bell times.</li>
                                     <li>Updated the High School Late Pep Rally schedule, including the 3:03 PM pep rally start.</li>
+                                    <li>Corrected the 6th–7th Grade Regular, Chapel, and Late Pep Rally schedules.</li>
                                 </ul>
                             </div>
                             <div class="wn-entry">
@@ -1063,6 +1064,17 @@
                         </div>
 
                         <div id="whatsnew-extension" class="whatsnew-log" role="tabpanel" hidden>
+                            <div class="wn-entry">
+                                <div class="wn-entry-header">
+                                    <span class="wn-version">v1.1.8</span>
+                                    <span class="wn-date">Sep 8, 2026</span>
+                                    <span class="wn-tag">Middle School Schedules</span>
+                                </div>
+                                <ul>
+                                    <li>Corrected the built-in 6th–7th Grade Regular, Chapel, and Late Pep Rally schedules.</li>
+                                    <li>Added the updated release, passing-period, House Meeting, lunch, and pep rally times.</li>
+                                </ul>
+                            </div>
                             <div class="wn-entry">
                                 <div class="wn-entry-header">
                                     <span class="wn-version">v1.1.7</span>
@@ -1573,11 +1585,18 @@
             <div class="update-notice-header">
                 <div class="update-title-icon"><img src="favicon.svg" alt="Shiloh Schedule logo"></div>
                 <div class="update-title-block">
-                    <h2 id="update-notice-title">Schedule Update</h2>
+                    <h2 id="update-notice-title">Middle School Schedules Updated</h2>
+                    <span class="update-version-pill">Site 3.1.1 · Extension 1.1.8</span>
                 </div>
             </div>
             <div class="update-notice-body">
-                <p style="margin-top:0">The High School Chapel, Normal, and Pep Rally schedules have been fixed with the correct bell times.</p>
+                <p style="margin-top:0">The 6th–7th Grade schedules now use the correct 2026–27 bell times.</p>
+                <ul>
+                    <li><strong>Regular</strong> schedule</li>
+                    <li><strong>Tuesday Chapel</strong> schedule, including House Meeting</li>
+                    <li><strong>Late Pep Rally</strong> schedule</li>
+                </ul>
+                <p>Release countdowns also now say “Release to 1st Period” or “Release to Chapel.”</p>
                 <div class="update-notice-actions">
                     <button id="update-notice-ok" class="btn btn-primary">OK</button>
                 </div>
@@ -1599,7 +1618,7 @@
             // Show redesigned update notice once per user (versioned localStorage key).
             function maybeShowUpdateOverlay() {
                 try {
-                    const key = 'updateNoticeShown_v3_1_1';
+                    const key = 'updateNoticeShown_v3_1_1_middle_school';
                     const backdrop = document.getElementById('update-notice-backdrop');
                     if (backdrop && !localStorage.getItem(key)) {
                         // reveal and keep visible until OK is clicked
