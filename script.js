@@ -402,6 +402,7 @@ function initializeAppLogic() {
         // Handle Tuesday chapel and Wednesday normal schedule
         const today = new Date();
         const dayOfWeek = today.getDay();
+        const todayKey = getLocalDateKey(today);
         const activeSchedules = getActiveSchedules();
         
         if (dayOfWeek === 2 && activeSchedules.chapel) { // Tuesday
@@ -413,12 +414,16 @@ function initializeAppLogic() {
         } else {
             // Load saved schedule for other days, but validate against active grade schedules
             const savedScheduleName = localStorage.getItem('currentScheduleName');
+            const savedScheduleDate = localStorage.getItem('currentScheduleDate');
+            const dateBoundSchedules = ['chapel', 'house', 'latePepRally', 'earlyPepRally'];
+            const isStaleSpecialSchedule = dateBoundSchedules.includes(savedScheduleName) && savedScheduleDate !== todayKey;
             if (savedScheduleName) {
-                if (activeSchedules && activeSchedules[savedScheduleName]) {
+                if (activeSchedules && activeSchedules[savedScheduleName] && !isStaleSpecialSchedule) {
                     switchSchedule(savedScheduleName);
                 } else {
-                    console.debug('Saved schedule not valid for current grade; clearing and defaulting to normal:', savedScheduleName);
+                    console.debug('Saved schedule is invalid or stale; clearing and defaulting to normal:', savedScheduleName);
                     localStorage.removeItem('currentScheduleName');
+                    localStorage.removeItem('currentScheduleDate');
                     switchSchedule(activeSchedules.normal ? 'normal' : Object.keys(activeSchedules)[0]);
                 }
             } else {
@@ -431,6 +436,13 @@ function initializeAppLogic() {
     } catch (error) {
         console.error('Error initializing app:', error);
     }
+}
+
+function getLocalDateKey(date = new Date()) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 // Schedule management functions
@@ -596,6 +608,7 @@ function switchSchedule(scheduleName) {
         currentSchedule = schedule;
         currentScheduleName = scheduleName;
         localStorage.setItem('currentScheduleName', scheduleName);
+        localStorage.setItem('currentScheduleDate', getLocalDateKey());
         const displayName = scheduleName.startsWith('customSchedule_') 
             ? scheduleName.replace('customSchedule_', '')
             : getScheduleDisplayName(scheduleName);
